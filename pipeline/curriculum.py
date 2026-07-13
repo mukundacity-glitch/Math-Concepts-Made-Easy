@@ -16,6 +16,8 @@ def load_curriculum() -> list:
     for path in sorted(CURRICULUM_DIR.glob("*.json")):
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
+        for lesson in data["lessons"]:
+            lesson.setdefault("grade", data.get("grade"))
         lessons.extend(data["lessons"])
 
     lessons.sort(key=lambda l: l["day"])

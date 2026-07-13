@@ -41,6 +41,19 @@ for row in MASTER_CURRICULUM:
 if not INTRO_TEASER:
     INTRO_TEASER = "Stay tuned — next lesson coming tomorrow on MathConceptsMadeEasy."
 
+# Short spoken recap of the previous lesson, used in today's opening
+PREV_RECAP = ""
+for row in MASTER_CURRICULUM:
+    if row["day"] == DAY_NUMBER - 1:
+        PREV_RECAP = (
+            f"Before we start, a quick recap. "
+            f"In our last lesson, Day {row['day']}, we studied {row['topic']} — "
+            f"{row['subtopic']}. "
+            f"If any of that feels unclear, pause here and rewatch Day {row['day']} first, "
+            f"because today builds directly on it. "
+        )
+        break
+
 print(f"\n{'═'*60}")
 print(f"  Channel    : MathConceptsMadeEasy")
 print(f"  Day        : {DAY_NUMBER}")
@@ -129,7 +142,7 @@ def clean_math_for_speech(text_or_list) -> str:
         text = text.replace(old, new)
     return " ".join(text.split())
 
-def write_narrations(lesson: dict, teaser: str, heading: str) -> dict:
+def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -> dict:
     topic             = lesson['topic']
     subtopic          = lesson['subtopic']
     goal              = lesson['lesson_goal']
@@ -153,6 +166,7 @@ def write_narrations(lesson: dict, teaser: str, heading: str) -> dict:
         f"Welcome to Math Concepts Made Easy. "
         f"Today is Day {day}. "
         f"Our lesson is on {topic}. "
+        f"{recap}"
         f"Look at the screen right now. "
         f"{real_world_hook} "
         f"By the end of this lesson, {goal}. "
@@ -298,7 +312,7 @@ if not validate_lesson(TODAY):
     raise SystemExit("🛑 Pipeline stopped: lesson failed the quality gate.")
 
 print("✍️  Writing dedicated narrations (no API)...")
-NARRATIONS = write_narrations(TODAY, INTRO_TEASER, HEADING)
+NARRATIONS = write_narrations(TODAY, INTRO_TEASER, HEADING, PREV_RECAP)
 print("✅ All 9 narrations written.\n")
 
 # ── Preview first 120 chars of each scene ────────────────────

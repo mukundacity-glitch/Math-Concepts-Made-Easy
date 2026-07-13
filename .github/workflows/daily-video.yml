@@ -14,7 +14,12 @@ name: Daily Lesson Video
 
 on:
   schedule:
-    - cron: "30 12 * * *"   # every day 12:30 UTC
+    # Target: 5:00 PM US Eastern daily — when Grade 9-10 students get home
+    # and search for homework help. GitHub cron runs in UTC, so production
+    # starts ~2h earlier to allow render time:
+    #   19:00 UTC = 3:00 PM EDT (school year Mar-Nov) / 2:00 PM EST →
+    #   video goes live close to the 4-6 PM ET window.
+    - cron: "0 19 * * *"
   workflow_dispatch:
     inputs:
       day:

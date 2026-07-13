@@ -68,6 +68,49 @@ def get_service():
 # METADATA — built entirely from curriculum data, never hard-coded
 # ══════════════════════════════════════════════════════════════
 
+# 3-5 hashtags per subject area — more does not improve ranking
+GEOMETRY_SUBJECTS = {"Triangles", "Quadrilaterals", "Circles", "Coordinate Geometry"}
+ALGEBRA_SUBJECTS = {"Polynomials", "Linear Equations", "Quadratic Equations",
+                    "Sequences and Series"}
+
+
+def grade_label(lesson: dict) -> str:
+    subject = lesson.get("subject", "")
+    if "SAT" in subject:
+        return "SAT Math"
+    if "ACT" in subject:
+        return "ACT Math"
+    grade = lesson.get("grade")
+    return f"Grade {grade} Math" if grade else "High School Math"
+
+
+def build_title(lesson: dict) -> str:
+    """SEO title formula: topic promise | grade + 'Full Lesson' | day.
+    Falls back to shorter forms instead of truncating mid-word (YouTube
+    caps titles at 100 characters)."""
+    for title in (
+        f"{lesson['seo_title']} | {grade_label(lesson)} Full Lesson | Day {lesson['day']}",
+        f"{lesson['seo_title']} | {grade_label(lesson)} | Day {lesson['day']}",
+        f"{lesson['seo_title']} | Day {lesson['day']}",
+    ):
+        if len(title) <= 100:
+            return title
+    return lesson["seo_title"][:100]
+
+
+def build_hashtags(lesson: dict) -> list:
+    subject = lesson.get("subject", "")
+    if subject in GEOMETRY_SUBJECTS:
+        return ["#Geometry", "#HighSchoolGeometry", "#MathHelp",
+                "#LearnGeometry", "#MathConceptsMadeEasy"]
+    if subject in ALGEBRA_SUBJECTS:
+        return ["#Algebra", "#Algebra1", "#HighSchoolMath",
+                "#LearnAlgebra", "#MathConceptsMadeEasy"]
+    grade = lesson.get("grade")
+    grade_tag = [f"#Grade{grade}Math"] if grade else ["#HighSchoolMath"]
+    return ["#MathConceptsMadeEasy"] + grade_tag + ["#LearnMath", "#MathTutorial"]
+
+
 def build_description(lesson: dict) -> str:
     lines = [
         f"Day {lesson['day']} — {lesson['topic']}: {lesson['subtopic']}",
@@ -83,10 +126,14 @@ def build_description(lesson: dict) -> str:
         f"📚 Track: {lesson['global_track']} → {lesson['subject']} → {lesson['concept_cluster']}",
         f"🎓 Useful for: {', '.join(lesson.get('exam_tags', []))}",
         "",
+        f"Perfect for {grade_label(lesson)} students — covers Grade 9 math, "
+        "Grade 10 math, Algebra 1, high school math, Common Core math, "
+        "homework help, math tutoring, and math exam preparation, with clear "
+        "step-by-step examples and practice in every lesson.",
+        "",
         CHANNEL_TAGLINE,
         "",
-        "#math #" + lesson["subject"].replace(" ", "").lower() +
-        " #" + lesson["topic"].replace(" ", "").lower() + " #learnmath #education",
+        " ".join(build_hashtags(lesson)),
     ]
     return "\n".join(lines)
 
@@ -96,6 +143,9 @@ def build_tags(lesson: dict) -> list:
         "math", "mathematics", "learn math", "math made easy",
         lesson["subject"], lesson["topic"], lesson["concept_cluster"],
         lesson["global_track"] + " math",
+        "grade 9 math", "grade 10 math", "algebra 1", "high school math",
+        "common core math", "homework help", "math tutoring",
+        "math exam preparation", "math concepts explained",
     ] + [f"{tag} math" for tag in lesson.get("exam_tags", [])]
     return list(dict.fromkeys(t.strip() for t in tags if t.strip()))[:30]
 
@@ -204,7 +254,7 @@ def upload_day(day: int, dry_run: bool = False, privacy: str = None):
     paths = lesson_paths(lesson)
     privacy = privacy or os.environ.get("YT_PRIVACY", "private")
 
-    title = f"{lesson['seo_title']} | Day {day}"
+    title = build_title(lesson)
     description = build_description(lesson)
     tags = build_tags(lesson)
     short_title = f"{lesson['thumbnail_angle']} #Shorts"
