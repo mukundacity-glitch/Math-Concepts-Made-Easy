@@ -1,0 +1,1007 @@
+{
+  "grade": 9,
+  "description": "Grade 9 track — Number Systems, Polynomials, Coordinate Geometry, Linear Equations, Triangles, Quadrilaterals, Circles, intro Trigonometry, Statistics.",
+  "lessons": [
+    {
+      "day": 1,
+      "global_track": "Foundation",
+      "subject": "Number Systems",
+      "concept_cluster": "Rational and Irrational Numbers",
+      "topic": "Rational Numbers",
+      "subtopic": "What is a rational number — intuition and definition",
+      "difficulty": "beginner",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "CBSE",
+        "IB",
+        "General High School"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student can conceptually understand fractions as rational numbers and identify them in p over q form",
+      "prerequisite": "Integers, fractions, basic division",
+      "key_formula": "\\frac{p}{q},\\ q \\neq 0",
+      "formula_spoken": "p over q, where q cannot equal zero",
+      "visual_type": "board_write",
+      "narration_style": "warm, patient, example-driven, conversational",
+      "estimated_minutes": 10,
+      "seo_title": "Rational Numbers Explained Clearly — Beginner Math",
+      "thumbnail_angle": "What is p over q? EASY",
+      "playlist": "Foundation — Number Systems",
+      "status": "active",
+      "real_world_hook": "Suppose you cut a pizza into 4 equal pieces and eat 3 of them. You would describe that amount as 3 over 4. Suppose you share 5 chocolates equally among 2 people. Each person gets 5 over 2 chocolates.",
+      "concept_intuition": "These numbers are written as fractions. In mathematics, any number that can be written as one whole number divided by another whole number is called a rational number.",
+      "visual_hints": "Hook: Show a pizza divided into 4, highlight 3. Transition to abstract: show 3/4 and 5/2. Number line: plot these points to show they exist between whole numbers. Box the 'q cannot be zero' rule in red.",
+      "common_mistake": "Assuming whole numbers like 7 are not rational because they don't look like fractions. Correct this by showing that 7 is exactly the same as 7 divided by 1.",
+      "board_examples": {
+        "formula": "\\text{Rational Number} = \\frac{p}{q},\\ q \\neq 0",
+        "worked_example": [
+          "\\text{Is } \\frac{3}{4} \\text{ rational?} \\Rightarrow \\text{Yes, integer over integer.}",
+          "\\text{Is } \\frac{5}{2} \\text{ rational?} \\Rightarrow \\text{Yes.}",
+          "\\text{Is } 7 \\text{ rational?} \\Rightarrow \\text{Yes, because } 7 = \\frac{7}{1}"
+        ],
+        "practice": [
+          "\\text{Can we have } \\frac{5}{0}?",
+          "\\text{No. Division by zero is undefined.}",
+          "\\Rightarrow q \\neq 0 \\text{ is a strict rule.}"
+        ]
+      }
+    },
+    {
+      "day": 2,
+      "global_track": "Foundation",
+      "subject": "Number Systems",
+      "concept_cluster": "Rational and Irrational Numbers",
+      "topic": "Irrational Numbers",
+      "subtopic": "What is an irrational number — proof that root 2 is irrational",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "CBSE",
+        "IB",
+        "General High School"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student understands why root 2 cannot be written as p over q and masters proof by contradiction",
+      "prerequisite": "Rational numbers, proof by contradiction",
+      "key_formula": "\\sqrt{2} \\notin \\mathbb{Q}",
+      "formula_spoken": "The square root of 2 is not a rational number",
+      "visual_type": "step_derivation",
+      "narration_style": "calm teacher, logical step by step, building suspense",
+      "estimated_minutes": 12,
+      "seo_title": "Irrational Numbers — Proof Root 2 is Irrational",
+      "thumbnail_angle": "Why root 2 is NOT a fraction — PROOF",
+      "playlist": "Foundation — Number Systems",
+      "status": "active",
+      "real_world_hook": "Imagine drawing a perfect square that is exactly 1 meter wide and 1 meter long. Now, draw a diagonal line from corner to corner. If you try to measure that diagonal perfectly, you will find something shocking: it is impossible to write its exact length as a simple fraction.",
+      "concept_intuition": "This blew the minds of ancient mathematicians. They realized there are gaps between our neat little fractions. We call these 'unmeasurable' numbers Irrational Numbers. Today, we are going to prove why the square root of 2 is one of them, using a brilliant method called Proof by Contradiction.",
+      "visual_hints": "Hook: Draw a 1x1 square, highlight the diagonal, label it root 2. Concept: Show a number line zooming in on root 2, showing the decimals never settle into a pattern. Board: Step-by-step logical proof. Highlight the contradiction in red at the end.",
+      "common_mistake": "Students often think 'irrational' just means a very long decimal. Correct this: Even a very long decimal is rational if it eventually stops or repeats. Irrational means it NEVER stops and NEVER repeats. It literally cannot be built from whole number pieces.",
+      "board_examples": {
+        "formula": "\\sqrt{2} \\neq \\frac{p}{q}",
+        "worked_example": [
+          "\\text{Assume } \\sqrt{2} = \\frac{p}{q},\\ \\text{where fraction is fully simplified.}",
+          "2 = \\frac{p^2}{q^2} \\Rightarrow p^2 = 2q^2",
+          "\\Rightarrow p^2 \\text{ is even} \\Rightarrow p \\text{ is even}",
+          "\\text{Let } p = 2k \\Rightarrow (2k)^2 = 2q^2 \\Rightarrow 4k^2 = 2q^2 \\Rightarrow q^2 = 2k^2",
+          "\\Rightarrow q \\text{ is even. Contradiction! Both cannot be even.}"
+        ],
+        "practice": [
+          "\\text{Classify: } 0.333...,\\ \\pi,\\ \\sqrt{9},\\ \\sqrt{5}",
+          "0.333... \\Rightarrow \\text{Rational (repeats)}",
+          "\\pi \\Rightarrow \\text{Irrational (never repeats)}",
+          "\\sqrt{9} = 3 \\Rightarrow \\text{Rational}",
+          "\\sqrt{5} \\Rightarrow \\text{Irrational}"
+        ]
+      }
+    },
+    {
+      "day": 3,
+      "global_track": "Foundation",
+      "subject": "Number Systems",
+      "concept_cluster": "Decimals",
+      "topic": "Decimal Expansions",
+      "subtopic": "Terminating and non-terminating recurring decimals",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "CBSE",
+        "General High School"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student can predict if a fraction terminates or recurs purely by analyzing its denominator, without using division",
+      "prerequisite": "Rational numbers, prime factorization",
+      "key_formula": "\\frac{p}{q} \\text{ terminates if } q = 2^m \\cdot 5^n",
+      "formula_spoken": "A fraction terminates only when its denominator is built entirely from 2s and 5s",
+      "visual_type": "table_and_board",
+      "narration_style": "calm, logical, building curiosity before revealing the rule",
+      "estimated_minutes": 11,
+      "seo_title": "Terminating and Recurring Decimals — Math Explained",
+      "thumbnail_angle": "When does a decimal STOP?",
+      "playlist": "Foundation — Number Systems",
+      "status": "active",
+      "real_world_hook": "If you type 1 divided by 4 into a calculator, it stops cleanly at 0.25. But type 1 divided by 3, and it gives you 0.3333... going on forever. Why does one stop perfectly, while the other refuses to end?",
+      "concept_intuition": "The secret hides in how we count. Our entire number system is based on 10. And what makes the number 10? Just two prime numbers: 2 and 5. Therefore, if the bottom of a fraction is built using only 2s and 5s, it fits perfectly into our base-10 system and the decimal stops. If any other prime number sneaks into the bottom, it breaks the pattern, and the decimal loops forever.",
+      "visual_hints": "Hook: Split screen showing a clean 0.25 vs an infinite 0.333... Concept: Factor trees for denominators 8 (2x2x2) vs 6 (2x3). Show the '3' causing the decimal to repeat. Board: clearly list prime factors before making the final decision.",
+      "common_mistake": "The ultimate trap is checking the denominator before simplifying the fraction. For example, looking at 6 over 15. The denominator is 15 (which is 3 times 5). Because of the 3, students guess it repeats. But 6 over 15 simplifies to 2 over 5. The 3 cancels out! It actually terminates. Always simplify first.",
+      "board_examples": {
+        "formula": "\\text{Simplified } \\frac{p}{q}\\ \\text{terminates} \\iff q = 2^m \\cdot 5^n",
+        "worked_example": [
+          "\\text{Test } \\frac{3}{8}:\\ 8 = 2 \\times 2 \\times 2 = 2^3 \\Rightarrow \\text{Terminates } (0.375)",
+          "\\text{Test } \\frac{7}{25}:\\ 25 = 5 \\times 5 = 5^2 \\Rightarrow \\text{Terminates } (0.28)",
+          "\\text{Test } \\frac{5}{6}:\\ 6 = 2 \\times 3 \\Rightarrow \\text{The } 3 \\text{ makes it recur } (0.833...)"
+        ],
+        "practice": [
+          "\\text{Does } \\frac{6}{15} \\text{ terminate?}",
+          "\\text{Wait! Simplify first: } \\frac{6}{15} = \\frac{2}{5}",
+          "\\text{Denominator is } 5. \\text{ Yes, it terminates.}"
+        ]
+      }
+    },
+    {
+      "day": 4,
+      "global_track": "Foundation",
+      "subject": "Number Systems",
+      "concept_cluster": "Exponents",
+      "topic": "Laws of Exponents",
+      "subtopic": "All six laws with intuitive proof and examples",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "AP"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student understands exponents as compact multiplication and can logically derive the six laws instead of blindly memorizing them",
+      "prerequisite": "Multiplication, powers, rational numbers",
+      "key_formula": "a^m \\cdot a^n = a^{m+n},\\ (a^m)^n = a^{mn}",
+      "formula_spoken": "a to the power of m times a to the power of n equals a to the power of m plus n",
+      "visual_type": "board_write",
+      "narration_style": "confident, demystifying, taking it one logical step at a time",
+      "estimated_minutes": 13,
+      "seo_title": "Laws of Exponents — All 6 Rules Explained Clearly",
+      "thumbnail_angle": "6 Exponent Laws — NEVER Forget",
+      "playlist": "Foundation — Number Systems",
+      "status": "active",
+      "real_world_hook": "Imagine a single bacterium that divides into two every hour. After 1 hour, there are 2. After 2 hours, 4. Then 8, 16, 32. In just one day, that single cell becomes nearly 17 million. Multiplication is too slow to write this down. We need a faster language.",
+      "concept_intuition": "Exponents are simply lazy mathematics. They are a shortcut for writing repeated multiplication. Because they are just a shortcut, the 'Laws of Exponents' aren't new rules you have to memorize. They are just logical consequences of counting how many times a number is multiplying itself.",
+      "visual_hints": "Hook: Visual of a cell splitting, numbers doubling rapidly. Concept: Expand 2^3 * 2^4 into (2*2*2) * (2*2*2*2) visually, then count them up to show why it becomes 2^7. This proves the addition rule visually.",
+      "common_mistake": "The most common mistake on exams is multiplying the bases. Students see 2^3 times 2^4 and write 4^7. We must explicitly show that the base stays exactly the same, because we are still just multiplying 2s together.",
+      "board_examples": {
+        "formula": "a^m \\cdot a^n = a^{m+n},\\quad (a^m)^n = a^{mn}",
+        "worked_example": [
+          "\\text{Why does } x^2 \\cdot x^3 = x^5?",
+          "\\Rightarrow (x \\cdot x) \\times (x \\cdot x \\cdot x)",
+          "\\Rightarrow x \\text{ multiplied } 5 \\text{ times } \\Rightarrow x^5",
+          "\\text{What about } (x^2)^3?",
+          "\\Rightarrow x^2 \\cdot x^2 \\cdot x^2 \\Rightarrow x^{2+2+2} = x^6"
+        ],
+        "practice": [
+          "\\text{Simplify: } \\frac{(3^2)^4 \\cdot 3^3}{3^7}",
+          "\\text{Step 1 (Power rule): } (3^2)^4 = 3^8",
+          "\\text{Step 2 (Multiply): } 3^8 \\cdot 3^3 = 3^{11}",
+          "\\text{Step 3 (Divide): } \\frac{3^{11}}{3^7} = 3^{11-7} = 3^4 = 81"
+        ]
+      }
+    },
+    {
+      "day": 5,
+      "global_track": "Algebra",
+      "subject": "Polynomials",
+      "concept_cluster": "Introduction to Polynomials",
+      "topic": "Introduction to Polynomials",
+      "subtopic": "Definition, degree, coefficients, types",
+      "difficulty": "beginner",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "General High School"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student can conceptually define a polynomial, identify its parts, and recognize what makes an expression NOT a polynomial",
+      "prerequisite": "Algebraic expressions, variables, constants, exponents",
+      "key_formula": "P(x) = a_n x^n + \\cdots + a_1 x + a_0",
+      "formula_spoken": "P of x equals a series of terms where every exponent is a positive whole number",
+      "visual_type": "board_write",
+      "narration_style": "warm, structured, breaking down complex terminology into simple parts",
+      "estimated_minutes": 10,
+      "seo_title": "Polynomials Introduction — What is a Polynomial?",
+      "thumbnail_angle": "What IS a polynomial? SIMPLE",
+      "playlist": "Algebra — Polynomials",
+      "status": "active",
+      "real_world_hook": "When engineers program the path of a roller coaster or the trajectory of a rocket, they don't draw it by hand. They write a mathematical equation that the computer translates into a smooth curve. The most reliable tools for building these curves are called polynomials.",
+      "concept_intuition": "A polynomial is just a mathematical machine. You feed it a number (x), it runs that number through a sequence of powers, multiplies them by coefficients, adds them up, and spits out a result. The rules for building this machine are incredibly strict: no negative powers, no fractional powers. Just clean, whole-number exponents.",
+      "visual_hints": "Hook: A roller coaster track turning into an algebraic curve. Concept: Break down an equation like 3x^2 - 5x + 2. Highlight '3' and '-5' in blue (coefficients), the '2' in red (exponents).",
+      "common_mistake": "Students often think anything with an 'x' is a polynomial. Show 1/x (which is x^-1) and square root of x (which is x^1/2). Explicitly cross these out in red. Exponents must be non-negative integers.",
+      "board_examples": {
+        "formula": "\\text{Polynomial: } P(x) = a_n x^n + \\dots + a_0",
+        "worked_example": [
+          "\\text{Let's break down: } 4x^3 - 7x + 9",
+          "\\text{Terms: } 4x^3,\\ -7x,\\ \\text{and } 9",
+          "\\text{Coefficients: } 4 \\text{ and } -7",
+          "\\text{Degree (highest power): } 3"
+        ],
+        "practice": [
+          "\\text{Which of these are NOT polynomials?}",
+          "1)\\; 5x^2 + 3x \\Rightarrow \\text{Polynomial}",
+          "2)\\; 2\\sqrt{x} + 4 \\Rightarrow \\text{NOT a polynomial (fractional power)}",
+          "3)\\; x^3 + \\frac{5}{x} \\Rightarrow \\text{NOT a polynomial (negative power)}"
+        ]
+      }
+    },
+    {
+      "day": 6,
+      "global_track": "Algebra",
+      "subject": "Polynomials",
+      "concept_cluster": "Zeroes and Roots",
+      "topic": "Zeroes of a Polynomial",
+      "subtopic": "Finding zeroes, graph connection, meaning",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB"
+      ],
+      "video_type": "concept_and_graph",
+      "lesson_goal": "Student understands that a 'zero' is the x-value that makes the machine output zero, and visually corresponds to the x-intercept",
+      "prerequisite": "Polynomials intro, basic graphing, solving simple equations",
+      "key_formula": "P(a) = 0 \\Rightarrow a \\text{ is a zero}",
+      "formula_spoken": "If P of a equals zero, then a is a zero of the polynomial",
+      "visual_type": "graph_and_board",
+      "narration_style": "patient, visually-driven, connecting algebra directly to geometry",
+      "estimated_minutes": 12,
+      "seo_title": "Zeroes of a Polynomial Explained — With Graph",
+      "thumbnail_angle": "What are ZEROES? Graph trick",
+      "playlist": "Algebra — Polynomials",
+      "status": "active",
+      "real_world_hook": "If you throw a ball into the air, its height over time forms a curve. The exact moment the ball hits the ground, its height is zero. In mathematics, finding when that height equals zero is one of the most important things we can calculate.",
+      "concept_intuition": "We call this finding the 'zero' of a polynomial. The name is a bit confusing. A zero is NOT the number zero itself. It is the specific input (the x-value) that forces the entire equation to output a zero. Visually, it is the exact spot where the graph slices through the x-axis.",
+      "visual_hints": "Hook: Animation of a ball thrown; height drops to zero. Graph: Show a curve crossing the x-axis at x=2 and x=-3. Highlight these specific crossing points vividly. Board: Connect P(2)=0 perfectly to the coordinate (2,0).",
+      "common_mistake": "Students confuse the y-intercept with the x-intercept. They plug 0 in for x, which finds where it crosses the vertical axis. We must emphasize: to find a zero, we set the WHOLE equation equal to 0, not just x.",
+      "board_examples": {
+        "formula": "\\text{To find a zero, set } P(x) = 0",
+        "worked_example": [
+          "\\text{Find the zero of } P(x) = 2x - 6",
+          "\\text{Step 1: Set the output to zero.}",
+          "2x - 6 = 0",
+          "\\text{Step 2: Solve for x.}",
+          "2x = 6 \\Rightarrow x = 3",
+          "\\text{Conclusion: } 3 \\text{ is the zero. The graph crosses at } (3, 0)."
+        ],
+        "practice": [
+          "\\text{Check if } x = -2 \\text{ is a zero of } P(x) = x^2 - 4",
+          "\\text{Substitute } -2 \\text{ into the machine:}",
+          "P(-2) = (-2)^2 - 4",
+          "P(-2) = 4 - 4 = 0",
+          "\\text{Since the output is zero, } -2 \\text{ IS a zero.}"
+        ]
+      }
+    },
+    {
+      "day": 7,
+      "global_track": "Algebra",
+      "subject": "Polynomials",
+      "concept_cluster": "Theorems",
+      "topic": "Remainder Theorem",
+      "subtopic": "Statement, proof, and worked examples",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "IB",
+        "CBSE",
+        "General High School"
+      ],
+      "video_type": "theorem_and_example",
+      "lesson_goal": "Student can apply the remainder theorem to bypass long division entirely",
+      "prerequisite": "Polynomials, zeroes, substitution",
+      "key_formula": "P(a) = \\text{remainder when } P(x) \\div (x-a)",
+      "formula_spoken": "P of a gives the exact remainder when P of x is divided by x minus a",
+      "visual_type": "step_derivation",
+      "narration_style": "confident, revealing a secret, contrasting the hard way with the easy way",
+      "estimated_minutes": 12,
+      "seo_title": "Remainder Theorem — Proof and Examples",
+      "thumbnail_angle": "Skip long division — Remainder Theorem TRICK",
+      "playlist": "Algebra — Polynomials",
+      "status": "active",
+      "real_world_hook": "Imagine trying to find out if a 10,000-piece puzzle is missing a piece by building the entire thing. It takes hours. What if you could just weigh the box and know instantly? In mathematics, we have a trick just like that for division.",
+      "concept_intuition": "Dividing a massive polynomial by hand takes a long time and it is easy to make a sign error. The Remainder Theorem is a mathematical cheat code. Instead of doing the division, we just take the opposite number of the divisor, drop it directly into the machine, and the number that pops out is our remainder. Zero division required.",
+      "visual_hints": "Hook: Split the screen. On the left, show 5 messy lines of polynomial long division. On the right, show 2 clean lines of substitution using the theorem. Emphasize the speed difference.",
+      "common_mistake": "Forgetting to flip the sign. If we divide by (x - 3), students often plug in -3 instead of +3. Emphasize that we are plugging in the ZERO of the divisor. Set x - 3 = 0, so x = 3.",
+      "board_examples": {
+        "formula": "\\text{If } P(x) \\text{ is divided by } (x-a), \\text{ remainder is } P(a)",
+        "worked_example": [
+          "\\text{Find remainder when } P(x) = x^3 - 2x^2 + x - 5 \\text{ is divided by } (x-2)",
+          "\\text{Step 1: Find the zero of divisor.} \\Rightarrow x - 2 = 0 \\Rightarrow x = 2",
+          "\\text{Step 2: Substitute } 2 \\text{ into } P(x)",
+          "P(2) = (2)^3 - 2(2)^2 + 2 - 5",
+          "P(2) = 8 - 8 + 2 - 5 = -3 \\Rightarrow \\text{Remainder is } -3"
+        ],
+        "practice": [
+          "\\text{Find remainder when } P(x) = x^2 + 4x + 1 \\text{ is divided by } (x+1)",
+          "\\text{Divisor is } x+1 \\Rightarrow \\text{Use } x = -1",
+          "P(-1) = (-1)^2 + 4(-1) + 1 = 1 - 4 + 1 = -2"
+        ]
+      }
+    },
+    {
+      "day": 8,
+      "global_track": "Algebra",
+      "subject": "Polynomials",
+      "concept_cluster": "Theorems",
+      "topic": "Factor Theorem",
+      "subtopic": "Statement, proof, factorising using factor theorem",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "IB",
+        "CBSE",
+        "AP",
+        "General High School"
+      ],
+      "video_type": "theorem_and_example",
+      "lesson_goal": "Student understands that the Factor Theorem is just the Remainder Theorem when the answer is zero",
+      "prerequisite": "Remainder theorem, polynomial division",
+      "key_formula": "P(a)=0 \\iff (x-a) \\text{ is a factor of } P(x)",
+      "formula_spoken": "If P of a equals zero, then x minus a is a perfect factor of P of x",
+      "visual_type": "step_derivation",
+      "narration_style": "logical, connecting ideas seamlessly, building on yesterday's lesson",
+      "estimated_minutes": 13,
+      "seo_title": "Factor Theorem — Clear Explanation and Examples",
+      "thumbnail_angle": "Factorise ANY cubic — Factor Theorem",
+      "playlist": "Algebra — Polynomials",
+      "status": "active",
+      "real_world_hook": "How do you know if a brick fits perfectly into a wall? You measure it, and if there is exactly zero space left over, it's a perfect fit. Numbers work the same way. 12 divided by 4 leaves zero remainder, so 4 is a perfect factor.",
+      "concept_intuition": "The Factor Theorem is not a new rule; it is just the Remainder Theorem's identical twin. Yesterday we learned how to find the remainder. Today, we simply look for the cases where that remainder is exactly zero. If it is zero, there is nothing left over, which means it fits perfectly. It is a factor.",
+      "visual_hints": "Hook: Show a block fitting perfectly into a gap with '0 remainder' written on it. Board: Write P(a) = 0 and draw a bright green arrow pointing to the word 'FACTOR'. Emphasize the IF and ONLY IF relationship.",
+      "common_mistake": "Thinking that finding one factor means the problem is finished. Finding the first factor just opens the door; you usually have to use polynomial division with that factor to find the remaining pieces of a cubic equation.",
+      "board_examples": {
+        "formula": "P(a) = 0 \\iff (x-a) \\text{ is a factor}",
+        "worked_example": [
+          "\\text{Is } (x-1) \\text{ a factor of } P(x) = x^3 - 3x^2 + 2?",
+          "\\text{Step 1: Test } x = 1",
+          "P(1) = (1)^3 - 3(1)^2 + 2 = 1 - 3 + 2 = 0",
+          "\\text{Step 2: Conclude. Since remainder is } 0,\\ (x-1) \\text{ IS a factor.}"
+        ],
+        "practice": [
+          "\\text{Check if } (x+2) \\text{ is a factor of } x^2 + 5x + 6",
+          "\\text{Test } x = -2",
+          "P(-2) = (-2)^2 + 5(-2) + 6 = 4 - 10 + 6 = 0",
+          "\\Rightarrow \\text{Yes, it is a factor.}"
+        ]
+      }
+    },
+    {
+      "day": 9,
+      "global_track": "Algebra",
+      "subject": "Polynomials",
+      "concept_cluster": "Identities",
+      "topic": "Algebraic Identities",
+      "subtopic": "All standard identities with geometric proof",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "General High School"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student can recall and apply standard identities by understanding their geometric area proofs",
+      "prerequisite": "Expansion of brackets, polynomials, basic area of squares",
+      "key_formula": "(a+b)^2 = a^2 + 2ab + b^2",
+      "formula_spoken": "a plus b all squared equals a squared plus 2 a b plus b squared",
+      "visual_type": "board_write",
+      "narration_style": "visual, patient, preventing a major classic error",
+      "estimated_minutes": 14,
+      "seo_title": "Algebraic Identities — All Formulas Explained Geometrically",
+      "thumbnail_angle": "5 identities you MUST know (with visual proof)",
+      "playlist": "Algebra — Polynomials",
+      "status": "active",
+      "real_world_hook": "Here is a mental math trick. How do you calculate 102 squared in your head? Doing 102 times 102 the long way is painful. But if you think of it as (100 + 2) squared, you can use an algebraic identity to solve it in seconds.",
+      "concept_intuition": "Most students hate algebraic identities because they look like random letters to memorize. But they aren't random. They are universal physical truths. For example, (a+b) squared is literally just the area of a large square that has been chopped up into four smaller pieces. When you see the geometry, you never have to memorize the algebra.",
+      "visual_hints": "Hook: Show a square with side length (a+b). Split it down the middle into an 'a^2' square, a 'b^2' square, and two 'ab' rectangles. Highlight the two 'ab' rectangles brightly to show where the '2ab' comes from.",
+      "common_mistake": "The most famous mistake in all of algebra: claiming that (a+b)^2 equals a^2 + b^2. This completely ignores the two 'ab' rectangles in our visual. Emphasize that the exponent does NOT simply 'distribute' over addition.",
+      "board_examples": {
+        "formula": "(a+b)^2 = a^2 + 2ab + b^2",
+        "worked_example": [
+          "\\text{Expand } (x+3)^2",
+          "\\text{Use the pattern: } (\\text{First})^2 + 2(\\text{First})(\\text{Second}) + (\\text{Second})^2",
+          "= (x)^2 + 2(x)(3) + (3)^2",
+          "= x^2 + 6x + 9"
+        ],
+        "practice": [
+          "\\text{Mental Math: } 102^2",
+          "= (100 + 2)^2",
+          "= 100^2 + 2(100)(2) + 2^2",
+          "= 10000 + 400 + 4 = 10404"
+        ]
+      }
+    },
+    {
+      "day": 10,
+      "global_track": "Algebra",
+      "subject": "Coordinate Geometry",
+      "concept_cluster": "Cartesian Plane",
+      "topic": "Cartesian Plane",
+      "subtopic": "Axes, quadrants, and plotting points intuitively",
+      "difficulty": "beginner",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "General High School"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student can conceptually map pairs of numbers to a physical 2D space without mixing up the axes",
+      "prerequisite": "Number line, integers",
+      "key_formula": "P(x, y)",
+      "formula_spoken": "Point P, located at coordinate x comma y",
+      "visual_type": "graph_and_board",
+      "narration_style": "patient, highly visual, connecting spatial reality to numbers",
+      "estimated_minutes": 9,
+      "seo_title": "Coordinate Geometry Introduction — Cartesian Plane",
+      "thumbnail_angle": "Plot ANY point — Cartesian plane EASY",
+      "playlist": "Algebra — Coordinate Geometry",
+      "status": "active",
+      "real_world_hook": "Think about finding your seat in a massive movie theater. Your ticket says 'Row H, Seat 12'. If it only said '12', you wouldn't know where to go. To pinpoint an exact location on a flat surface, you always need exactly two pieces of information.",
+      "concept_intuition": "The Cartesian plane is just a mathematical map. We take a normal number line that runs left and right, and we cross it with a second number line that runs up and down. Where they cross is the center of the world, called the origin. Every point on this map is just a set of driving directions from that center.",
+      "visual_hints": "Hook: Show a theater seating chart highlighting a specific seat. Concept: Draw the horizontal x-axis first, pause, then drop the vertical y-axis right through the zero. Board: Plot (3, 4) by explicitly animating a dot moving right 3 spaces, then up 4 spaces.",
+      "common_mistake": "The universal beginner mistake is swapping the x and y coordinates. Students will plot (3, 4) by going up 3 and right 4. To fix this forever, teach the golden rule: 'You must walk into the elevator before you can go up.' Horizontal first, vertical second.",
+      "board_examples": {
+        "formula": "\\text{Coordinates: } (x, y) \\Rightarrow (\\text{horizontal}, \\text{vertical})",
+        "worked_example": [
+          "\\text{Plot Point A at } (4, 2)",
+          "\\text{Step 1: Start at } (0,0)",
+          "\\text{Step 2: Walk right } 4 \\text{ on the x-axis.}",
+          "\\text{Step 3: Take the elevator up } 2 \\text{ on the y-axis.}"
+        ],
+        "practice": [
+          "\\text{Where is Point B } (-3, -5)?",
+          "\\text{Horizontal: } -3 \\Rightarrow \\text{Move LEFT 3}",
+          "\\text{Vertical: } -5 \\Rightarrow \\text{Move DOWN 5}",
+          "\\Rightarrow \\text{Plots in the 3rd Quadrant.}"
+        ]
+      }
+    },
+    {
+      "day": 11,
+      "global_track": "Algebra",
+      "subject": "Linear Equations",
+      "concept_cluster": "Linear Equations in Two Variables",
+      "topic": "Standard Form of a Linear Equation",
+      "subtopic": "ax plus by plus c equals zero — meaning and examples",
+      "difficulty": "beginner",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "General High School"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student can translate a real-world scenario into a two-variable equation and format it in standard form",
+      "prerequisite": "Linear equations in one variable",
+      "key_formula": "ax + by + c = 0",
+      "formula_spoken": "a times x, plus b times y, plus c, equals zero",
+      "visual_type": "board_write",
+      "narration_style": "clear, grounded in reality, demystifying the abstract letters",
+      "estimated_minutes": 10,
+      "seo_title": "Linear Equations in Two Variables — Standard Form",
+      "thumbnail_angle": "ax+by+c=0 — What does it mean?",
+      "playlist": "Algebra — Linear Equations",
+      "status": "active",
+      "real_world_hook": "Imagine you have exactly 30 dollars to spend at a bakery. Cupcakes cost 3 dollars, and brownies cost 2 dollars. You don't know how many of each you will buy yet. There are multiple different combinations you could choose that exactly drain your 30 dollar budget.",
+      "concept_intuition": "A linear equation in two variables is just a mathematical way of writing down a balancing act. The 'x' is the number of cupcakes, the 'y' is the number of brownies. The standard form of this equation is just a neat, organized way to write this rule so that mathematicians worldwide can read it identically.",
+      "visual_hints": "Hook: Show the bakery budget visually (3x + 2y = 30). Concept: Animate the terms shifting across the equals sign to demonstrate how we get to the standard form ax + by + c = 0. Highlight the a, b, and c coefficients in different colors.",
+      "common_mistake": "When rearranging into standard form, students often forget to change the sign of the constant 'c' when bringing it across the equals sign. Show explicitly that subtracting from one side means subtracting from the other.",
+      "board_examples": {
+        "formula": "\\text{Standard Form: } ax + by + c = 0",
+        "worked_example": [
+          "\\text{Convert } 3x = 5y - 7 \\text{ to standard form.}",
+          "\\text{Goal: Get everything to one side, equal to zero.}",
+          "\\text{Subtract } 5y \\text{ from both sides: } 3x - 5y = -7",
+          "\\text{Add } 7 \\text{ to both sides: } 3x - 5y + 7 = 0",
+          "\\Rightarrow a=3,\\ b=-5,\\ c=7"
+        ],
+        "practice": [
+          "\\text{Write } y = -2x + 4 \\text{ in standard form.}",
+          "\\text{Add } 2x \\text{ to both sides: } 2x + y = 4",
+          "\\text{Subtract } 4: 2x + y - 4 = 0",
+          "\\Rightarrow a=2,\\ b=1,\\ c=-4"
+        ]
+      }
+    },
+    {
+      "day": 12,
+      "global_track": "Algebra",
+      "subject": "Linear Equations",
+      "concept_cluster": "Graphing Lines",
+      "topic": "Graph of a Linear Equation",
+      "subtopic": "Plotting the line, infinite solutions, slope intuition",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "General High School"
+      ],
+      "video_type": "concept_and_graph",
+      "lesson_goal": "Student deeply understands that a drawn line is simply a picture of every possible correct answer to the equation",
+      "prerequisite": "Standard form, coordinate plane, plotting points",
+      "key_formula": "y = mx + c",
+      "formula_spoken": "y equals m x plus c",
+      "visual_type": "graph_and_board",
+      "narration_style": "revealing, connecting algebra to geometry smoothly, step by step",
+      "estimated_minutes": 12,
+      "seo_title": "Graph of Linear Equations — Step by Step",
+      "thumbnail_angle": "Draw the line from the equation — EASY",
+      "playlist": "Algebra — Linear Equations",
+      "status": "active",
+      "real_world_hook": "If you get into a taxi, the meter often starts with a flat fee of 5 dollars just for sitting down. After that, it adds 2 dollars for every mile you drive. You can calculate the cost for 1 mile, 5 miles, or 10 miles. If you calculated the cost for every possible distance and put dots on a map, they would form a perfectly straight line.",
+      "concept_intuition": "Many students think a graph is just a random line drawn on a grid. It is not. A line is actually made of millions of tiny dots perfectly squeezed together. And every single dot represents one correct answer to your equation. The equation y = mx + c is simply the instruction manual for how to draw that line.",
+      "visual_hints": "Hook: Show a taxi meter ticking up. Graph: Plot 3 individual coordinate points first. Then, explicitly animate millions of dots filling in the gaps between them to form a solid continuous line. This visualizes 'infinite solutions'.",
+      "common_mistake": "Misinterpreting the slope 'm'. Students often do 'run over rise' instead of 'rise over run', moving horizontally first when calculating the slope. We must anchor slope as 'vertical change over horizontal change'—like a staircase.",
+      "board_examples": {
+        "formula": "\\text{Slope-Intercept Form: } y = mx + c",
+        "worked_example": [
+          "\\text{Graph } y = 2x + 1",
+          "\\text{Step 1: The y-intercept (c) is } 1.",
+          "\\Rightarrow \\text{Plot point at } (0, 1)",
+          "\\text{Step 2: The slope (m) is } 2 \\Rightarrow \\frac{2}{1} \\Rightarrow \\frac{\\text{UP } 2}{\\text{RIGHT } 1}",
+          "\\text{Step 3: From } (0, 1), \\text{ go UP 2, RIGHT 1. Plot } (1, 3)",
+          "\\text{Draw a line through the points.}"
+        ],
+        "practice": [
+          "\\text{Find the starting point and rhythm for } y = -\\frac{1}{3}x + 4",
+          "\\text{Start (y-intercept): } (0, 4)",
+          "\\text{Rhythm (slope): } -\\frac{1}{3} \\Rightarrow \\frac{\\text{DOWN } 1}{\\text{RIGHT } 3}",
+          "\\text{Next point is at } (3, 3)"
+        ]
+      }
+    },
+    {
+      "day": 13,
+      "global_track": "Geometry",
+      "subject": "Triangles",
+      "concept_cluster": "Congruence",
+      "topic": "Congruence of Triangles",
+      "subtopic": "SAS, ASA, SSS, RHS — rules with proof",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "CBSE",
+        "IB",
+        "General High School"
+      ],
+      "video_type": "theorem_and_example",
+      "lesson_goal": "Student understands congruence as a 'cloning test' and can confidently identify the minimum information needed to lock a triangle's shape",
+      "prerequisite": "Basic triangle properties, angles",
+      "key_formula": "\\triangle ABC \\cong \\triangle DEF",
+      "formula_spoken": "Triangle A B C is perfectly congruent to Triangle D E F",
+      "visual_type": "diagram_and_board",
+      "narration_style": "clear, structural, treating triangles like physical objects",
+      "estimated_minutes": 14,
+      "seo_title": "Congruence of Triangles — SAS ASA SSS RHS Explained",
+      "thumbnail_angle": "4 Triangle Rules — Which one to use?",
+      "playlist": "Geometry — Triangles",
+      "status": "active",
+      "real_world_hook": "Imagine a factory building car doors. Every single door must be a perfect, microscopic clone of the others, or it won't fit the car. In geometry, when two shapes are perfect clones, we call them congruent.",
+      "concept_intuition": "A triangle has 6 parts: 3 sides and 3 angles. To prove two triangles are clones, you don't need to check all 6 parts. If you lock down just 3 specific parts—like three solid metal bars (SSS) or two bars and the hinge between them (SAS)—the rest of the triangle has no choice but to form the exact same shape.",
+      "visual_hints": "Hook: Show two perfectly overlapping triangles, then pull them apart. Concept: Animate two sides acting like metal bars on a hinge. Show how locking the hinge (the angle) forces the third side to be an exact length.",
+      "common_mistake": "The infamous 'ASS' (Angle-Side-Side) trap. Students see two sides and an angle and immediately assume congruence. Show visually how the third side can swing like a pendulum to create TWO entirely different triangles.",
+      "board_examples": {
+        "formula": "\\text{Congruence: perfect clones. Symbol: } \\cong",
+        "worked_example": [
+          "\\text{Rule 1: SAS (Side-Angle-Side)}",
+          "\\text{The angle MUST be trapped directly between the two sides.}",
+          "\\text{Rule 2: SSS (Side-Side-Side)}",
+          "\\text{Rule 3: ASA (Angle-Side-Angle)}",
+          "\\text{Rule 4: RHS (Right Angle-Hypotenuse-Side)}"
+        ],
+        "practice": [
+          "\\text{Identify the rule: } AB=DE,\\ \\angle B = \\angle E,\\ BC=EF",
+          "\\Rightarrow \\text{The angle is between the sides.}",
+          "\\Rightarrow \\text{Therefore, } \\triangle ABC \\cong \\triangle DEF \\text{ by SAS.}"
+        ]
+      }
+    },
+    {
+      "day": 14,
+      "global_track": "Geometry",
+      "subject": "Triangles",
+      "concept_cluster": "Inequalities",
+      "topic": "Inequalities in Triangles",
+      "subtopic": "Longer side opposite larger angle — proof and application",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "CBSE",
+        "IB"
+      ],
+      "video_type": "theorem_and_example",
+      "lesson_goal": "Student can intuitively map the relationship between an angle opening up and the side stretching across from it",
+      "prerequisite": "Congruence, angle sum property",
+      "key_formula": "\\text{If } \\angle A > \\angle B \\text{ then } BC > AC",
+      "formula_spoken": "If angle A is strictly greater than angle B, then the side opposite angle A is longer than the side opposite angle B",
+      "visual_type": "diagram_and_board",
+      "narration_style": "observational, pointing out obvious physical realities before formalizing",
+      "estimated_minutes": 11,
+      "seo_title": "Triangle Inequalities — Sides and Angles Explained",
+      "thumbnail_angle": "Bigger angle = longer side — WHY?",
+      "playlist": "Geometry — Triangles",
+      "status": "active",
+      "real_world_hook": "Think about opening a door. If you open it just a tiny crack, the distance from the door's edge to the frame is very small. If you swing it wide open, that distance stretches out. Triangles work exactly the same way.",
+      "concept_intuition": "An angle acts like a hinge. The wider the hinge opens, the further it pushes the opposite corners apart. Because of this physical reality, the longest side of any triangle is always directly across from the largest angle. The shortest side is always across from the smallest angle. It is a perfect hierarchy.",
+      "visual_hints": "Hook: Animate a hinge opening and closing, with a dashed line measuring the gap. Concept: Draw a triangle. Highlight the largest angle in red, then shoot an arrow across the triangle to highlight the longest side in red.",
+      "common_mistake": "Assuming proportional scaling. Students think if an angle is twice as big, the opposite side is exactly twice as long. Emphasize that while the hierarchy holds (bigger angle = longer side), the exact length requires trigonometry, not simple multiplication.",
+      "board_examples": {
+        "formula": "\\text{Hierarchy: Largest Angle } \\leftrightarrow \\text{ Longest Side}",
+        "worked_example": [
+          "\\text{In } \\triangle PQR,\\ \\angle P = 70^\\circ,\\ \\angle Q = 50^\\circ.",
+          "\\text{Step 1: Find } \\angle R.",
+          "\\angle R = 180^\\circ - (70^\\circ + 50^\\circ) = 60^\\circ",
+          "\\text{Step 2: Order angles: } \\angle P > \\angle R > \\angle Q",
+          "\\text{Step 3: Order sides opposite to them.}",
+          "\\Rightarrow QR > PQ > PR"
+        ],
+        "practice": [
+          "\\text{Can a triangle have sides 3, 4, and 8?}",
+          "\\text{Rule: Any two sides must add up to be greater than the third.}",
+          "3 + 4 = 7",
+          "7 \\text{ is NOT greater than } 8. \\text{ The triangle would not close!}"
+        ]
+      }
+    },
+    {
+      "day": 15,
+      "global_track": "Geometry",
+      "subject": "Quadrilaterals",
+      "concept_cluster": "Parallelograms",
+      "topic": "Properties of a Parallelogram",
+      "subtopic": "Opposite sides, angles, diagonals — intuitive proofs",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "CBSE",
+        "IB",
+        "General High School"
+      ],
+      "video_type": "theorem_and_example",
+      "lesson_goal": "Student realizes that all parallelogram properties come from a single diagonal slice creating two congruent triangles",
+      "prerequisite": "Congruence, triangles, parallel lines",
+      "key_formula": "AB \\parallel CD,\\ AB = CD",
+      "formula_spoken": "Side A B is parallel to side C D, and side A B is equal in length to side C D",
+      "visual_type": "diagram_and_board",
+      "narration_style": "connecting, revealing the hidden triangles inside the shape",
+      "estimated_minutes": 13,
+      "seo_title": "Parallelogram Properties — All 5 Proofs Explained",
+      "thumbnail_angle": "Parallelogram — 5 properties EXPLAINED",
+      "playlist": "Geometry — Quadrilaterals",
+      "status": "active",
+      "real_world_hook": "Look at a scissor lift rising up, or an architect's drawing tool. They are built using criss-crossing metal bars that form parallelograms. No matter how much you squash or stretch them, the opposite bars always stay perfectly parallel and equal.",
+      "concept_intuition": "Students try to memorize 5 separate properties for a parallelogram. Don't do that. Just remember one secret: if you cut a parallelogram diagonally, you create two perfectly identical, congruent triangles. Because the triangles are clones, their sides must match, and their angles must match. Every rule derives from that one slice.",
+      "visual_hints": "Hook: Animate a parallelogram shearing (leaning left and right) while the top and bottom remain locked parallel. Concept: Slice it with a diagonal line. Rotate one half 180 degrees to show it perfectly overlaps the other half.",
+      "common_mistake": "Assuming the diagonals bisect the corner angles. That only happens in a rhombus or a square. Show visually how a stretched parallelogram has a diagonal that completely ignores the angle bisector.",
+      "board_examples": {
+        "formula": "\\text{The Diagonal Secret: } \\triangle ABC \\cong \\triangle CDA",
+        "worked_example": [
+          "\\text{Because the triangles are clones:}",
+          "\\text{1. Opposite sides are equal } (AB = CD,\\ BC = AD)",
+          "\\text{2. Opposite angles are equal } (\\angle B = \\angle D)",
+          "\\text{3. Diagonals bisect each other.}"
+        ],
+        "practice": [
+          "\\text{In parallelogram ABCD, } \\angle A = 70^\\circ. \\text{ Find } \\angle B.",
+          "\\text{Adjacent angles are supplementary (add to 180).}",
+          "\\angle B = 180^\\circ - 70^\\circ = 110^\\circ"
+        ]
+      }
+    },
+    {
+      "day": 16,
+      "global_track": "Geometry",
+      "subject": "Quadrilaterals",
+      "concept_cluster": "Midpoint Theorem",
+      "topic": "Mid-Point Theorem",
+      "subtopic": "Statement, proof, converse, applications",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "CBSE",
+        "IB",
+        "General High School"
+      ],
+      "video_type": "theorem_and_example",
+      "lesson_goal": "Student can visually identify the mid-point theorem pattern and apply it to break complex shapes into solvable halves",
+      "prerequisite": "Parallelogram, congruence, parallel lines",
+      "key_formula": "EF \\parallel BC,\\ EF = \\frac{1}{2}BC",
+      "formula_spoken": "The segment E F is parallel to the base B C, and its length is exactly half of B C",
+      "visual_type": "diagram_and_board",
+      "narration_style": "measured, elegant, pointing out geometric symmetry",
+      "estimated_minutes": 12,
+      "seo_title": "Mid-Point Theorem — Proof and Application",
+      "thumbnail_angle": "Mid-Point Theorem — simple proof",
+      "playlist": "Geometry — Quadrilaterals",
+      "status": "active",
+      "real_world_hook": "Imagine climbing exactly halfway up an A-frame ladder and locking the crossbar into place. That crossbar will be perfectly level with the floor, and it will be exactly half the width of the ladder's base. This happens every single time.",
+      "concept_intuition": "The Mid-Point Theorem simply states that if you find the exact middle of two sides of a triangle and build a bridge between them, two magical things happen. First, your bridge is perfectly parallel to the floor. Second, your bridge is exactly half the length of the floor.",
+      "visual_hints": "Hook: Animate a triangle like an A-frame ladder. Drop two dots at the exact midpoints of the 'legs'. Draw a line connecting them. Copy that new line and place it twice on the base to visually prove it is exactly half.",
+      "common_mistake": "Applying the rule when the connecting points are NOT exact midpoints. If you connect a point 1/3 of the way down to a point 1/2 of the way down, the line is neither parallel nor half the length. It requires perfect symmetry.",
+      "board_examples": {
+        "formula": "E, F \\text{ are midpoints} \\Rightarrow EF \\parallel BC \\text{ and } EF = \\frac{1}{2}BC",
+        "worked_example": [
+          "\\text{In } \\triangle ABC,\\ E \\text{ and } F \\text{ are midpoints of } AB \\text{ and } AC.",
+          "\\text{If } BC = 14 \\text{ cm, find } EF.",
+          "\\text{By the Mid-Point Theorem:}",
+          "EF = \\frac{1}{2} \\times BC",
+          "EF = \\frac{1}{2} \\times 14 = 7 \\text{ cm.}"
+        ],
+        "practice": [
+          "\\text{If } EF = 5x \\text{ and } BC = 30, \\text{ find } x.",
+          "EF = \\frac{1}{2}BC \\Rightarrow 5x = \\frac{1}{2}(30)",
+          "5x = 15 \\Rightarrow x = 3"
+        ]
+      }
+    },
+    {
+      "day": 17,
+      "global_track": "Geometry",
+      "subject": "Circles",
+      "concept_cluster": "Chord Properties",
+      "topic": "Chord Properties",
+      "subtopic": "Equal chords, perpendicular from centre, distance",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "CBSE",
+        "IB"
+      ],
+      "video_type": "theorem_and_example",
+      "lesson_goal": "Student understands that circle chord theorems are entirely based on the perfect mirroring and symmetry of a circle",
+      "prerequisite": "Circle basics, radius, diameter, Pythagoras theorem",
+      "key_formula": "OM \\perp AB \\Rightarrow AM = MB",
+      "formula_spoken": "If a line from the centre is perpendicular to a chord, it perfectly cuts that chord in half",
+      "visual_type": "diagram_and_board",
+      "narration_style": "calm, emphasizing symmetry and perfect balance",
+      "estimated_minutes": 12,
+      "seo_title": "Chord Properties of Circles — Theorems Explained",
+      "thumbnail_angle": "Perpendicular from centre BISECTS the chord",
+      "playlist": "Geometry — Circles",
+      "status": "active",
+      "real_world_hook": "If you have a horizontal water pipe that is partially filled, the surface of the water forms a flat line across the circular pipe. This flat line is called a chord. If you drop a plumb line straight down from the exact centre of the pipe, where does it hit the water?",
+      "concept_intuition": "A circle is the ultimate shape of symmetry. Because of this perfect balance, if you draw a straight line from the exact centre so that it hits a chord at a 90-degree angle, it has no choice but to hit the exact middle of that chord. It splits it perfectly in half. If you understand this symmetry, you never have to memorize the theorem.",
+      "visual_hints": "Hook: Show a circular pipe partially filled with water, dropping a perfectly vertical line from the centre. Concept: Draw the chord, drop the perpendicular, and then draw two radii to the edges of the chord to reveal a hidden isosceles triangle.",
+      "common_mistake": "Assuming ANY line from the centre cuts the chord in half. Emphasize the 90-degree angle. Without the 90-degree perpendicular intersection, the symmetry breaks and the chord is not bisected.",
+      "board_examples": {
+        "formula": "\\text{Centre } O,\\ \\text{Chord } AB.\\ \\text{If } OM \\perp AB, \\text{ then } AM = MB",
+        "worked_example": [
+          "\\text{Circle has radius } 5\\text{cm}. \\text{ Chord is } 3\\text{cm} \\text{ from centre.}",
+          "\\text{Find the length of the chord.}",
+          "\\text{Step 1: Draw the hidden right triangle.}",
+          "\\text{Hypotenuse (radius)} = 5,\\ \\text{Height} = 3.",
+          "\\text{Step 2: Pythagoras } \\Rightarrow 3^2 + x^2 = 5^2 \\Rightarrow 9 + x^2 = 25 \\Rightarrow x = 4",
+          "\\text{Step 3: The chord is bisected, so total length } = 4 \\times 2 = 8\\text{cm}."
+        ],
+        "practice": [
+          "\\text{Radius } = 13,\\ \\text{Chord length } = 24. \\text{ Find distance to centre.}",
+          "\\text{Half-chord } = 12.",
+          "\\text{Pythagoras: } d^2 + 12^2 = 13^2",
+          "d^2 + 144 = 169 \\Rightarrow d^2 = 25 \\Rightarrow d = 5"
+        ]
+      }
+    },
+    {
+      "day": 18,
+      "global_track": "Geometry",
+      "subject": "Circles",
+      "concept_cluster": "Angle Theorems",
+      "topic": "Angle Subtended by Arc",
+      "subtopic": "Inscribed angle theorem, angle at centre vs circumference",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "CBSE",
+        "IB"
+      ],
+      "video_type": "theorem_and_example",
+      "lesson_goal": "Student can visually recognize the 'arrowhead' pattern and knows the centre angle is always twice the edge angle",
+      "prerequisite": "Chord properties, isosceles triangles",
+      "key_formula": "\\angle AOB = 2\\angle ACB \\text{ when both angles subtend arc } AB",
+      "formula_spoken": "The angle at the centre is exactly twice the angle at the circumference",
+      "visual_type": "diagram_and_board",
+      "narration_style": "observational, directing the student's eyes to specific anchor points",
+      "estimated_minutes": 13,
+      "seo_title": "Inscribed Angle Theorem — Centre vs Circumference",
+      "thumbnail_angle": "Centre angle = DOUBLE the inscribed angle",
+      "playlist": "Geometry — Circles",
+      "status": "active",
+      "real_world_hook": "Imagine standing in the exact centre of a circular room, looking at a painting on the wall. Your eyes have to open wide to see the whole thing. Now, back up until you hit the back wall. The painting is further away, so your viewing angle shrinks.",
+      "concept_intuition": "Geometry proves exactly how much it shrinks. If you stand at the edge of the circle (the circumference), the angle you look through is exactly half the size of the angle from the centre. We call this the 'arrowhead' theorem because the lines often look like an arrow pointing at the arc.",
+      "visual_hints": "Hook: Animate a person's field of vision from the centre vs the back wall. Concept: Draw the classic 'Star Trek' badge/arrowhead shape inside the circle. Colour the centre angle blue and the edge angle green, explicitly showing one is 2x the other.",
+      "common_mistake": "Using the theorem when the 'centre' point is just a random floating point inside the circle. The point MUST be the exact mathematical centre of the circle, and both angles must anchor to the exact same arc.",
+      "board_examples": {
+        "formula": "\\text{Angle at Centre } = 2 \\times \\text{Angle at Edge}",
+        "worked_example": [
+          "\\text{Given: Points A, B, C on a circle, centre O.}",
+          "\\angle ACB \\text{ (edge)} = 35^\\circ.",
+          "\\text{Find } \\angle AOB \\text{ (centre)}.",
+          "\\text{Step 1: Check that both angles anchor to the same arc (AB).}",
+          "\\text{Step 2: Apply theorem.}",
+          "\\angle AOB = 2 \\times 35^\\circ = 70^\\circ."
+        ],
+        "practice": [
+          "\\text{If the centre angle } \\angle AOB = 150^\\circ, \\text{ what is } \\angle ACB?",
+          "\\text{The edge angle is half of the centre.}",
+          "\\angle ACB = 150^\\circ \\div 2 = 75^\\circ"
+        ]
+      }
+    },
+    {
+      "day": 19,
+      "global_track": "Trigonometry",
+      "subject": "Trigonometry",
+      "concept_cluster": "Trigonometric Ratios",
+      "topic": "Trigonometric Ratios",
+      "subtopic": "sin, cos, tan — definition from right triangle",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "AP"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student sees sine, cosine, and tangent not as abstract magic, but as a simple percentage representing the shape of a triangle",
+      "prerequisite": "Right triangles, Pythagoras theorem, ratios",
+      "key_formula": "\\sin\\theta = \\frac{\\text{opp}}{\\text{hyp}}",
+      "formula_spoken": "Sine of theta equals the opposite side divided by the hypotenuse",
+      "visual_type": "diagram_and_board",
+      "narration_style": "demystifying, removing the fear of new vocabulary, highly grounded",
+      "estimated_minutes": 13,
+      "seo_title": "Trigonometric Ratios — sin cos tan Explained Simply",
+      "thumbnail_angle": "sin cos tan — EASY way to remember",
+      "playlist": "Trigonometry — Ratios and Identities",
+      "status": "active",
+      "real_world_hook": "If you build a wheelchair ramp at a 30-degree angle, it doesn't matter if the ramp is 10 feet long or 100 feet long. The height of the ramp will ALWAYS be exactly 50 percent of its length. That specific shape is locked into the universe.",
+      "concept_intuition": "Trigonometry is just a translation dictionary. It translates an angle (like 30 degrees) into a ratio (like 50 percent or 1/2). 'Sine', 'Cosine', and 'Tangent' are just names for different ratios. Sine compares the height to the ramp. Cosine compares the floor to the ramp. They aren't magical operations; they are just fractions.",
+      "visual_hints": "Hook: Show a small 30-degree ramp and a massive 30-degree ramp; highlight that height/length is 0.5 for both. Concept: Animate a stick figure standing at angle theta. 'Opposite' is the wall far away. 'Adjacent' is the floor touching their feet.",
+      "common_mistake": "Mislabeling the Opposite and Adjacent sides because students memorize the triangle in only one orientation. Force the visual of 'standing inside the angle'. Opposite is across the room; adjacent is the wall you are touching.",
+      "board_examples": {
+        "formula": "\\text{SOH CAH TOA: } \\sin = \\frac{O}{H},\\ \\cos = \\frac{A}{H},\\ \\tan = \\frac{O}{A}",
+        "worked_example": [
+          "\\text{Right triangle with sides 3, 4, and 5.}",
+          "\\text{Stand at angle } \\theta \\text{ opposite the 3.}",
+          "\\text{Step 1: Label the sides.}",
+          "\\text{Opposite } = 3,\\ \\text{Adjacent } = 4,\\ \\text{Hypotenuse (longest)} = 5.",
+          "\\text{Step 2: Find the ratios.}",
+          "\\sin\\theta = \\frac{3}{5},\\ \\cos\\theta = \\frac{4}{5},\\ \\tan\\theta = \\frac{3}{4}"
+        ],
+        "practice": [
+          "\\text{Same triangle, but now stand at angle } \\alpha \\text{ opposite the 4.}",
+          "\\text{Opposite is now 4. Adjacent is now 3.}",
+          "\\sin\\alpha = \\frac{4}{5}"
+        ]
+      }
+    },
+    {
+      "day": 20,
+      "global_track": "Trigonometry",
+      "subject": "Trigonometry",
+      "concept_cluster": "Identities",
+      "topic": "Pythagorean Trigonometric Identity",
+      "subtopic": "sin squared plus cos squared equals 1 — proof and use",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "AP"
+      ],
+      "video_type": "theorem_and_example",
+      "lesson_goal": "Student realizes that the foundational trig identity is literally just Pythagoras' theorem wearing a different mask",
+      "prerequisite": "Trig ratios, Pythagoras theorem, algebra",
+      "key_formula": "\\sin^2\\theta + \\cos^2\\theta = 1",
+      "formula_spoken": "Sine squared theta, plus cosine squared theta, equals one",
+      "visual_type": "step_derivation",
+      "narration_style": "revelatory, connecting past knowledge (Pythagoras) to new knowledge",
+      "estimated_minutes": 12,
+      "seo_title": "Pythagorean Trig Identity sin²+cos²=1 — Proved",
+      "thumbnail_angle": "Most important trig identity — PROVED",
+      "playlist": "Trigonometry — Ratios and Identities",
+      "status": "active",
+      "real_world_hook": "If you walk diagonally across a rectangular park, you already know the math to find the distance. It is Pythagoras' Theorem: a squared plus b squared equals c squared. But what happens if we force the diagonal path to be exactly 1 mile long?",
+      "concept_intuition": "If the hypotenuse is exactly 1, the math becomes beautiful. The 'Opposite' side divided by 1 is just Sine. The 'Adjacent' side divided by 1 is just Cosine. So, if we take Pythagoras' old rule and drop these new names into it, a^2 + b^2 = c^2 instantly transforms into sine squared plus cosine squared equals one. It is the exact same law of physics.",
+      "visual_hints": "Hook: Show a standard right triangle with a, b, c. Concept: Visually shrink the triangle until the hypotenuse 'c' equals 1. Morph 'a' into 'sin' and 'b' into 'cos'. Then morph the a^2+b^2=c^2 equation directly into the identity.",
+      "common_mistake": "The notation trap. Students see sin^2(theta) and think they need to square the angle itself (e.g., squaring 30 degrees to get 900). Explicitly clarify that it means taking the decimal value of sine, and squaring THAT result.",
+      "board_examples": {
+        "formula": "\\text{Pythagoras: } O^2 + A^2 = H^2 \\Rightarrow \\sin^2\\theta + \\cos^2\\theta = 1",
+        "worked_example": [
+          "\\text{If } \\sin\\theta = \\frac{3}{5}, \\text{ find } \\cos\\theta \\text{ without drawing a triangle.}",
+          "\\text{Step 1: Use the identity.} \\Rightarrow \\left(\\frac{3}{5}\\right)^2 + \\cos^2\\theta = 1",
+          "\\text{Step 2: Square the fraction.} \\Rightarrow \\frac{9}{25} + \\cos^2\\theta = 1",
+          "\\text{Step 3: Subtract.} \\Rightarrow \\cos^2\\theta = 1 - \\frac{9}{25} = \\frac{16}{25}",
+          "\\text{Step 4: Square root.} \\Rightarrow \\cos\\theta = \\frac{4}{5}"
+        ],
+        "practice": [
+          "\\text{If } \\cos\\theta = 0.8, \\text{ what is } \\sin\\theta?",
+          "\\sin^2\\theta + (0.8)^2 = 1",
+          "\\sin^2\\theta + 0.64 = 1 \\Rightarrow \\sin^2\\theta = 0.36",
+          "\\sin\\theta = 0.6"
+        ]
+      }
+    },
+    {
+      "day": 21,
+      "global_track": "Statistics",
+      "subject": "Descriptive Statistics",
+      "concept_cluster": "Measures of Central Tendency",
+      "topic": "Mean, Median, Mode",
+      "subtopic": "Definitions, formulas, and worked examples",
+      "difficulty": "beginner",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "AP",
+        "General High School"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student deeply understands the physical difference between the three averages and knows exactly when to use each one in real life",
+      "prerequisite": "Basic arithmetic, ordering numbers",
+      "key_formula": "\\bar{x} = \\frac{\\sum x_i}{n}",
+      "formula_spoken": "x bar equals the sum of all x values divided by the number of values",
+      "visual_type": "table_and_board",
+      "narration_style": "conversational, scenario-driven, focusing on logical choices",
+      "estimated_minutes": 12,
+      "seo_title": "Mean Median Mode — Simple Explanation for All Levels",
+      "thumbnail_angle": "Mean vs Median vs Mode — which to use?",
+      "playlist": "Statistics — Descriptive Statistics",
+      "status": "active",
+      "real_world_hook": "Imagine 10 normal people are sitting in a coffee shop. Suddenly, a billionaire walks in. If we calculate the 'average' wealth in that room using the Mean, everyone is suddenly a millionaire on paper. But nobody's actual bank account changed. This is why having only one way to measure the 'middle' is dangerous.",
+      "concept_intuition": "Mean, Median, and Mode are just three different tools for finding the 'typical' number in a messy group of data. The Mean shares the wealth equally. The Median forces everyone to stand in a line and simply picks the person in the exact centre. The Mode just looks for the most popular, repeating number. You need to know all three because outliers—like our billionaire—can completely break the Mean.",
+      "visual_hints": "Hook: Show 10 normal stick figures and 1 rich stick figure. Show the Mean dragging heavily toward the rich figure, while the Median stays perfectly in the middle of the normal crowd. Board: Always order the data set from smallest to largest visually before doing any math.",
+      "common_mistake": "Forgetting to sort the numbers before finding the Median. Students will just pick the middle number of a scrambled list. Visually demonstrate rearranging the numbers from smallest to largest.",
+      "board_examples": {
+        "formula": "\\text{Mean: Share equally. Median: Middle in line. Mode: Most frequent.}",
+        "worked_example": [
+          "\\text{Data: } 4, 1, 7, 4, 9",
+          "\\text{Mean: } \\frac{4+1+7+4+9}{5} = \\frac{25}{5} = 5",
+          "\\text{Median: Sort first! } \\Rightarrow 1, 4, \\mathbf{4}, 7, 9 \\Rightarrow \\text{Median is } 4",
+          "\\text{Mode: The number } 4 \\text{ appears twice. Mode is } 4"
+        ],
+        "practice": [
+          "\\text{Find the Median of: } 8, 2, 5, 10",
+          "\\text{Sort: } 2, 5, 8, 10",
+          "\\text{Two numbers in middle! Average them.}",
+          "\\Rightarrow \\frac{5+8}{2} = 6.5"
+        ]
+      }
+    }
+  ]
+}
