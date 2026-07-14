@@ -1,0 +1,426 @@
+{
+  "grade": null,
+  "description": "University track — Linear Algebra, Multivariable Calculus, and Ordinary Differential Equations (undergraduate level).",
+  "lessons": [
+    {
+      "day": 111, "global_track": "University", "subject": "Linear Algebra", "concept_cluster": "Vectors",
+      "topic": "Vectors in 2D and 3D", "subtopic": "Magnitude, direction, unit vectors, and vector arithmetic",
+      "difficulty": "intermediate", "exam_tags": ["AP","IB","University","GRE"],
+      "video_type": "concept", "lesson_goal": "Student can perform vector addition, scalar multiplication, find magnitude and unit vectors in 2D and 3D",
+      "prerequisite": "Coordinate geometry, Pythagorean theorem",
+      "key_formula": "\\|\\mathbf{v}\\|=\\sqrt{v_1^2+v_2^2+v_3^2},\\quad \\hat{\\mathbf{v}}=\\frac{\\mathbf{v}}{\\|\\mathbf{v}\\|}",
+      "formula_spoken": "The magnitude of v is the square root of v1 squared plus v2 squared plus v3 squared; the unit vector is v divided by its magnitude",
+      "visual_type": "board_write", "narration_style": "geometric and coordinate, building 3D intuition from 2D", "estimated_minutes": 13,
+      "seo_title": "Vectors in 2D and 3D — Magnitude Direction Unit Vectors",
+      "thumbnail_angle": "Arrows that carry SIZE and DIRECTION", "playlist": "University — Linear Algebra", "status": "active",
+      "real_world_hook": "GPS satellite navigation, aircraft autopilot, and physics simulations all represent motion as vectors. Direction and magnitude together define where something is going and how fast.",
+      "concept_intuition": "A vector is a directed arrow. Its length is the magnitude; its direction tells you where it points. Adding vectors means following one arrow then the next.",
+      "visual_hints": "Draw 2D vectors as arrows. Show the parallelogram law for addition. Extend to 3D with axes. Show magnitude as Pythagoras in 3D. Show unit vector as arrow of length 1.",
+      "common_mistake": "Confusing a vector ⟨3,4⟩ with the point (3,4). A vector represents a displacement — it has no fixed starting position.",
+      "board_examples": {
+        "formula": "\\mathbf{v}=\\langle3,4,0\\rangle,\\;\\|\\mathbf{v}\\|=5,\\;\\hat{\\mathbf{v}}=\\langle\\tfrac{3}{5},\\tfrac{4}{5},0\\rangle",
+        "worked_example": ["\\mathbf{a}+\\mathbf{b}=\\langle1+2,3+(-1)\\rangle=\\langle3,2\\rangle", "2\\mathbf{a}=\\langle2,6\\rangle"],
+        "practice": ["\\mathbf{v}=\\langle1,2,2\\rangle:\\;\\|\\mathbf{v}\\|=3,\\;\\hat{\\mathbf{v}}=\\langle\\tfrac{1}{3},\\tfrac{2}{3},\\tfrac{2}{3}\\rangle"]
+      }
+    },
+    {
+      "day": 112, "global_track": "University", "subject": "Linear Algebra", "concept_cluster": "Vectors",
+      "topic": "Dot Product", "subtopic": "Definition, geometric interpretation, and angle between vectors",
+      "difficulty": "intermediate", "exam_tags": ["AP","IB","University","GRE"],
+      "video_type": "concept", "lesson_goal": "Student can compute the dot product, find the angle between two vectors, and test for orthogonality",
+      "prerequisite": "Vectors, cosine rule, magnitudes",
+      "key_formula": "\\mathbf{a}\\cdot\\mathbf{b}=\\|a\\|\\|b\\|\\cos\\theta=a_1b_1+a_2b_2+a_3b_3",
+      "formula_spoken": "The dot product equals a magnitude times b magnitude times cosine theta, which also equals the sum of products of corresponding components",
+      "visual_type": "step_derivation", "narration_style": "two formulas connected, geometric and algebraic", "estimated_minutes": 12,
+      "seo_title": "Dot Product — Angle Between Vectors and Orthogonality",
+      "thumbnail_angle": "One number that tells you the ANGLE", "playlist": "University — Linear Algebra", "status": "active",
+      "real_world_hook": "Recommendation engines compute similarity between user preference vectors using the dot product. The higher the dot product, the more similar the tastes.",
+      "concept_intuition": "The dot product measures how much two vectors point in the same direction. When they are perpendicular the dot product is zero — no shared direction at all.",
+      "visual_hints": "Show two vectors with the angle θ between them. Show the projection of a onto b. Connect to the formula. Show three cases: θ=0 (parallel), θ=90° (orthogonal), θ=180° (antiparallel).",
+      "common_mistake": "Thinking the dot product is a vector. It is a SCALAR — a single number, not a directed quantity.",
+      "board_examples": {
+        "formula": "\\cos\\theta=\\frac{\\mathbf{a}\\cdot\\mathbf{b}}{\\|a\\|\\|b\\|}",
+        "worked_example": ["\\mathbf{a}=\\langle1,2,3\\rangle,\\;\\mathbf{b}=\\langle4,5,6\\rangle", "\\mathbf{a}\\cdot\\mathbf{b}=4+10+18=32", "\\|a\\|=\\sqrt{14},\\;\\|b\\|=\\sqrt{77},\\;\\cos\\theta=\\frac{32}{\\sqrt{1078}}"],
+        "practice": ["\\langle1,0\\rangle\\cdot\\langle0,1\\rangle=0 \\Rightarrow \\text{orthogonal vectors}"]
+      }
+    },
+    {
+      "day": 113, "global_track": "University", "subject": "Linear Algebra", "concept_cluster": "Vectors",
+      "topic": "Cross Product", "subtopic": "Definition, perpendicular vector, and geometric area interpretation",
+      "difficulty": "advanced", "exam_tags": ["University","GRE","AP"],
+      "video_type": "concept", "lesson_goal": "Student can compute the cross product, interpret it geometrically, and use it to find area of a parallelogram",
+      "prerequisite": "Dot product, determinants, 3D vectors",
+      "key_formula": "\\mathbf{a}\\times\\mathbf{b}=\\begin{vmatrix}\\mathbf{i}&\\mathbf{j}&\\mathbf{k}\\\\a_1&a_2&a_3\\\\b_1&b_2&b_3\\end{vmatrix}",
+      "formula_spoken": "The cross product of a and b is computed using the 3 by 3 determinant with i j k in the first row, components of a in the second row, and components of b in the third row",
+      "visual_type": "step_derivation", "narration_style": "determinant method, right-hand rule, area application", "estimated_minutes": 14,
+      "seo_title": "Cross Product — Perpendicular Vector and Parallelogram Area",
+      "thumbnail_angle": "The vector perpendicular to BOTH arrows", "playlist": "University — Linear Algebra", "status": "active",
+      "real_world_hook": "Computer graphics use the cross product to compute surface normals — the direction a polygon faces, needed for lighting and shading calculations in every 3D game.",
+      "concept_intuition": "The cross product creates a new vector perpendicular to both a and b. Its magnitude equals the area of the parallelogram formed by a and b.",
+      "visual_hints": "Show the 3×3 determinant expansion. Show the resulting vector perpendicular to both inputs using the right-hand rule. Show the parallelogram and label its area = |a×b|.",
+      "common_mistake": "Cross product is not commutative: a×b = −(b×a). Reversing the order flips the direction of the resulting vector.",
+      "board_examples": {
+        "formula": "\\mathbf{i}\\times\\mathbf{j}=\\mathbf{k},\\;\\mathbf{j}\\times\\mathbf{k}=\\mathbf{i},\\;\\mathbf{k}\\times\\mathbf{i}=\\mathbf{j}",
+        "worked_example": ["\\langle1,2,3\\rangle\\times\\langle4,5,6\\rangle", "=\\langle2\\cdot6-3\\cdot5,\\;3\\cdot4-1\\cdot6,\\;1\\cdot5-2\\cdot4\\rangle=\\langle-3,6,-3\\rangle"],
+        "practice": ["\\text{Area of parallelogram with sides }\\langle1,0,0\\rangle,\\langle0,1,0\\rangle", "=|\\langle0,0,1\\rangle|=1"]
+      }
+    },
+    {
+      "day": 114, "global_track": "University", "subject": "Linear Algebra", "concept_cluster": "Systems of Equations",
+      "topic": "Gaussian Elimination", "subtopic": "Row reduction to echelon form to solve linear systems",
+      "difficulty": "intermediate", "exam_tags": ["University","GRE","AP"],
+      "video_type": "worked_example", "lesson_goal": "Student can row-reduce an augmented matrix to echelon form and use back substitution to solve the system",
+      "prerequisite": "Matrix notation, systems of linear equations",
+      "key_formula": "\\text{Row operations: swap, scale, replace} \\Rightarrow \\text{row echelon form}",
+      "formula_spoken": "Use three row operations — swap two rows, multiply a row by a non-zero scalar, add a multiple of one row to another — to reach row echelon form",
+      "visual_type": "step_derivation", "narration_style": "algorithmic, showing each row operation clearly labeled", "estimated_minutes": 15,
+      "seo_title": "Gaussian Elimination — Row Reduction Step by Step",
+      "thumbnail_angle": "Solve ANY linear system with one algorithm", "playlist": "University — Linear Algebra", "status": "active",
+      "real_world_hook": "Google Maps finds the optimal route by solving a massive linear system. The algorithm at its core is Gaussian elimination — running on millions of variables simultaneously.",
+      "concept_intuition": "Gaussian elimination systematically eliminates variables from top to bottom. Each row operation does not change the solution set — it just makes the system simpler to read.",
+      "visual_hints": "Show the augmented matrix [A|b]. Perform each row operation step-by-step, labelling each (R2 → R2 − 2R1, etc.). Show the final upper-triangular form and back-substitute.",
+      "common_mistake": "Changing the right-hand-side column incorrectly. Every row operation must be applied to the ENTIRE augmented matrix including the b column.",
+      "board_examples": {
+        "formula": "\\begin{pmatrix}1&2&|&5\\\\2&5&|&11\\end{pmatrix}\\xrightarrow{R_2-2R_1}\\begin{pmatrix}1&2&|&5\\\\0&1&|&1\\end{pmatrix}",
+        "worked_example": ["\\text{Back sub: }y=1", "x+2(1)=5 \\Rightarrow x=3", "\\text{Solution: }(3,1)"],
+        "practice": ["\\text{Solve }3x+2y=8,\\;x-y=1\\text{ using row reduction}"]
+      }
+    },
+    {
+      "day": 115, "global_track": "University", "subject": "Linear Algebra", "concept_cluster": "Vector Spaces",
+      "topic": "Vector Spaces", "subtopic": "Definition, axioms, subspaces",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "concept", "lesson_goal": "Student can verify that a set with operations satisfies the vector space axioms and identify subspaces",
+      "prerequisite": "Vectors, matrix operations, sets",
+      "key_formula": "V \\text{ is a vector space if } \\mathbf{u}+\\mathbf{v}\\in V \\text{ and } c\\mathbf{u}\\in V \\text{ for all } \\mathbf{u},\\mathbf{v}\\in V, c\\in\\mathbb{R}",
+      "formula_spoken": "A vector space is closed under addition and scalar multiplication — combining any two elements or scaling any element stays inside the space",
+      "visual_type": "board_write", "narration_style": "abstract then concrete with examples and counterexamples", "estimated_minutes": 14,
+      "seo_title": "Vector Spaces — Definition Axioms and Subspaces Explained",
+      "thumbnail_angle": "Not just arrows — ANY set can be a vector space", "playlist": "University — Linear Algebra", "status": "active",
+      "real_world_hook": "The set of all continuous functions forms a vector space. Adding two continuous functions gives another continuous function. Calculus operations work within this infinite-dimensional space.",
+      "concept_intuition": "A vector space is any set where you can add elements and scale them, and the result stays in the set. ℝ², ℝ³, polynomials, and matrices are all vector spaces.",
+      "visual_hints": "Show ℝ² as the familiar xy-plane vector space. Then show that a line through the origin is a subspace (closed under addition and scalar multiplication) but a line NOT through the origin is not.",
+      "common_mistake": "Checking only closure without verifying the zero vector is in the subspace. A subspace must contain the zero vector — always check this first.",
+      "board_examples": {
+        "formula": "W=\\{(x,y)\\in\\mathbb{R}^2: y=2x\\} \\text{ is a subspace}",
+        "worked_example": ["\\text{Zero: }(0,0)\\in W\\;\\checkmark", "(x_1,2x_1)+(x_2,2x_2)=(x_1+x_2,2(x_1+x_2))\\in W\\;\\checkmark", "c(x,2x)=(cx,2cx)\\in W\\;\\checkmark"],
+        "practice": ["\\text{Is }W=\\{(x,y):y=x+1\\}\\text{ a subspace?}", "(0,0)\\notin W \\Rightarrow \\text{NOT a subspace}"]
+      }
+    },
+    {
+      "day": 116, "global_track": "University", "subject": "Linear Algebra", "concept_cluster": "Basis and Dimension",
+      "topic": "Linear Independence and Basis", "subtopic": "Spanning sets, linear independence, and basis definition",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "concept", "lesson_goal": "Student can test vectors for linear independence, determine if they span a space, and identify a basis",
+      "prerequisite": "Vector spaces, Gaussian elimination, systems of equations",
+      "key_formula": "\\{\\mathbf{v}_1,\\ldots,\\mathbf{v}_n\\}\\text{ linearly independent iff }c_1\\mathbf{v}_1+\\cdots+c_n\\mathbf{v}_n=\\mathbf{0}\\Rightarrow c_i=0",
+      "formula_spoken": "Vectors are linearly independent if the only solution to the linear combination equaling zero is all coefficients being zero",
+      "visual_type": "step_derivation", "narration_style": "geometric then algebraic, no redundant directions", "estimated_minutes": 14,
+      "seo_title": "Linear Independence and Basis — Complete Explanation",
+      "thumbnail_angle": "Minimum vectors to describe ALL of space", "playlist": "University — Linear Algebra", "status": "active",
+      "real_world_hook": "In data science, finding a basis of independent features (no redundant information) is called dimensionality reduction — PCA is based directly on this concept.",
+      "concept_intuition": "Linearly independent vectors each contribute a new direction. A basis is the smallest set of vectors that can reach every point in the space — no redundancy, no gaps.",
+      "visual_hints": "In ℝ², show that ⟨1,0⟩ and ⟨0,1⟩ are independent (can reach all of ℝ²). Show that ⟨1,0⟩, ⟨0,1⟩, ⟨1,1⟩ are dependent (third is redundant).",
+      "common_mistake": "Confusing 'a basis for ℝ²' with 'just two vectors'. They must also span the space — two parallel vectors do not form a basis even though there are two of them.",
+      "board_examples": {
+        "formula": "\\text{Test: set }c_1\\mathbf{v}_1+c_2\\mathbf{v}_2=\\mathbf{0}\\text{, solve}",
+        "worked_example": ["c_1\\langle1,0\\rangle+c_2\\langle0,1\\rangle=\\langle0,0\\rangle", "c_1=0,\\;c_2=0 \\Rightarrow \\text{independent}\\;\\checkmark"],
+        "practice": ["\\text{Test }\\langle1,2\\rangle,\\langle2,4\\rangle:", "c_1+2c_2=0,\\;2c_1+4c_2=0 \\Rightarrow \\text{infinitely many solutions} \\Rightarrow \\text{dependent}"]
+      }
+    },
+    {
+      "day": 117, "global_track": "University", "subject": "Linear Algebra", "concept_cluster": "Linear Transformations",
+      "topic": "Linear Transformations", "subtopic": "Definition, matrix representation, kernel and image",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "concept", "lesson_goal": "Student can determine if a function is a linear transformation, find its matrix, and identify its kernel and image",
+      "prerequisite": "Vector spaces, matrix multiplication, linear independence",
+      "key_formula": "T(\\mathbf{u}+\\mathbf{v})=T(\\mathbf{u})+T(\\mathbf{v}),\\quad T(c\\mathbf{u})=cT(\\mathbf{u})",
+      "formula_spoken": "T is linear if T of u plus v equals T of u plus T of v, and T of c u equals c times T of u",
+      "visual_type": "graph", "narration_style": "visual transformation of the plane, showing what matrices do to space", "estimated_minutes": 15,
+      "seo_title": "Linear Transformations — Matrix Representation Kernel Image",
+      "thumbnail_angle": "Matrices are FUNCTIONS that transform space", "playlist": "University — Linear Algebra", "status": "active",
+      "real_world_hook": "Every image filter, rotation, zoom, and shear in Photoshop is a linear transformation applied to pixel coordinates. The entire photo editing pipeline is matrix multiplication.",
+      "concept_intuition": "A linear transformation is a function that preserves the vector space structure. It maps lines to lines and keeps the origin fixed. Every linear transformation has a matrix representation.",
+      "visual_hints": "Show the standard basis vectors e₁ and e₂ being transformed. The images T(e₁) and T(e₂) form the COLUMNS of the transformation matrix. Animate a square being sheared or rotated.",
+      "common_mistake": "Thinking all functions between vector spaces are linear. T(x)=x+1 is NOT linear because T(0)=1≠0.",
+      "board_examples": {
+        "formula": "T\\begin{pmatrix}x\\\\y\\end{pmatrix}=\\begin{pmatrix}2x-y\\\\x+3y\\end{pmatrix}\\Rightarrow A=\\begin{pmatrix}2&-1\\\\1&3\\end{pmatrix}",
+        "worked_example": ["\\ker(T):\\;Ax=0\\Rightarrow\\text{only }x=0\\text{ (injective)}", "\\text{im}(T)=\\mathbb{R}^2 \\text{ (surjective, since det}A=7\\neq0)"],
+        "practice": ["T(x,y)=(x+y,x+y):\\;A=\\begin{pmatrix}1&1\\\\1&1\\end{pmatrix}", "\\ker(T)=\\text{span}\\{\\langle1,-1\\rangle\\},\\;\\text{dim im}=1"]
+      }
+    },
+    {
+      "day": 118, "global_track": "University", "subject": "Linear Algebra", "concept_cluster": "Eigenvalues",
+      "topic": "Eigenvalues and Eigenvectors", "subtopic": "Characteristic polynomial and eigenspace",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "concept", "lesson_goal": "Student can find eigenvalues from the characteristic polynomial and compute eigenvectors for each",
+      "prerequisite": "Determinants, systems of equations, matrix multiplication",
+      "key_formula": "A\\mathbf{v}=\\lambda\\mathbf{v} \\iff \\det(A-\\lambda I)=0",
+      "formula_spoken": "v is an eigenvector of A with eigenvalue lambda if A times v equals lambda times v; eigenvalues satisfy the characteristic equation det of A minus lambda I equals zero",
+      "visual_type": "step_derivation", "narration_style": "revealing the special directions that matrices preserve", "estimated_minutes": 15,
+      "seo_title": "Eigenvalues and Eigenvectors — Characteristic Polynomial Method",
+      "thumbnail_angle": "Directions a matrix CANNOT rotate", "playlist": "University — Linear Algebra", "status": "active",
+      "real_world_hook": "Google's PageRank algorithm ranks every web page by computing the dominant eigenvector of a massive matrix. The page with the largest eigenvector component ranks first.",
+      "concept_intuition": "An eigenvector is a special direction that the matrix only scales — does not rotate. The scaling factor is the eigenvalue. Stretching by λ in the direction v.",
+      "visual_hints": "Show a matrix stretching the plane. Draw arrows showing most vectors being rotated. Then highlight one special vector that only scales along its direction — that is the eigenvector.",
+      "common_mistake": "Using I instead of λI in the characteristic equation. It must be det(A − λI) = 0, not det(A) − λ = 0.",
+      "board_examples": {
+        "formula": "A=\\begin{pmatrix}3&1\\\\0&2\\end{pmatrix},\\;\\det(A-\\lambda I)=(3-\\lambda)(2-\\lambda)=0",
+        "worked_example": ["\\lambda=3: (A-3I)v=0\\Rightarrow v=\\langle1,0\\rangle", "\\lambda=2: (A-2I)v=0\\Rightarrow v=\\langle-1,1\\rangle"],
+        "practice": ["A=\\begin{pmatrix}2&0\\\\0&5\\end{pmatrix}:\\;\\lambda_1=2,\\lambda_2=5", "\\text{Eigenvectors: }\\mathbf{e}_1,\\mathbf{e}_2\\text{ (standard basis)}"]
+      }
+    },
+    {
+      "day": 119, "global_track": "University", "subject": "Linear Algebra", "concept_cluster": "Diagonalization",
+      "topic": "Diagonalization", "subtopic": "Diagonalizable matrices and the decomposition A = PDP⁻¹",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "concept", "lesson_goal": "Student can determine if a matrix is diagonalizable and compute the decomposition A=PDP⁻¹",
+      "prerequisite": "Eigenvalues and eigenvectors, matrix inverse, matrix multiplication",
+      "key_formula": "A=PDP^{-1},\\quad D=\\text{diag}(\\lambda_1,\\ldots,\\lambda_n),\\quad P=[\\mathbf{v}_1\\cdots\\mathbf{v}_n]",
+      "formula_spoken": "A equals P D P inverse, where D is the diagonal matrix of eigenvalues and P is the matrix of corresponding eigenvectors as columns",
+      "visual_type": "step_derivation", "narration_style": "connecting eigenvalues to diagonal form", "estimated_minutes": 14,
+      "seo_title": "Diagonalization — A = PDP Inverse Step by Step",
+      "thumbnail_angle": "Simplify a matrix to its diagonal skeleton", "playlist": "University — Linear Algebra", "status": "active",
+      "real_world_hook": "Computing Aⁿ (matrix powers) is expensive. Diagonalization turns it into Dⁿ — trivially raise each diagonal entry to the power n. Population genetics models use Aⁿ repeatedly.",
+      "concept_intuition": "If a matrix has n independent eigenvectors, change basis to those eigenvectors. In the new basis the matrix is diagonal — it just scales each direction by its eigenvalue.",
+      "visual_hints": "Show the three matrices P, D, P⁻¹. Show that columns of P are eigenvectors. Show multiplication AA=P D² P⁻¹ to demonstrate computing powers is easy with diagonal form.",
+      "common_mistake": "Forgetting to check that eigenvectors are linearly independent before claiming diagonalizability. Repeated eigenvalues may not yield enough independent eigenvectors.",
+      "board_examples": {
+        "formula": "A=\\begin{pmatrix}3&1\\\\0&2\\end{pmatrix}",
+        "worked_example": ["P=\\begin{pmatrix}1&-1\\\\0&1\\end{pmatrix},\\;D=\\begin{pmatrix}3&0\\\\0&2\\end{pmatrix}", "A^{10}=PD^{10}P^{-1}=P\\begin{pmatrix}3^{10}&0\\\\0&2^{10}\\end{pmatrix}P^{-1}"],
+        "practice": ["\\text{Why is }A=\\begin{pmatrix}1&1\\\\0&1\\end{pmatrix}\\text{ NOT diagonalizable?}", "\\lambda=1\\text{ (double), only one eigenvector }\\langle1,0\\rangle \\Rightarrow \\text{deficient}"]
+      }
+    },
+    {
+      "day": 120, "global_track": "University", "subject": "Linear Algebra", "concept_cluster": "Orthogonality",
+      "topic": "Orthogonal Bases and Gram-Schmidt", "subtopic": "Gram-Schmidt orthogonalisation process",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "worked_example", "lesson_goal": "Student can apply the Gram-Schmidt process to convert any basis into an orthonormal basis",
+      "prerequisite": "Dot product, projections, linear independence",
+      "key_formula": "\\mathbf{e}_k = \\mathbf{v}_k - \\sum_{j<k}\\text{proj}_{\\mathbf{e}_j}\\mathbf{v}_k,\\quad \\text{proj}_{\\mathbf{u}}\\mathbf{v}=\\frac{\\mathbf{v}\\cdot\\mathbf{u}}{\\mathbf{u}\\cdot\\mathbf{u}}\\mathbf{u}",
+      "formula_spoken": "To orthogonalise, subtract from each vector all its projections onto the previously computed orthogonal vectors",
+      "visual_type": "step_derivation", "narration_style": "geometric removal of components, iterative", "estimated_minutes": 14,
+      "seo_title": "Gram-Schmidt Process — Building Orthonormal Basis Step by Step",
+      "thumbnail_angle": "Turn any basis into perpendicular arrows", "playlist": "University — Linear Algebra", "status": "active",
+      "real_world_hook": "Noise-cancelling headphones use orthogonal signal decomposition to separate speech from background noise. Gram-Schmidt is the mathematical engine behind the separation.",
+      "concept_intuition": "Start with any basis vector. For each new vector, subtract the parts pointing in directions you have already handled. What remains is perpendicular to all previous vectors.",
+      "visual_hints": "Show two non-orthogonal vectors. Project v₂ onto v₁. Subtract the projection from v₂ to get an orthogonal vector. Normalize both to unit length. Show the resulting orthonormal pair.",
+      "common_mistake": "Normalizing before completing all the orthogonalization steps. Normalise each vector only after computing all of its projections.",
+      "board_examples": {
+        "formula": "\\mathbf{v}_1=\\langle1,1\\rangle,\\;\\mathbf{v}_2=\\langle1,0\\rangle",
+        "worked_example": ["\\mathbf{e}_1=\\langle1,1\\rangle", "\\text{proj}_{e_1}\\mathbf{v}_2=\\frac{1}{2}\\langle1,1\\rangle", "\\mathbf{e}_2=\\langle1,0\\rangle-\\frac{1}{2}\\langle1,1\\rangle=\\langle\\frac{1}{2},-\\frac{1}{2}\\rangle"],
+        "practice": ["\\text{Normalize each to get the orthonormal basis: }", "\\hat{e}_1=\\frac{1}{\\sqrt{2}}\\langle1,1\\rangle,\\;\\hat{e}_2=\\frac{1}{\\sqrt{2}}\\langle1,-1\\rangle"]
+      }
+    },
+    {
+      "day": 121, "global_track": "University", "subject": "Multivariable Calculus", "concept_cluster": "Partial Derivatives",
+      "topic": "Partial Derivatives", "subtopic": "Definition, computation, and geometric interpretation",
+      "difficulty": "advanced", "exam_tags": ["University","GRE","AP"],
+      "video_type": "concept", "lesson_goal": "Student can compute first and second partial derivatives and interpret them as rates of change in one direction",
+      "prerequisite": "Single-variable calculus, functions of two variables",
+      "key_formula": "\\frac{\\partial f}{\\partial x}=\\lim_{h\\to0}\\frac{f(x+h,y)-f(x,y)}{h}",
+      "formula_spoken": "The partial derivative with respect to x is the limit of f at x plus h comma y minus f at x comma y, all over h — treating y as a constant",
+      "visual_type": "graph", "narration_style": "slicing the 3D surface with planes", "estimated_minutes": 13,
+      "seo_title": "Partial Derivatives — Functions of Two Variables Explained",
+      "thumbnail_angle": "How does a surface slope in ONE direction?", "playlist": "University — Multivariable Calculus", "status": "active",
+      "real_world_hook": "A weather model computes how temperature changes eastward (∂T/∂x) and northward (∂T/∂y) independently at every grid point. Partial derivatives power every climate simulation.",
+      "concept_intuition": "A partial derivative holds all other variables constant and differentiates with respect to just one. Slice the 3D surface with a vertical plane parallel to one axis — the slope of that slice is the partial derivative.",
+      "visual_hints": "Show a 3D surface z=f(x,y). Slice it with planes x=constant and y=constant. Show the 2D curve on each slice. The slope of those curves is the partial derivative.",
+      "common_mistake": "Differentiating every variable when computing a partial. Treat ALL variables except the one you are differentiating with respect to as CONSTANTS.",
+      "board_examples": {
+        "formula": "f(x,y)=x^2y+3xy^2",
+        "worked_example": ["\\frac{\\partial f}{\\partial x}=2xy+3y^2", "\\frac{\\partial f}{\\partial y}=x^2+6xy"],
+        "practice": ["f(x,y)=e^{xy}:\\;\\frac{\\partial f}{\\partial x}=ye^{xy},\\;\\frac{\\partial f}{\\partial y}=xe^{xy}"]
+      }
+    },
+    {
+      "day": 122, "global_track": "University", "subject": "Multivariable Calculus", "concept_cluster": "Gradient",
+      "topic": "Gradient and Directional Derivatives", "subtopic": "The gradient vector and steepest ascent direction",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "concept", "lesson_goal": "Student can compute the gradient, find the directional derivative, and identify the direction of steepest ascent",
+      "prerequisite": "Partial derivatives, unit vectors, dot product",
+      "key_formula": "\\nabla f=\\left\\langle\\frac{\\partial f}{\\partial x},\\frac{\\partial f}{\\partial y}\\right\\rangle,\\quad D_{\\hat{u}}f=\\nabla f\\cdot\\hat{u}",
+      "formula_spoken": "The gradient is the vector of partial derivatives; the directional derivative in direction u-hat is the dot product of the gradient with u-hat",
+      "visual_type": "graph", "narration_style": "gradient as a compass pointing uphill on a topographic map", "estimated_minutes": 14,
+      "seo_title": "Gradient and Directional Derivatives — Steepest Ascent Explained",
+      "thumbnail_angle": "The arrow pointing UPHILL on any surface", "playlist": "University — Multivariable Calculus", "status": "active",
+      "real_world_hook": "Machine learning's gradient descent minimizes the loss function by stepping opposite the gradient — the steepest downhill direction. Every AI model is trained using this concept.",
+      "concept_intuition": "The gradient is a vector pointing in the direction of steepest increase. Its magnitude is the rate of that increase. Move opposite the gradient to descend fastest.",
+      "visual_hints": "Show a topographic map (contours of equal height). Draw gradient vectors perpendicular to contours pointing uphill. Show that the directional derivative is maximized along the gradient.",
+      "common_mistake": "Thinking the gradient is a scalar. The gradient is a VECTOR — it has both magnitude and direction.",
+      "board_examples": {
+        "formula": "f(x,y)=x^2+y^2,\\;\\nabla f=\\langle2x,2y\\rangle",
+        "worked_example": ["\\text{At }(1,2): \\nabla f=\\langle2,4\\rangle\\;\\text{(points outward)}","D_{\\hat{u}}f=\\langle2,4\\rangle\\cdot\\frac{1}{\\sqrt{5}}\\langle1,2\\rangle=\\frac{10}{\\sqrt{5}}=2\\sqrt{5}"],
+        "practice": ["f(x,y)=x^2y:\\;\\nabla f=\\langle2xy,x^2\\rangle", "\\text{At }(1,1):\\;\\nabla f=\\langle2,1\\rangle"]
+      }
+    },
+    {
+      "day": 123, "global_track": "University", "subject": "Multivariable Calculus", "concept_cluster": "Optimization",
+      "topic": "Multivariable Optimization", "subtopic": "Critical points, second derivative test, saddle points",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "worked_example", "lesson_goal": "Student can find critical points of f(x,y) and classify them using the second derivative test (Hessian determinant)",
+      "prerequisite": "Gradient, partial derivatives, single-variable critical points",
+      "key_formula": "D=f_{xx}f_{yy}-(f_{xy})^2,\\quad D>0,f_{xx}>0\\Rightarrow\\text{min}",
+      "formula_spoken": "D equals f sub xx times f sub yy minus f sub xy squared; D positive with f sub xx positive means a local minimum",
+      "visual_type": "step_derivation", "narration_style": "systematic: find critical points, compute Hessian, classify", "estimated_minutes": 14,
+      "seo_title": "Multivariable Optimization — Critical Points and Hessian Test",
+      "thumbnail_angle": "Min Max or Saddle? The Hessian decides", "playlist": "University — Multivariable Calculus", "status": "active",
+      "real_world_hook": "An electronics company minimizes the cost of a rectangular box (volume fixed, minimize surface area) using multivariable optimization — two variables, one constraint.",
+      "concept_intuition": "Set both partial derivatives to zero to find critical points. The Hessian D acts as a 2D version of the second derivative test: D>0 means it curves the same way in all directions (extremum), D<0 means it curves differently (saddle).",
+      "visual_hints": "Show a 3D surface with a minimum (bowl), maximum (cap), and saddle point. Compute D for each and show the sign confirms the type.",
+      "common_mistake": "Not checking both conditions when D>0 — you also need the sign of f_xx to determine if it is a max (f_xx<0) or min (f_xx>0).",
+      "board_examples": {
+        "formula": "f(x,y)=x^2+y^2-2x-4y",
+        "worked_example": ["f_x=2x-2=0\\Rightarrow x=1,\\;f_y=2y-4=0\\Rightarrow y=2", "f_{xx}=2,\\;f_{yy}=2,\\;f_{xy}=0,\\;D=4>0", "f_{xx}>0 \\Rightarrow \\text{local minimum at }(1,2)"],
+        "practice": ["f(x,y)=x^2-y^2:\\;(0,0)\\text{ is a saddle point }(D=-4<0)"]
+      }
+    },
+    {
+      "day": 124, "global_track": "University", "subject": "Multivariable Calculus", "concept_cluster": "Multiple Integrals",
+      "topic": "Double Integrals", "subtopic": "Iterated integrals over rectangular and general regions",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "worked_example", "lesson_goal": "Student can evaluate double integrals over rectangular and general regions using iterated integration",
+      "prerequisite": "Single-variable integration, area between curves, FTC",
+      "key_formula": "\\iint_R f(x,y)\\,dA=\\int_a^b\\int_c^d f(x,y)\\,dy\\,dx",
+      "formula_spoken": "The double integral over R equals the iterated integral — integrate with respect to y first from c to d, then integrate with respect to x from a to b",
+      "visual_type": "step_derivation", "narration_style": "inside-out integration, building volume from area", "estimated_minutes": 15,
+      "seo_title": "Double Integrals — Iterated Integration Over 2D Regions",
+      "thumbnail_angle": "Integrate over a 2D region — volume!", "playlist": "University — Multivariable Calculus", "status": "active",
+      "real_world_hook": "Computing the mass of a thin plate with variable density requires a double integral. Every MRI scan uses double integration to reconstruct the density of tissue from signals.",
+      "concept_intuition": "A double integral sums infinitely many thin columns of height f(x,y). Compute the inner integral to sum along columns, then the outer integral to sum all those column sums.",
+      "visual_hints": "Show a 3D solid under a surface. Slice into strips parallel to y-axis. Show the inner integral computing each strip's area. Outer integral stacks all strips.",
+      "common_mistake": "Integrating in the wrong order without adjusting the limits. When switching integration order, always re-determine the new limits by sketching the region.",
+      "board_examples": {
+        "formula": "\\int_0^2\\int_0^3 xy\\,dy\\,dx",
+        "worked_example": ["\\text{Inner: }\\int_0^3 xy\\,dy=x\\cdot\\frac{9}{2}", "\\text{Outer: }\\int_0^2\\frac{9x}{2}\\,dx=\\frac{9}{2}\\cdot2=9"],
+        "practice": ["\\iint_R(x+y)\\,dA,\\;R:[0,1]\\times[0,1]", "=\\int_0^1\\int_0^1(x+y)\\,dy\\,dx=1"]
+      }
+    },
+    {
+      "day": 125, "global_track": "University", "subject": "Ordinary Differential Equations", "concept_cluster": "First-Order ODEs",
+      "topic": "Linear First-Order ODEs", "subtopic": "Integrating factor method",
+      "difficulty": "advanced", "exam_tags": ["University","GRE","AP"],
+      "video_type": "worked_example", "lesson_goal": "Student can solve any first-order linear ODE using the integrating factor technique",
+      "prerequisite": "Separable ODEs, integration, exponential functions",
+      "key_formula": "y'+P(x)y=Q(x),\\quad \\mu=e^{\\int P\\,dx}",
+      "formula_spoken": "For y prime plus P of x times y equals Q of x, the integrating factor mu equals e to the integral of P dx",
+      "visual_type": "step_derivation", "narration_style": "four steps: compute mu, multiply, recognise product rule, integrate", "estimated_minutes": 14,
+      "seo_title": "Linear First-Order ODE — Integrating Factor Method",
+      "thumbnail_angle": "Solve ANY linear ODE in 4 steps", "playlist": "University — Differential Equations", "status": "active",
+      "real_world_hook": "RC electrical circuits obey V'+V/RC=E(t)/RC — a linear first-order ODE. The integrating factor gives the exact voltage at any time, essential for circuit design.",
+      "concept_intuition": "Multiply both sides by μ=e^∫P(x)dx. The left side collapses to d/dx[μy] by the product rule. Then integrate both sides to get μy = ∫μQ dx, and solve for y.",
+      "visual_hints": "Four-step checklist on the board. Label each step clearly. Show how multiplying by μ makes the left side a perfect derivative using the product rule.",
+      "common_mistake": "Not simplifying to standard form y'+P(x)y=Q(x) first. If the equation is 2y'+4xy=8 you must divide by 2 before computing the integrating factor.",
+      "board_examples": {
+        "formula": "y'+\\frac{2}{x}y=x^2",
+        "worked_example": ["\\mu=e^{\\int(2/x)dx}=e^{2\\ln x}=x^2", "\\frac{d}{dx}[x^2y]=x^4", "x^2y=\\frac{x^5}{5}+C \\Rightarrow y=\\frac{x^3}{5}+\\frac{C}{x^2}"],
+        "practice": ["y'+y=e^x,\\;\\mu=e^x", "\\frac{d}{dx}[e^xy]=e^{2x}\\Rightarrow y=\\frac{e^x}{2}+Ce^{-x}"]
+      }
+    },
+    {
+      "day": 126, "global_track": "University", "subject": "Ordinary Differential Equations", "concept_cluster": "Second-Order ODEs",
+      "topic": "Second-Order Linear Homogeneous ODEs", "subtopic": "Characteristic equation and general solution",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "concept", "lesson_goal": "Student can solve second-order linear homogeneous ODEs with constant coefficients using the characteristic equation",
+      "prerequisite": "First-order ODEs, quadratic equations, exponential functions",
+      "key_formula": "ay''+by'+cy=0 \\Rightarrow ar^2+br+c=0",
+      "formula_spoken": "For a y double prime plus b y prime plus c y equals zero, substitute y equals e to the r x and solve the characteristic equation a r squared plus b r plus c equals zero",
+      "visual_type": "step_derivation", "narration_style": "three cases from discriminant — real distinct, repeated, complex", "estimated_minutes": 14,
+      "seo_title": "Second-Order Homogeneous ODEs — Characteristic Equation",
+      "thumbnail_angle": "Solve spring-mass equations with one formula", "playlist": "University — Differential Equations", "status": "active",
+      "real_world_hook": "A mass on a spring obeys mx''+bx'+kx=0. The characteristic equation gives the natural frequencies of oscillation — used in every mechanical and civil engineering design.",
+      "concept_intuition": "Guess y=eˣ. Substituting into the ODE converts a differential equation into a simple algebra equation (the characteristic equation). Solve for r to find all solutions.",
+      "visual_hints": "Show the three cases: (1) Two real distinct roots → y=C₁eʳ¹ˣ+C₂eʳ²ˣ. (2) Repeated root → y=(C₁+C₂x)eʳˣ. (3) Complex roots α±βi → y=eᵅˣ(C₁cosβx+C₂sinβx). One example of each.",
+      "common_mistake": "Using the particular solution form y=eˣ to try to solve non-homogeneous equations. For the homogeneous case this works; the non-homogeneous case needs an extra particular solution.",
+      "board_examples": {
+        "formula": "y''-5y'+6y=0 \\Rightarrow r^2-5r+6=0",
+        "worked_example": ["(r-2)(r-3)=0 \\Rightarrow r=2,3", "y=C_1e^{2x}+C_2e^{3x}"],
+        "practice": ["y''-4y'+4y=0 \\Rightarrow (r-2)^2=0 \\Rightarrow r=2\\;(\\text{repeated})", "y=(C_1+C_2x)e^{2x}"]
+      }
+    },
+    {
+      "day": 127, "global_track": "University", "subject": "Ordinary Differential Equations", "concept_cluster": "Second-Order ODEs",
+      "topic": "Method of Undetermined Coefficients", "subtopic": "Finding particular solutions for non-homogeneous ODEs",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "worked_example", "lesson_goal": "Student can choose the correct form of the particular solution for polynomials, exponentials, and sinusoidal forcing functions",
+      "prerequisite": "Second-order homogeneous ODEs, differentiation",
+      "key_formula": "y = y_h + y_p,\\quad y_h\\text{ solves homogeneous},\\;y_p\\text{ solves particular}",
+      "formula_spoken": "The general solution is y sub h plus y sub p — the homogeneous solution plus any particular solution to the full non-homogeneous equation",
+      "visual_type": "step_derivation", "narration_style": "guess table approach, three types of forcing function", "estimated_minutes": 14,
+      "seo_title": "Undetermined Coefficients — Non-Homogeneous ODE Particular Solution",
+      "thumbnail_angle": "Guess the solution — then PROVE it works", "playlist": "University — Differential Equations", "status": "active",
+      "real_world_hook": "A tuning fork forces a guitar string at its frequency. The particular solution models the driven oscillation — resonance occurs when the forcing frequency matches the natural frequency.",
+      "concept_intuition": "Match the form of y_p to the form of the right-hand side. Polynomial driving → polynomial y_p. Exponential driving → exponential y_p. Sinusoidal driving → sinusoidal y_p.",
+      "visual_hints": "Guess table: if Q(x)=polynomial degree n, try Aₙxⁿ+...+A₀. If Q=Aeᵅˣ, try Beᵅˣ. If Q=Asinβx, try Csinβx+Dcosβx. Show modification rule for resonance cases.",
+      "common_mistake": "Guessing y_p = e^{2x} when e^{2x} is already part of y_h. In that case multiply by x — the modification rule applies.",
+      "board_examples": {
+        "formula": "y''-3y'+2y=4e^{3x}",
+        "worked_example": ["y_h=C_1e^x+C_2e^{2x}", "\\text{Guess }y_p=Ae^{3x}:\\;9Ae^{3x}-9Ae^{3x}+2Ae^{3x}=4e^{3x}", "2A=4\\Rightarrow A=2\\Rightarrow y_p=2e^{3x}"],
+        "practice": ["y''+y=x^2:\\;y_p=Ax^2+Bx+C", "2A+Ax^2+Bx+C=x^2 \\Rightarrow A=1,B=0,C=-2\\Rightarrow y_p=x^2-2"]
+      }
+    },
+    {
+      "day": 128, "global_track": "University", "subject": "Ordinary Differential Equations", "concept_cluster": "Laplace Transform",
+      "topic": "Laplace Transform", "subtopic": "Definition, standard table, and properties",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "concept", "lesson_goal": "Student can compute Laplace transforms of basic functions using the definition and standard table",
+      "prerequisite": "Improper integrals, exponential functions, ODEs",
+      "key_formula": "\\mathcal{L}\\{f(t)\\}=F(s)=\\int_0^{\\infty}e^{-st}f(t)\\,dt",
+      "formula_spoken": "The Laplace transform of f of t is F of s, defined as the integral from zero to infinity of e to the negative s t times f of t dt",
+      "visual_type": "step_derivation", "narration_style": "transforming from time domain to s-domain", "estimated_minutes": 13,
+      "seo_title": "Laplace Transform — Definition Table and Properties",
+      "thumbnail_angle": "Turn differential equations into ALGEBRA", "playlist": "University — Differential Equations", "status": "active",
+      "real_world_hook": "Control engineers design autopilot systems using Laplace transforms. Differential equations describing the aircraft's dynamics become simple algebra in the s-domain — much easier to work with.",
+      "concept_intuition": "The Laplace transform converts a function of time into a function of the complex variable s. Derivatives become multiplication by s. Differential equations become algebraic equations.",
+      "visual_hints": "Show the integral definition. Compute L{1} and L{eᵅᵗ} directly. Then display the standard table of pairs. Show the time-derivative property: L{f'}=sF(s)−f(0).",
+      "common_mistake": "Applying Laplace transform to problems without zero initial conditions without accounting for the initial value terms in L{f'}=sF(s)−f(0).",
+      "board_examples": {
+        "formula": "\\mathcal{L}\\{e^{at}\\}=\\frac{1}{s-a},\\;s>a",
+        "worked_example": ["\\mathcal{L}\\{1\\}=\\frac{1}{s}", "\\mathcal{L}\\{t^n\\}=\\frac{n!}{s^{n+1}}", "\\mathcal{L}\\{\\sin(bt)\\}=\\frac{b}{s^2+b^2}"],
+        "practice": ["\\mathcal{L}\\{3e^{2t}-4\\sin(3t)\\}", "=\\frac{3}{s-2}-\\frac{12}{s^2+9}"]
+      }
+    },
+    {
+      "day": 129, "global_track": "University", "subject": "Ordinary Differential Equations", "concept_cluster": "Laplace Transform",
+      "topic": "Solving ODEs with Laplace Transform", "subtopic": "Transform, solve algebraically, invert",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "worked_example", "lesson_goal": "Student can solve an IVP by applying the Laplace transform, solving the algebraic equation, and inverting",
+      "prerequisite": "Laplace transform table, partial fractions, second-order ODEs",
+      "key_formula": "\\text{Transform ODE}\\xrightarrow{\\mathcal{L}}\\text{Algebraic equation}\\xrightarrow{\\text{solve}}F(s)\\xrightarrow{\\mathcal{L}^{-1}}y(t)",
+      "formula_spoken": "Apply the Laplace transform to convert the ODE to algebra, solve for F of s, then invert using the table to get y of t",
+      "visual_type": "step_derivation", "narration_style": "three-lane highway: transform, solve, invert", "estimated_minutes": 15,
+      "seo_title": "Solving ODEs with Laplace Transform — IVP Step by Step",
+      "thumbnail_angle": "Convert ODE to algebra — then convert back", "playlist": "University — Differential Equations", "status": "active",
+      "real_world_hook": "Electrical engineers use Laplace to solve the RLC circuit ODE. The transform turns it into F(s)=voltage/impedance — simple algebra — then invert for current vs time.",
+      "concept_intuition": "The power of Laplace is that initial conditions are automatically included. Transform the equation, solve for F(s) using algebra, then find the inverse transform from the table.",
+      "visual_hints": "Show the three steps as a flowchart. Work a complete IVP on the board. Use partial fractions to decompose F(s) into table-invertible pieces.",
+      "common_mistake": "Inverting without decomposing into recognisable table forms. Always use partial fractions to break F(s) into pieces that match the standard table entries.",
+      "board_examples": {
+        "formula": "y''-y=0,\\;y(0)=2,\\;y'(0)=0",
+        "worked_example": ["s^2F-2s-F=0\\Rightarrow(s^2-1)F=2s", "F(s)=\\frac{2s}{s^2-1}=\\frac{1}{s-1}+\\frac{1}{s+1}", "y(t)=e^t+e^{-t}=2\\cosh t"],
+        "practice": ["y'+2y=0,\\;y(0)=3", "sF-3+2F=0\\Rightarrow F=\\frac{3}{s+2}\\Rightarrow y=3e^{-2t}"]
+      }
+    },
+    {
+      "day": 130, "global_track": "University", "subject": "Ordinary Differential Equations", "concept_cluster": "Systems of ODEs",
+      "topic": "Systems of Differential Equations", "subtopic": "Solving 2×2 systems using eigenvalues",
+      "difficulty": "advanced", "exam_tags": ["University","GRE"],
+      "video_type": "concept", "lesson_goal": "Student can write a system of ODEs in matrix form and solve using eigenvalues and eigenvectors",
+      "prerequisite": "Eigenvalues and eigenvectors, second-order ODEs, Laplace transform",
+      "key_formula": "\\mathbf{x}'=A\\mathbf{x} \\Rightarrow \\mathbf{x}(t)=c_1\\mathbf{v}_1e^{\\lambda_1 t}+c_2\\mathbf{v}_2e^{\\lambda_2 t}",
+      "formula_spoken": "The solution to x prime equals Ax is a linear combination of eigenvectors times e to the eigenvalue t",
+      "visual_type": "step_derivation", "narration_style": "connecting linear algebra eigenvalue theory to ODE solutions", "estimated_minutes": 15,
+      "seo_title": "Systems of ODEs — Eigenvalue Method Step by Step",
+      "thumbnail_angle": "Linear algebra meets differential equations", "playlist": "University — Differential Equations", "status": "active",
+      "real_world_hook": "Predator-prey population models (Lotka-Volterra) are systems of ODEs. Near equilibrium they are linear — solved by the eigenvalue method to predict oscillating population cycles.",
+      "concept_intuition": "A system of two ODEs can be written as a single matrix equation x'=Ax. The solution is built from eigenvectors of A, each multiplied by eˡᵗ where λ is the corresponding eigenvalue.",
+      "visual_hints": "Show x'=Ax. Guess x=veˡᵗ. Substituting gives Av=λv — the eigenvalue equation. Solve for eigenvalues and eigenvectors. Combine to build the general solution.",
+      "common_mistake": "Forgetting to multiply by both the eigenvector AND the exponential. The solution is cᵢvᵢeˡⁱᵗ — the eigenvector is not alone.",
+      "board_examples": {
+        "formula": "\\mathbf{x}'=\\begin{pmatrix}1&2\\\\0&3\\end{pmatrix}\\mathbf{x}",
+        "worked_example": ["\\lambda_1=1:\\;\\mathbf{v}_1=\\langle1,0\\rangle,\\quad\\lambda_2=3:\\;\\mathbf{v}_2=\\langle1,1\\rangle", "\\mathbf{x}(t)=c_1\\begin{pmatrix}1\\\\0\\end{pmatrix}e^t+c_2\\begin{pmatrix}1\\\\1\\end{pmatrix}e^{3t}"],
+        "practice": ["\\text{Apply IC }\\mathbf{x}(0)=\\begin{pmatrix}2\\\\1\\end{pmatrix}\\text{ to find }c_1,c_2"]
+      }
+    }
+  ]
+}
