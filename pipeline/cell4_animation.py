@@ -124,6 +124,8 @@ C_YELLOW  = "{C_YELLOW}"
 C_RED     = "{C_RED}"
 C_CARD    = "{C_CARD}"
 
+config.background_color = C_BG
+
 CHANNEL   = "MathConceptsMadeEasy"
 
 # ════════════════════════════════════════════════════════════
@@ -178,17 +180,7 @@ def add_banner(scene_obj):
     return None
 
 def set_background(scene_obj):
-    if BANNER_PATH.exists():
-        try:
-            bg_img = ImageMobject(str(BANNER_PATH))
-            bg_img.set_width(config.frame_width)
-            bg_img.set_height(config.frame_height)
-            bg_img.move_to(ORIGIN)
-            scene_obj.add(bg_img)
-        except Exception:
-            scene_obj.camera.background_color = mc(C_BG)
-    else:
-        scene_obj.camera.background_color = mc(C_BG)
+    scene_obj.camera.background_color = mc(C_BG)
 
 def attach_audio(scene_obj, scene_id: int):
     mp3 = LESSON_AUDIO / f"scene_{scene_id:02d}.mp3"
@@ -217,6 +209,21 @@ def board_write_steps(scene_obj, steps: list, start_y: float = 2.0, color: str =
         scene_obj.play(Write(mob), run_time=0.7)
         scene_obj.wait(0.3)
         y -= 0.95
+
+def sync_to_audio(scene_obj, scene_id: int):
+    """Extend scene duration to match audio. Call as last line of every construct()."""
+    target = 20.0
+    for s in SCRIPT_DATA["scenes"]:
+        if s.get("scene_id") == scene_id:
+            target = float(s.get("duration_seconds", 20.0))
+            break
+    try:
+        elapsed = scene_obj.renderer.time
+    except Exception:
+        elapsed = 0.0
+    remaining = target - elapsed - 0.1
+    if remaining > 0.05:
+        scene_obj.wait(remaining)
 
 # ════════════════════════════════════════════════════════════
 # SCENE 01 — WHAT IS A RATIONAL NUMBER?
@@ -547,6 +554,7 @@ class Scene01_Opening(Scene):
             run_time=1.0
         )
         self.wait(0.5)
+        sync_to_audio(self, sd.get("scene_id", 1))
 
 # ════════════════════════════════════════════════════════════
 # SCENE 02 — HOOK (VISUAL_ONLY)
@@ -600,7 +608,7 @@ class Scene02_Hook(Scene):
         self.play(Create(diag), run_time=0.7)
         self.play(Write(diag_lbl), run_time=0.5)
         self.play(Create(arrow), FadeIn(note), run_time=0.7)
-        self.wait(max(0.5, dur - 4.5))
+        sync_to_audio(self, sd.get("scene_id", 2))
 # ════════════════════════════════════════════════════════════
 # SCENE 03 — CONCEPT (VISUAL_ONLY)
 # Clean diagram or illustration.
@@ -626,15 +634,16 @@ class Scene03_Concept(Scene):
         self.play(Write(heading), run_time=0.6)
 
         if "graph" in vis_type:
-            self._draw_axes(dur)
+            self._draw_axes()
         elif "diagram" in vis_type:
-            self._draw_diagram(dur)
+            self._draw_diagram()
         elif "table" in vis_type:
-            self._draw_table(dur)
+            self._draw_table()
         else:
-            self._draw_visual_card(dur)
+            self._draw_visual_card()
+        sync_to_audio(self, sd.get("scene_id", 3))
 
-    def _draw_axes(self, dur):
+    def _draw_axes(self):
         axes = Axes(
             x_range=[-4, 4, 1],
             y_range=[-3, 3, 1],
@@ -648,9 +657,8 @@ class Scene03_Concept(Scene):
             Text("y", font_size=24, color=mc(C_SECOND))
         )
         self.play(Create(axes), FadeIn(x_lbl), FadeIn(y_lbl), run_time=1.2)
-        self.wait(max(0.5, dur - 3.5))
 
-    def _draw_diagram(self, dur):
+    def _draw_diagram(self):
         circle = Circle(radius=2.2, color=mc(C_BLUE), stroke_width=3)
         circle.shift(DOWN * 0.3)
         dot    = Dot(circle.get_center(), color=mc(C_YELLOW))
@@ -661,9 +669,8 @@ class Scene03_Concept(Scene):
                       color=mc(C_GREEN)).next_to(r_line, UP, buff=0.1)
         self.play(Create(circle), run_time=0.9)
         self.play(FadeIn(dot), Create(r_line), FadeIn(r_lbl), run_time=0.6)
-        self.wait(max(0.5, dur - 3.5))
 
-    def _draw_table(self, dur):
+    def _draw_table(self):
         rows = [["Value", "Type"], ["1/2", "Rational"],
                 ["-3", "Rational"], ["√2", "Irrational"]]
         tbl = Table(
@@ -674,9 +681,8 @@ class Scene03_Concept(Scene):
             line_config={"stroke_width": 1.5, "color": mc(C_SECOND)},
         ).scale(0.7).shift(DOWN * 0.3)
         self.play(Create(tbl), run_time=1.4)
-        self.wait(max(0.5, dur - 3.5))
 
-    def _draw_visual_card(self, dur):
+    def _draw_visual_card(self):
         # Number line
         nl = NumberLine(
             x_range=[-3, 3, 1],
@@ -708,7 +714,6 @@ class Scene03_Concept(Scene):
             lbl.next_to(dot, UP, buff=0.25)
             self.play(FadeIn(dot), Write(lbl), run_time=0.45)
             self.wait(0.2)
-        self.wait(max(0.5, dur - 4.0))
 # ════════════════════════════════════════════════════════════
 # SCENE 04 — DEFINITION (VISUAL_ONLY)
 # Formal definition shown on clean card.
@@ -788,7 +793,7 @@ class Scene04_Definition(Scene):
         self.play(Write(cond),  run_time=0.6)
         self.play(FadeIn(spoken_txt), run_time=0.6)
         self.play(FadeIn(prereq_card), FadeIn(prereq_txt), run_time=0.5)
-        self.wait(max(0.5, dur - 4.5))
+        sync_to_audio(self, sd.get("scene_id", 4))
 # ════════════════════════════════════════════════════════════
 # SCENE 05 — FORMULA (EQUATION_BUILD)
 # Formula builds one component at a time.
@@ -872,7 +877,7 @@ class Scene05_Formula(Scene):
             )
             self.play(Write(fml), run_time=1.4)
             self.play(Create(box), run_time=0.5)
-            self.wait(max(0.5, dur - 4.0))
+        sync_to_audio(self, sd.get("scene_id", 5))
 
 
 # ════════════════════════════════════════════════════════════
@@ -940,7 +945,7 @@ class Scene06_WorkedExample(Scene):
                 mobs[-1].animate.set_color(mc(C_GREEN)),
                 run_time=0.4
             )
-        self.wait(0.5)
+        sync_to_audio(self, sd.get("scene_id", 6))
 
 
 # ════════════════════════════════════════════════════════════
@@ -1006,7 +1011,7 @@ class Scene07_Mistakes(Scene):
             self.wait(per_step - 0.65)
             y_pos -= 0.95
 
-        self.wait(0.5)
+        sync_to_audio(self, sd.get("scene_id", 7))
 
 
 # ════════════════════════════════════════════════════════════
@@ -1104,7 +1109,7 @@ class Scene08_Practice(Scene):
                 run_time=0.55
             )
 
-        self.wait(0.5)
+        sync_to_audio(self, sd.get("scene_id", 8))
 
 
 # ════════════════════════════════════════════════════════════
@@ -1198,6 +1203,7 @@ class Scene09_Summary(Scene):
         self.wait(per_b)
         self.play(FadeIn(sub_box), FadeIn(sub_txt), run_time=0.5)
         self.wait(0.8)
+        sync_to_audio(self, sd.get("scene_id", 9))
 '''
 
 # ══════════════════════════════════════════════════════════════
