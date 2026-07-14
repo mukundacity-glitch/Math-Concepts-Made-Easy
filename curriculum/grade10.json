@@ -1,0 +1,910 @@
+{
+  "grade": 10,
+  "description": "Grade 10 track — Quadratic Equations, Trigonometry, Sequences & Series, Sets, Limits, intro Calculus, SAT and ACT Math strategy.",
+  "lessons": [
+    {
+      "day": 22,
+      "global_track": "Algebra",
+      "subject": "Quadratic Equations",
+      "concept_cluster": "Zeroes and Coefficients",
+      "topic": "Relationship Between Zeroes and Coefficients",
+      "subtopic": "Sum and product of zeroes for quadratic",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "AP"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student can use the shortcut to find the sum and product of the roots without ever actually solving the equation",
+      "prerequisite": "Zeroes of polynomial, quadratic equations",
+      "key_formula": "\\alpha+\\beta = -\\frac{b}{a},\\ \\alpha\\beta = \\frac{c}{a}",
+      "formula_spoken": "The sum of the roots equals negative b over a, and the product of the roots equals c over a",
+      "visual_type": "step_derivation",
+      "narration_style": "revealing a powerful shortcut, connecting the expanded form to the factored form",
+      "estimated_minutes": 13,
+      "seo_title": "Zeroes and Coefficients of Quadratic — Full Explanation",
+      "thumbnail_angle": "Find zeroes WITHOUT solving — trick",
+      "playlist": "Algebra — Quadratic Equations",
+      "status": "active",
+      "real_world_hook": "Imagine a safe that requires two secret numbers to open. You don't know the exact numbers, but I tell you that they add up to 10 and multiply to 21. Your brain can instantly guess that the numbers are 3 and 7. Quadratics hide their secrets exactly like this.",
+      "concept_intuition": "Every quadratic equation has its two roots secretly baked directly into its coefficients—the numbers sitting in front of the x squared and the x. You do not need to do any heavy solving. If you just divide the middle number by the front number and flip the sign, you magically get the sum of the answers. It is a mathematical shortcut.",
+      "visual_hints": "Hook: Show a locked safe with '? + ? = 10' and '? * ? = 21'. Concept: Write ax^2 + bx + c = 0. Highlight the 'b' in red and 'a' in blue, drawing arrows showing them transforming into the sum formula.",
+      "common_mistake": "Forgetting the negative sign on the sum formula (-b/a). Students constantly drop it. Emphasize visually that the sum formula ALWAYS flips the sign of the middle term.",
+      "board_examples": {
+        "formula": "\\text{Sum: } \\alpha+\\beta = -\\frac{b}{a} \\quad \\text{Product: } \\alpha\\beta = \\frac{c}{a}",
+        "worked_example": [
+          "\\text{Equation: } 2x^2 - 8x + 6 = 0",
+          "\\Rightarrow a=2,\\ b=-8,\\ c=6",
+          "\\text{Sum of roots: } -\\frac{(-8)}{2} = \\frac{8}{2} = 4",
+          "\\text{Product of roots: } \\frac{6}{2} = 3"
+        ],
+        "practice": [
+          "\\text{Find sum and product for } x^2 + 5x - 14 = 0",
+          "\\text{Here, } a=1,\\ b=5,\\ c=-14",
+          "\\text{Sum: } -\\frac{5}{1} = -5",
+          "\\text{Product: } -\\frac{14}{1} = -14"
+        ]
+      }
+    },
+    {
+      "day": 23,
+      "global_track": "Algebra",
+      "subject": "Quadratic Equations",
+      "concept_cluster": "Solving Quadratics",
+      "topic": "Standard Form and Solutions",
+      "subtopic": "What is a quadratic equation, methods of solving overview",
+      "difficulty": "beginner",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "General High School"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student conceptually understands what a quadratic is geometrically, and why it can have two answers",
+      "prerequisite": "Polynomials, factorisation",
+      "key_formula": "ax^2 + bx + c = 0",
+      "formula_spoken": "a x squared, plus b x, plus c, equals zero",
+      "visual_type": "board_write",
+      "narration_style": "big-picture overview, highly visual, setting the roadmap for the next three days",
+      "estimated_minutes": 10,
+      "seo_title": "Quadratic Equations Introduction — 3 Methods Explained",
+      "thumbnail_angle": "3 ways to solve a quadratic",
+      "playlist": "Algebra — Quadratic Equations",
+      "status": "active",
+      "real_world_hook": "If you throw a basketball, it goes up, reaches a peak, and comes back down. It crosses your eye-level exactly twice: once on the way up, and once on the way down. This U-shape is a parabola, and its math is entirely controlled by quadratic equations.",
+      "concept_intuition": "A linear equation is a straight line; it crosses the floor once. But because a quadratic has an 'x squared', the line bends into a U-shape. This means it can smash through the floor exactly twice. When we say we are 'solving' a quadratic, we are just looking for those two exact spots where it hits the ground.",
+      "visual_hints": "Hook: Animate a basketball arc. Draw a horizontal line at eye level, highlighting the two crossing points. Concept: Show a U-shaped curve (parabola) crossing the x-axis at two distinct roots. Emphasize the 'squared' term bending the line.",
+      "common_mistake": "Thinking that solving a quadratic means finding just one answer like x = 5. Because of the x-squared term, there are almost always TWO answers. We must train students to expect two numbers at the end of their work.",
+      "board_examples": {
+        "formula": "\\text{Standard Form: } ax^2 + bx + c = 0",
+        "worked_example": [
+          "\\text{Is this quadratic? } 3x^2 - 5x + 2 = 0",
+          "\\Rightarrow \\text{Yes, highest power is } 2.",
+          "\\text{Is this quadratic? } 4x - 7 = 0",
+          "\\Rightarrow \\text{No, there is no } x^2 \\text{ term.}",
+          "\\text{3 Ways to solve: Factorisation, Quadratic Formula, Completing the Square.}"
+        ],
+        "practice": [
+          "\\text{Rearrange into standard form: } 5x = 2x^2 - 3",
+          "\\text{Move everything to one side, equal to zero.}",
+          "2x^2 - 5x - 3 = 0",
+          "\\Rightarrow a=2,\\ b=-5,\\ c=-3"
+        ]
+      }
+    },
+    {
+      "day": 24,
+      "global_track": "Algebra",
+      "subject": "Quadratic Equations",
+      "concept_cluster": "Solving Quadratics",
+      "topic": "Solving by Factorisation",
+      "subtopic": "Splitting the middle term — method and examples",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB"
+      ],
+      "video_type": "worked_examples",
+      "lesson_goal": "Student can factorize any quadratic by treating 'splitting the middle term' as a logical number puzzle",
+      "prerequisite": "Factorisation, standard form",
+      "key_formula": "ax^2+bx+c = a(x-r_1)(x-r_2)",
+      "formula_spoken": "a x squared plus b x plus c equals x minus root one, times x minus root two",
+      "visual_type": "step_derivation",
+      "narration_style": "methodical, puzzle-solving tone, breaking the algorithm down clearly",
+      "estimated_minutes": 13,
+      "seo_title": "Solving Quadratics by Factorisation — Step by Step",
+      "thumbnail_angle": "Split the middle term — EASY method",
+      "playlist": "Algebra — Quadratic Equations",
+      "status": "active",
+      "real_world_hook": "Imagine you are taking apart a piece of IKEA furniture to pack it into a box. You are reversing the assembly process. Expanding brackets is putting the furniture together. Factorisation is taking it apart back into its original two pieces.",
+      "concept_intuition": "To take a quadratic apart, we play a number game called 'Splitting the Middle Term'. We are looking for two magic numbers. These two numbers must multiply to give us the outside pieces (a times c), but they must also add together to give us the middle piece (b). Once we find them, the equation falls apart perfectly.",
+      "visual_hints": "Hook: Show two brackets (x+2)(x+3) multiplying to form x^2+5x+6. Then hit reverse, showing the expansion running backward. Board: Draw a bright cross (X). Top quadrant: 'Multiply to get ac'. Bottom quadrant: 'Add to get b'.",
+      "common_mistake": "Mishandling negative signs. If they need to multiply to a positive but add to a negative, both secret numbers MUST be negative. Walk through the sign rules explicitly during the example.",
+      "board_examples": {
+        "formula": "\\text{Find two numbers that: Multiply to } (a \\times c) \\text{ and Add to } (b)",
+        "worked_example": [
+          "\\text{Solve: } x^2 + 5x + 6 = 0",
+          "\\text{Multiply to } 6,\\ \\text{Add to } 5. \\Rightarrow \\text{Numbers are } 2 \\text{ and } 3.",
+          "\\text{Rewrite: } (x + 2)(x + 3) = 0",
+          "\\text{Zero Product Rule: If } A \\times B = 0, \\text{ one must be zero.}",
+          "x + 2 = 0 \\Rightarrow x = -2",
+          "x + 3 = 0 \\Rightarrow x = -3"
+        ],
+        "practice": [
+          "\\text{Solve: } x^2 - 2x - 8 = 0",
+          "\\text{Multiply to } -8,\\ \\text{Add to } -2. \\Rightarrow \\text{Numbers are } -4 \\text{ and } 2.",
+          "(x - 4)(x + 2) = 0",
+          "\\Rightarrow x = 4,\\ x = -2"
+        ]
+      }
+    },
+    {
+      "day": 25,
+      "global_track": "Algebra",
+      "subject": "Quadratic Equations",
+      "concept_cluster": "Quadratic Formula",
+      "topic": "The Quadratic Formula",
+      "subtopic": "Derivation, formula, discriminant, worked examples",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "AP"
+      ],
+      "video_type": "concept_and_formula",
+      "lesson_goal": "Student views the formula not as random letters, but as an unbreakable master key that provides symmetric steps from the parabola's center",
+      "prerequisite": "Standard form, completing the square, square roots",
+      "key_formula": "x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}",
+      "formula_spoken": "x equals negative b, plus or minus the square root of b squared minus 4ac, all divided by 2a",
+      "visual_type": "step_derivation",
+      "narration_style": "empowering, breaking a massive formula down into simple, bite-sized visual pieces",
+      "estimated_minutes": 15,
+      "seo_title": "Quadratic Formula — Derivation and Full Examples",
+      "thumbnail_angle": "Quadratic Formula — solve ANYTHING",
+      "playlist": "Algebra — Quadratic Equations",
+      "status": "active",
+      "real_world_hook": "Factorising by splitting the middle term is like using a lockpick. It is fast, but it only works on easy, perfect locks. The Quadratic Formula is a sledgehammer. It doesn't matter how ugly or complicated the numbers are; this formula will smash open every single quadratic equation in the universe.",
+      "concept_intuition": "The formula looks terrifying, but it is actually just a set of physical directions. The first part, negative b over 2a, just tells you exactly where the middle of the U-shape is. The plus-or-minus part just tells you how many steps to walk to the right, and how many steps to walk to the left, to find where the curve hits the floor.",
+      "visual_hints": "Hook: Show a lock being picked (factorisation) vs a vault door opening (the formula). Concept: Draw a parabola. Drop a vertical line down the exact center (-b/2a). Animate two arrows stepping symmetrically left (-) and right (+) from that center line.",
+      "common_mistake": "Plugging a negative 'b' value into the formula and forgetting that the formula has its own negative sign. If b is -5, then -b becomes +5. Also, typing the entire formula into a calculator at once almost always causes a syntax error. Calculate the inside of the square root first.",
+      "board_examples": {
+        "formula": "x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}",
+        "worked_example": [
+          "\\text{Solve: } 2x^2 - 5x - 3 = 0",
+          "\\Rightarrow a=2,\\ b=-5,\\ c=-3",
+          "\\text{Step 1: Calculate inside the root first: } b^2 - 4ac",
+          "(-5)^2 - 4(2)(-3) = 25 - (-24) = 49",
+          "\\text{Step 2: Plug into main formula.}",
+          "x = \\frac{-(-5) \\pm \\sqrt{49}}{2(2)} \\Rightarrow x = \\frac{5 \\pm 7}{4}",
+          "x = \\frac{12}{4} = 3 \\quad \\text{OR} \\quad x = \\frac{-2}{4} = -0.5"
+        ],
+        "practice": [
+          "\\text{Identify } a, b, c \\text{ for: } x^2 = 7x - 10",
+          "\\text{Must equal zero first!} \\Rightarrow x^2 - 7x + 10 = 0",
+          "\\Rightarrow a=1,\\ b=-7,\\ c=10"
+        ]
+      }
+    },
+    {
+      "day": 26,
+      "global_track": "Algebra",
+      "subject": "Quadratic Equations",
+      "concept_cluster": "Discriminant",
+      "topic": "Discriminant",
+      "subtopic": "Nature of roots — D greater than 0, equals 0, less than 0",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "AP"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student can use the discriminant as a diagnostic tool to instantly predict the graph of the parabola without doing full math",
+      "prerequisite": "Quadratic formula, square roots",
+      "key_formula": "D = b^2 - 4ac",
+      "formula_spoken": "D equals b squared minus 4ac",
+      "visual_type": "graph_and_board",
+      "narration_style": "diagnostic, analytical, visually mapping numbers to graph shapes",
+      "estimated_minutes": 12,
+      "seo_title": "Discriminant — Nature of Roots Explained Clearly",
+      "thumbnail_angle": "One number tells you EVERYTHING about the roots",
+      "playlist": "Algebra — Quadratic Equations",
+      "status": "active",
+      "real_world_hook": "If a doctor wants to know if your heart is healthy, they don't do a 10-hour full-body surgery. They just check your pulse. To know exactly what a quadratic graph will look like, we don't need to do 10 minutes of graphing. We just check its mathematical pulse: the Discriminant.",
+      "concept_intuition": "The discriminant is simply the piece of the formula hiding under the square root. Because you cannot take the square root of a negative number in real math, this one little piece controls everything. If it's positive, you get two answers. If it is exactly zero, the plus/minus does nothing, so you get one perfectly centered answer. If it is negative, the math breaks, meaning the graph floats in the sky and never hits the ground.",
+      "visual_hints": "Hook: Show a heart monitor beeping. Concept: Split screen into three columns. Col 1: D > 0, show a parabola smashing through the floor twice. Col 2: D = 0, show a parabola resting perfectly on the floor like a bouncing ball. Col 3: D < 0, show a parabola floating in the air.",
+      "common_mistake": "Forgetting parentheses when squaring a negative 'b'. If b is -3, students often type -3^2 into their calculator and get -9. It MUST be (-3)^2 which is +9. This completely changes the discriminant.",
+      "board_examples": {
+        "formula": "\\text{Discriminant } \\Delta = b^2 - 4ac",
+        "worked_example": [
+          "\\text{Find nature of roots: } 3x^2 - 4x + 5 = 0",
+          "a=3,\\ b=-4,\\ c=5",
+          "\\Delta = (-4)^2 - 4(3)(5)",
+          "\\Delta = 16 - 60 = -44",
+          "-44 < 0 \\Rightarrow \\text{Negative! No real roots. The graph floats.}"
+        ],
+        "practice": [
+          "\\text{Find nature of roots: } x^2 - 6x + 9 = 0",
+          "\\Delta = (-6)^2 - 4(1)(9) = 36 - 36 = 0",
+          "\\Delta = 0 \\Rightarrow \\text{Exactly one real root. Graph rests on axis.}"
+        ]
+      }
+    },
+    {
+      "day": 27,
+      "global_track": "Trigonometry",
+      "subject": "Trigonometry",
+      "concept_cluster": "Standard Angles",
+      "topic": "Trigonometric Ratios of Standard Angles",
+      "subtopic": "0, 30, 45, 60, 90 degrees — table and memory trick",
+      "difficulty": "beginner",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "AP"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student completely abandons rote memorization and can generate the entire trig table from scratch in 10 seconds using the square root pattern",
+      "prerequisite": "Trig ratios, special triangles",
+      "key_formula": "\\sin 30° = \\frac{1}{2},\\ \\cos 60° = \\frac{1}{2}",
+      "formula_spoken": "Sine 30 equals one half, Cosine 60 equals one half",
+      "visual_type": "table_and_board",
+      "narration_style": "fast-paced, revealing a secret cheat code, highly encouraging",
+      "estimated_minutes": 11,
+      "seo_title": "Trig Values 0 30 45 60 90 — Easy Memory Trick",
+      "thumbnail_angle": "Trig table in 60 seconds — TRICK",
+      "playlist": "Trigonometry — Ratios and Identities",
+      "status": "active",
+      "real_world_hook": "Memorizing a giant table of 15 different fractions for an exam is stressful. What if you get into the exam hall and your brain blanks from panic? Professionals don't rely on raw memory. They memorize the underlying pattern, so they can rebuild the table from scratch anytime they want.",
+      "concept_intuition": "The values for Sine follow a perfectly elegant pattern. You just count from 0 to 4. Put a square root over the numbers, and divide them all by 2. That's it. That is the entire sine row. Cosine is just the exact same row read backwards. Tangent is just dividing the Sine row by the Cosine row. If you can count to 4, you know trigonometry.",
+      "visual_hints": "Hook: Show a messy table of fractions, swipe it away. Concept: Animate the pattern building visually. Row 1: write 0, 1, 2, 3, 4. Row 2: drop square roots over them. Row 3: divide them all by 2. Row 4: simplify to show the final standard values.",
+      "common_mistake": "Confusing Sine 30 and Cosine 30. Sine starts at 0 and grows to 1. So Sine 30 is the small one (1/2). Cosine starts at 1 and drops to 0. Always ground yourself on where the numbers start.",
+      "board_examples": {
+        "formula": "\\sin \\text{ pattern: } \\frac{\\sqrt{0}}{2}, \\frac{\\sqrt{1}}{2}, \\frac{\\sqrt{2}}{2}, \\frac{\\sqrt{3}}{2}, \\frac{\\sqrt{4}}{2}",
+        "worked_example": [
+          "\\text{Build the } \\sin \\text{ row for } 0^\\circ, 30^\\circ, 45^\\circ, 60^\\circ, 90^\\circ",
+          "\\frac{\\sqrt{0}}{2} = 0",
+          "\\frac{\\sqrt{1}}{2} = \\frac{1}{2}",
+          "\\frac{\\sqrt{2}}{2} = \\frac{\\sqrt{2}}{2}",
+          "\\frac{\\sqrt{3}}{2} = \\frac{\\sqrt{3}}{2}",
+          "\\frac{\\sqrt{4}}{2} = \\frac{2}{2} = 1"
+        ],
+        "practice": [
+          "\\text{Find } \\tan 45^\\circ",
+          "\\tan = \\frac{\\sin}{\\cos}",
+          "\\tan 45^\\circ = \\frac{\\sin 45^\\circ}{\\cos 45^\\circ} = \\frac{\\frac{\\sqrt{2}}{2}}{\\frac{\\sqrt{2}}{2}}",
+          "\\Rightarrow \\tan 45^\\circ = 1"
+        ]
+      }
+    },
+    {
+      "day": 28,
+      "global_track": "Algebra",
+      "subject": "Sequences and Series",
+      "concept_cluster": "Arithmetic Progression",
+      "topic": "nth Term of an AP",
+      "subtopic": "Formula, derivation, and finding any term",
+      "difficulty": "beginner",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB",
+        "General High School"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student reads the AP formula as a logical set of jumping instructions rather than an abstract algebraic equation",
+      "prerequisite": "Sequences, common difference",
+      "key_formula": "a_n = a + (n-1)d",
+      "formula_spoken": "a n equals a plus n minus one times d",
+      "visual_type": "board_write",
+      "narration_style": "logical, step-by-step, relating math to physical movement",
+      "estimated_minutes": 11,
+      "seo_title": "nth Term of Arithmetic Progression — Formula Explained",
+      "thumbnail_angle": "Find the 50th term in 10 seconds",
+      "playlist": "Algebra — Sequences and Series",
+      "status": "active",
+      "real_world_hook": "Imagine you are standing on the 5th rung of a long ladder. Every second, you climb exactly 3 rungs higher. Where will you be after 50 seconds? You could sit there and count it out the long way, or you could use a simple pattern to instantly jump to the answer.",
+      "concept_intuition": "An Arithmetic Progression is just a ladder where every gap is exactly the same size. The formula looks fancy, but translate it into English: To find out where you finish, take your starting point (a), and add your jump size (d) multiplied by the number of jumps. Why (n-1)? Because you don't jump to stand on the first step. If you want the 10th step, you only need to take 9 jumps.",
+      "visual_hints": "Hook: Show a stick figure jumping up a ladder with equally spaced rungs. Concept: Draw a number line with dots at 5, 8, 11, 14. Draw arched arrows between them labeled '+3'. Emphasize that to get to the 4th dot, there are only 3 arrows (jumps).",
+      "common_mistake": "Using 'n' instead of 'n-1'. Students asked for the 20th term will multiply the difference by 20. Remind them visually: the first term requires ZERO jumps. The 20th term requires 19 jumps.",
+      "board_examples": {
+        "formula": "\\text{Final Position} = \\text{Start} + (\\text{Number of Jumps}) \\times \\text{Jump Size}",
+        "worked_example": [
+          "\\text{Find the 50th term of: } 4, 9, 14, 19...",
+          "\\text{Start (a)} = 4",
+          "\\text{Jump size (d)} = +5",
+          "\\text{Number of jumps (n-1)} = 50 - 1 = 49",
+          "a_{50} = 4 + (49 \\times 5)",
+          "a_{50} = 4 + 245 = 249"
+        ],
+        "practice": [
+          "\\text{If } a=10 \\text{ and } d=-2, \\text{ find } a_{15}",
+          "a_{15} = 10 + (15 - 1)(-2)",
+          "a_{15} = 10 + (14)(-2)",
+          "a_{15} = 10 - 28 = -18"
+        ]
+      }
+    },
+    {
+      "day": 29,
+      "global_track": "Algebra",
+      "subject": "Sequences and Series",
+      "concept_cluster": "Arithmetic Progression",
+      "topic": "Sum of n Terms of an AP",
+      "subtopic": "Formula derivation and worked examples",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "ACT",
+        "CBSE",
+        "IB"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student can calculate the sum of any AP by understanding the 'pairing' trick rather than blindly memorising the formula",
+      "prerequisite": "nth term of AP",
+      "key_formula": "S_n = \\frac{n}{2}(2a + (n-1)d)",
+      "formula_spoken": "S n equals n over 2, multiplied by 2a plus n minus 1 times d",
+      "visual_type": "step_derivation",
+      "narration_style": "storytelling, revealing mathematical elegance, highly visual",
+      "estimated_minutes": 13,
+      "seo_title": "Sum of Arithmetic Progression — Formula and Proof",
+      "thumbnail_angle": "Add 100 numbers in 5 seconds — AP trick",
+      "playlist": "Algebra — Sequences and Series",
+      "status": "active",
+      "real_world_hook": "When the great mathematician Carl Friedrich Gauss was 10 years old, his teacher tried to keep the class busy by asking them to add every number from 1 to 100. Gauss walked up with the correct answer in 5 seconds. He didn't add them one by one. He saw a hidden symmetry.",
+      "concept_intuition": "Gauss realised that if you pair the first and last numbers (1 and 100), they add to 101. If you pair the second and second-to-last (2 and 99), they also add to 101. Every single pair equals the exact same number! So to find the total sum, you just take the sum of the first and last terms, and multiply it by how many pairs you have. That beautiful trick is all the AP Sum formula actually is.",
+      "visual_hints": "Hook: Show a number line from 1 to 100. Draw an arched bridge connecting 1 and 100 (101), then 2 and 99 (101). Concept: Show the sequence as a staircase of blocks, duplicate it, flip it upside down, and lock them together to form a perfect rectangle. Area = length x width.",
+      "common_mistake": "Using 'n' instead of 'n/2'. Because we are pairing the numbers up, a list of 100 numbers only makes 50 pairs. We must divide n by 2. Also, clarify that there are two versions of the formula: one if you know the last term, and one if you don't.",
+      "board_examples": {
+        "formula": "S_n = \\frac{n}{2}(\\text{First} + \\text{Last}) \\quad \\text{OR} \\quad \\frac{n}{2}(2a + (n-1)d)",
+        "worked_example": [
+          "\\text{Find sum of first 50 positive integers: } 1 + 2 + 3 \\dots + 50",
+          "\\text{Method 1: We know the last term (50)}",
+          "n = 50,\\ a = 1,\\ l = 50",
+          "S_{50} = \\frac{50}{2}(1 + 50) = 25 \\times 51 = 1275"
+        ],
+        "practice": [
+          "\\text{Find sum of first 20 terms: } 5, 8, 11, 14 \\dots",
+          "\\text{We don't know the last term. Use the long formula.}",
+          "n=20,\\ a=5,\\ d=3",
+          "S_{20} = \\frac{20}{2}[2(5) + (20-1)3]",
+          "= 10[10 + 19(3)] = 10[10 + 57] = 10 \\times 67 = 670"
+        ]
+      }
+    },
+    {
+      "day": 30,
+      "global_track": "Precalculus",
+      "subject": "Sets",
+      "concept_cluster": "Set Theory",
+      "topic": "Types of Sets and Venn Diagrams",
+      "subtopic": "Empty, finite, infinite, subset, universal, Venn diagrams",
+      "difficulty": "beginner",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "IB",
+        "AP",
+        "CBSE",
+        "General High School"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student can conceptually map abstract set notation (union/intersection) directly to physical overlapping regions",
+      "prerequisite": "Basic set notation",
+      "key_formula": "A \\cup B,\\ A \\cap B",
+      "formula_spoken": "A union B, and A intersection B",
+      "visual_type": "diagram_and_board",
+      "narration_style": "calm, translating mathematical symbols into physical boundaries",
+      "estimated_minutes": 11,
+      "seo_title": "Sets and Venn Diagrams — Explained Simply",
+      "thumbnail_angle": "Venn Diagrams MADE SIMPLE",
+      "playlist": "Precalculus — Sets and Logic",
+      "status": "active",
+      "real_world_hook": "Think about your music playlists on your phone. You might have a 'Workout' playlist and a 'Rock' playlist. Some songs belong strictly in one. But some high-energy rock songs belong in both. If you wanted to visualise where every song lives, you would draw a Venn Diagram.",
+      "concept_intuition": "A Set is simply a mathematical VIP list. You are either on the list, or you are not. A Venn Diagram is just a map of these lists. We have two main operations. 'Intersection' is a strict bouncer; you must be on BOTH lists to get into the middle zone. 'Union' is a friendly bouncer; if you are on AT LEAST one list, you are allowed in.",
+      "visual_hints": "Hook: Show a phone screen with two playlists, highlighting a song that is in both. Concept: Draw two overlapping circles. For Intersection, color ONLY the middle leaf shape in bright green. For Union, color both entire circles green. Connect the U-symbol to the word 'Unite'.",
+      "common_mistake": "Mixing up the symbols for Union (U) and Intersection (n). Give them a visual anchor. The 'U' is a cup that holds everything (Union). The 'n' is a dome or a bridge that only lets the exact middle cross over (Intersection).",
+      "board_examples": {
+        "formula": "\\cup = \\text{OR (Everything)} \\quad \\cap = \\text{AND (Only overlaps)}",
+        "worked_example": [
+          "\\text{Set A: } \\{1, 2, 3, 4\\} \\quad \\text{Set B: } \\{3, 4, 5, 6\\}",
+          "\\text{Find } A \\cup B \\text{ (Union)}",
+          "\\Rightarrow \\text{Combine them, but don't write duplicates twice.}",
+          "A \\cup B = \\{1, 2, 3, 4, 5, 6\\}",
+          "\\text{Find } A \\cap B \\text{ (Intersection)}",
+          "\\Rightarrow \\text{What is exactly the same in both?}",
+          "A \\cap B = \\{3, 4\\}"
+        ],
+        "practice": [
+          "\\text{Universal Set } \\mathcal{E} = \\{1,2,3,4,5\\}",
+          "A = \\{1,2\\} \\Rightarrow \\text{Find } A' \\text{ (Complement)}",
+          "\\text{Complement means 'everything NOT in A'}",
+          "A' = \\{3, 4, 5\\}"
+        ]
+      }
+    },
+    {
+      "day": 31,
+      "global_track": "Precalculus",
+      "subject": "Sequences and Series",
+      "concept_cluster": "Geometric Progression",
+      "topic": "Geometric Progression",
+      "subtopic": "Definition, nth term, sum to n terms",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "IB",
+        "AP",
+        "CBSE"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student understands explosive exponential growth and never confuses geometric ratios with arithmetic differences",
+      "prerequisite": "AP, exponents, ratios",
+      "key_formula": "a_n = ar^{n-1},\\ S_n = \\frac{a(r^n-1)}{r-1},\\ r \\neq 1",
+      "formula_spoken": "a n equals a times r to the power of n minus one. S n equals a times the group r to the n minus one, all over r minus one",
+      "visual_type": "step_derivation",
+      "narration_style": "building awe at the scale of numbers, highly comparative against AP",
+      "estimated_minutes": 14,
+      "seo_title": "Geometric Progression — nth Term and Sum Formula",
+      "thumbnail_angle": "GP formula — never confuse with AP again",
+      "playlist": "Precalculus — Sequences and Series",
+      "status": "active",
+      "real_world_hook": "If you take a standard piece of paper and fold it in half, it is now 2 layers thick. Fold it again, 4 layers. Then 8. Then 16. If you could fold that piece of paper 42 times, the thickness wouldn't just be the height of a house. It would reach the moon. This is the terrifying power of geometric growth.",
+      "concept_intuition": "An Arithmetic progression walks. A Geometric Progression multiplies and sprints. Instead of adding a 'common difference' every step, we are multiplying by a 'common ratio'. Because we are doing repeated multiplication, our formula uses exponents. Exponents are just lazy mathematics for repeated multiplying.",
+      "visual_hints": "Hook: Animate a paper folding, showing the layers doubling rapidly, panning out to show a stack hitting the moon. Concept: Split screen. Left side: AP (adding +3) forming a straight staircase. Right side: GP (multiplying x3) forming a violently curving exponential ramp.",
+      "common_mistake": "In the nth term formula, writing a*r^n instead of a*r^(n-1). Just like with the ladder in AP, you don't multiply to stand on the first step. To get to the 5th step, you only multiply by the ratio 4 times.",
+      "board_examples": {
+        "formula": "a_n = ar^{n-1} \\quad S_n = \\frac{a(r^n-1)}{r-1}",
+        "worked_example": [
+          "\\text{Find the 6th term of: } 3, 6, 12, 24 \\dots",
+          "\\text{Start (a)} = 3",
+          "\\text{Ratio (r)} = 6 \\div 3 = 2",
+          "a_6 = 3(2)^{6-1} = 3(2)^5",
+          "a_6 = 3(32) = 96"
+        ],
+        "practice": [
+          "\\text{Find the sum of the first 4 terms of that same GP.}",
+          "S_4 = \\frac{3(2^4 - 1)}{2 - 1}",
+          "S_4 = \\frac{3(16 - 1)}{1} = 3(15) = 45",
+          "\\text{Check manually: } 3 + 6 + 12 + 24 = 45. \\text{ Correct!}"
+        ]
+      }
+    },
+    {
+      "day": 32,
+      "global_track": "Trigonometry",
+      "subject": "Trigonometry",
+      "concept_cluster": "Radians",
+      "topic": "Radians and Degrees",
+      "subtopic": "Conversion formula, arc length, sector area",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "SAT",
+        "IB",
+        "AP",
+        "ACT",
+        "CBSE"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student sees radians as a physical distance wrapped around a circle rather than a made-up unit, making formulas like s=r*theta obvious",
+      "prerequisite": "Circle, pi, basic trig",
+      "key_formula": "\\theta_{\\text{rad}} = \\theta^\\circ \\times \\frac{\\pi}{180}",
+      "formula_spoken": "theta in radians equals theta in degrees multiplied by pi over 180",
+      "visual_type": "diagram_and_board",
+      "narration_style": "revelatory, discarding arbitrary old rules in favor of natural physics",
+      "estimated_minutes": 11,
+      "seo_title": "Radians and Degrees — Conversion Formula Explained",
+      "thumbnail_angle": "Degrees to Radians — FORMULA and trick",
+      "playlist": "Trigonometry — Radians and Unit Circle",
+      "status": "active",
+      "real_world_hook": "Why are there 360 degrees in a circle? Because ancient Babylonians liked base-60 math and calendars with 360 days. It is completely made up! If we want to do real physics, engineering, or calculus, we cannot use a made-up Babylonian calendar. We need a natural way to measure angles.",
+      "concept_intuition": "A Radian is nature's angle. Imagine taking the radius of a circle, snapping it off like a dry piece of spaghetti, bending it, and wrapping it along the outside edge of the circle. The angle that one spaghetti piece creates is exactly 1 radian. And because the circumference is 2 times pi times the radius, it takes exactly 2 pi of these pieces to wrap a full circle.",
+      "visual_hints": "Hook: Strike through the number 360 with a red line. Concept: Draw a radius line. Animate it detaching, curving, and wrapping exactly along the edge of the circle. Draw lines from its ends back to the center to highlight 1 Radian. Show that half a circle is exactly 3.14 (pi) of these wrapped lines.",
+      "common_mistake": "Forgetting whether to multiply by pi/180 or 180/pi to convert. Teach dimensional analysis: if you want degrees to disappear, 'degrees' must be on the bottom of the fraction so they cancel out. So, put 180 on the bottom.",
+      "board_examples": {
+        "formula": "\\pi \\text{ radians} = 180^\\circ",
+        "worked_example": [
+          "\\text{Convert } 60^\\circ \\text{ into radians.}",
+          "\\text{Multiply by } \\frac{\\pi}{180^\\circ} \\text{ so degrees cancel out:}",
+          "60 \\times \\frac{\\pi}{180} = \\frac{60\\pi}{180}",
+          "\\text{Simplify fraction: } \\frac{1\\pi}{3} \\text{ or } \\frac{\\pi}{3}"
+        ],
+        "practice": [
+          "\\text{Convert } \\frac{3\\pi}{4} \\text{ radians to degrees.}",
+          "\\text{Replace } \\pi \\text{ with } 180^\\circ.",
+          "\\frac{3(180)}{4} = 3 \\times 45 = 135^\\circ"
+        ]
+      }
+    },
+    {
+      "day": 33,
+      "global_track": "Precalculus",
+      "subject": "Limits",
+      "concept_cluster": "Introduction to Limits",
+      "topic": "Introduction to Limits",
+      "subtopic": "Intuitive meaning, left hand limit, right hand limit",
+      "difficulty": "advanced",
+      "exam_tags": [
+        "IB",
+        "AP",
+        "CBSE",
+        "A-Level"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student understands that a limit is just mathematics asking 'where is this path heading?', completely ignoring what happens when it actually arrives",
+      "prerequisite": "Functions, graphs, continuity idea",
+      "key_formula": "\\lim_{x \\to a} f(x) = L",
+      "formula_spoken": "The limit of f of x, as x approaches a, equals L",
+      "visual_type": "graph_and_board",
+      "narration_style": "calm, demystifying, acting as a detective tracing a path",
+      "estimated_minutes": 14,
+      "seo_title": "Introduction to Limits — Intuitive and Formal Explanation",
+      "thumbnail_angle": "What IS a limit? Finally CLEAR",
+      "playlist": "Precalculus — Limits",
+      "status": "active",
+      "real_world_hook": "Imagine walking towards the edge of a cliff. If you take steps closer and closer, we can predict exactly where your path is taking you: the edge. It doesn't matter if you actually step off. We only care about the trend.",
+      "concept_intuition": "Before limits, mathematics was obsessed with exact destinations. What is the exact value at x=2? But sometimes, plugging in x=2 causes a division by zero, and the math breaks. A limit bypasses this. It acts like a detective. It checks x=1.9, then 1.99, then 1.999. It watches the trend. If the path from the left and the path from the right both point to the exact same destination, the limit exists.",
+      "visual_hints": "Hook: Show a person walking toward a glowing checkpoint, stopping 0.01 inches away. Concept: Graph a smooth curve with a literal 'hole' cut out at x=2. Animate two neon arrows sliding along the curve from the left and right, pointing directly at the empty hole to show agreement.",
+      "common_mistake": "Plugging the number in immediately, hitting 0/0, and just writing 'Undefined'. Emphasize heavily: 0/0 is NOT the end of a limit problem. It is a mathematical alarm bell that means 'Keep looking! The answer is hiding behind some algebra.'",
+      "board_examples": {
+        "formula": "\\text{Limit exists if } \\lim_{x \\to a^-} f(x) = \\lim_{x \\to a^+} f(x)",
+        "worked_example": [
+          "\\text{Find } \\lim_{x \\to 3} \\frac{x^2 - 9}{x - 3}",
+          "\\text{Step 1: Plug in 3.} \\Rightarrow \\frac{3^2 - 9}{3 - 3} = \\frac{0}{0} \\text{ (Alarm Bell!)}",
+          "\\text{Step 2: Use Algebra (Factor the top).}",
+          "\\frac{(x-3)(x+3)}{(x-3)}",
+          "\\text{Step 3: Cancel the trap.} \\Rightarrow x + 3",
+          "\\text{Step 4: Plug in 3 again.} \\Rightarrow 3 + 3 = 6"
+        ],
+        "practice": [
+          "\\text{Evaluate } \\lim_{x \\to 5} \\frac{x^2 - 25}{x - 5}",
+          "\\text{Direct sub: } 0/0",
+          "\\text{Factor: } \\frac{(x-5)(x+5)}{(x-5)} = x + 5",
+          "\\text{Limit } = 5 + 5 = 10"
+        ]
+      }
+    },
+    {
+      "day": 34,
+      "global_track": "Calculus",
+      "subject": "Differentiation",
+      "concept_cluster": "First Principles",
+      "topic": "First Principles of Differentiation",
+      "subtopic": "Definition of derivative from limit definition",
+      "difficulty": "advanced",
+      "exam_tags": [
+        "IB",
+        "AP",
+        "A-Level",
+        "CBSE"
+      ],
+      "video_type": "theorem_and_example",
+      "lesson_goal": "Student visually understands that the derivative is just the old 'rise over run' slope formula pushed to its absolute microscopic limit",
+      "prerequisite": "Limits, algebra of limits, slope formula",
+      "key_formula": "f'(x) = \\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}",
+      "formula_spoken": "f prime of x equals the limit, as h approaches zero, of f of x plus h minus f of x, all divided by h",
+      "visual_type": "step_derivation",
+      "narration_style": "revelatory, connecting middle-school math (slope) to advanced calculus",
+      "estimated_minutes": 15,
+      "seo_title": "Differentiation from First Principles — Full Derivation",
+      "thumbnail_angle": "Where does dy/dx actually come from?",
+      "playlist": "Calculus — Differentiation",
+      "status": "active",
+      "real_world_hook": "If you drive 60 miles in one hour, your average speed is 60 miles per hour. But what was your exact speed at a frozen snapshot in time, like 12:04 PM and 3 seconds? To find your speed at an exact millisecond, average speed formulas fail because zero time has passed. We need a way to safely divide by zero.",
+      "concept_intuition": "The derivative is just the old 'rise over run' slope formula pushed to the extreme. Instead of measuring the slope between two points that are far apart, we bring the second point infinitely close to the first. The gap between them, 'h', shrinks to zero. We use our new tool—the limit—to safely land at exactly h=0 without breaking the universe.",
+      "visual_hints": "Hook: A car's speedometer freezing at an exact millisecond. Concept: Draw a curve with a secant line cutting through two dots. Visually shrink the distance 'h' repeatedly until the two dots merge and the secant line snaps into a perfect tangent line kissing the curve.",
+      "common_mistake": "Algebraic errors when expanding the (x+h)^2 term. Students often write x^2 + h^2 and forget the middle 2xh term. This completely destroys the h-cancellation step later. Warn them to bracket and expand with extreme care.",
+      "board_examples": {
+        "formula": "\\text{Slope} = \\frac{y_2 - y_1}{x_2 - x_1} \\Rightarrow \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}",
+        "worked_example": [
+          "\\text{Find derivative of } f(x) = x^2",
+          "f'(x) = \\lim_{h \\to 0} \\frac{(x+h)^2 - (x^2)}{h}",
+          "\\text{Step 1: Expand carefully.}",
+          "= \\lim_{h \\to 0} \\frac{(x^2 + 2xh + h^2) - x^2}{h}",
+          "\\text{Step 2: Cancel } x^2.",
+          "= \\lim_{h \\to 0} \\frac{2xh + h^2}{h} = \\lim_{h \\to 0} (2x + h)",
+          "\\text{Step 3: Let } h \\text{ become } 0. \\Rightarrow 2x"
+        ],
+        "practice": [
+          "\\text{Setup the First Principles for } f(x) = 3x",
+          "f'(x) = \\lim_{h \\to 0} \\frac{3(x+h) - 3x}{h}",
+          "= \\lim_{h \\to 0} \\frac{3x + 3h - 3x}{h}",
+          "= \\lim_{h \\to 0} \\frac{3h}{h} = 3"
+        ]
+      }
+    },
+    {
+      "day": 35,
+      "global_track": "Calculus",
+      "subject": "Differentiation",
+      "concept_cluster": "Rules of Differentiation",
+      "topic": "Chain Rule",
+      "subtopic": "Statement, proof, worked examples",
+      "difficulty": "advanced",
+      "exam_tags": [
+        "IB",
+        "AP",
+        "A-Level",
+        "CBSE"
+      ],
+      "video_type": "theorem_and_example",
+      "lesson_goal": "Student can differentiate composite functions without confusion by thinking of them as interlocking gears",
+      "prerequisite": "Basic derivatives, composite functions",
+      "key_formula": "\\frac{dy}{dx} = \\frac{dy}{du} \\cdot \\frac{du}{dx}",
+      "formula_spoken": "dy over dx equals dy over du times du over dx",
+      "visual_type": "step_derivation",
+      "narration_style": "rhythmic, building a mantra to prevent ordering mistakes",
+      "estimated_minutes": 15,
+      "seo_title": "Chain Rule — Differentiation of Composite Functions",
+      "thumbnail_angle": "Chain Rule — never get confused again",
+      "playlist": "Calculus — Differentiation",
+      "status": "active",
+      "real_world_hook": "Imagine three connected gears in a machine. If the first gear turns twice as fast as the second, and the second turns three times as fast as the third, how fast is the first compared to the third? You just multiply their rates: two times three is six. Rates of change multiply together perfectly.",
+      "concept_intuition": "The Chain Rule is just gear math for functions. When a function is trapped inside another function—like a Russian nesting doll—you cannot differentiate it all at once. You must peel it layer by layer. Take the derivative of the outside shell, leave the inside completely untouched, and then multiply by the derivative of the inside.",
+      "visual_hints": "Hook: Animate three interlocking gears turning at different speeds. Concept: Show a composite function like sin(x^2). Color the 'sin' blue (Outside) and the 'x^2' red (Inside). Visually pull them apart, differentiate them separately, and multiply them together.",
+      "common_mistake": "Differentiating the inside and the outside at the exact same time. For example, looking at sin(x^2) and incorrectly writing cos(2x). We must physically drill the mantra: 'Derivative of the outside... KEEP the inside exactly the same... times the derivative of the inside.'",
+      "board_examples": {
+        "formula": "\\text{Mantra: } f'(\\text{outside}) \\times \\text{KEEP inside} \\times f'(\\text{inside})",
+        "worked_example": [
+          "\\text{Find } \\frac{d}{dx} \\sin(x^3)",
+          "\\text{Outside layer: } \\sin(\\dots) \\Rightarrow \\text{Derivative is } \\cos(\\dots)",
+          "\\text{Inside layer: } x^3 \\Rightarrow \\text{Derivative is } 3x^2",
+          "\\text{Step 1: Deriv of outside, keep inside.} \\Rightarrow \\cos(x^3)",
+          "\\text{Step 2: Multiply by deriv of inside.} \\Rightarrow \\cos(x^3) \\cdot (3x^2)",
+          "\\text{Clean up: } 3x^2 \\cos(x^3)"
+        ],
+        "practice": [
+          "\\text{Differentiate } (5x + 2)^4",
+          "\\text{Outside: } (\\dots)^4 \\Rightarrow 4(\\dots)^3",
+          "\\text{Inside: } 5x + 2 \\Rightarrow 5",
+          "\\text{Chain: } 4(5x + 2)^3 \\cdot 5 = 20(5x + 2)^3"
+        ]
+      }
+    },
+    {
+      "day": 36,
+      "global_track": "Calculus",
+      "subject": "Integration",
+      "concept_cluster": "Indefinite Integrals",
+      "topic": "Integration as Reverse Differentiation",
+      "subtopic": "Indefinite integrals, constant of integration, basic rules",
+      "difficulty": "advanced",
+      "exam_tags": [
+        "IB",
+        "AP",
+        "A-Level",
+        "CBSE"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Student deeply understands integration as a time-reversal process and never forgets the '+ C' constant",
+      "prerequisite": "Differentiation, power rule",
+      "key_formula": "\\int x^n dx = \\frac{x^{n+1}}{n+1} + C",
+      "formula_spoken": "The integral of x to the n dx equals x to the n plus one, divided by n plus one, plus C",
+      "visual_type": "step_derivation",
+      "narration_style": "reflective, looping back to the beginning of calculus to show the grand design",
+      "estimated_minutes": 14,
+      "seo_title": "Integration Introduction — Reverse Differentiation Explained",
+      "thumbnail_angle": "Integration = reverse differentiation — CLEAR",
+      "playlist": "Calculus — Integration",
+      "status": "active",
+      "real_world_hook": "If you have a video of a leaking bucket, differentiation tells you exactly how fast the water is dripping at any specific second. Integration is running that video in reverse. If I only tell you the dripping speed, can you calculate exactly how much water was originally in the bucket?",
+      "concept_intuition": "Integration is the mathematical undo button for differentiation. If taking a derivative drops the exponent and multiplies, then integration must do the exact opposite: add one to the exponent and divide. But there is a catch. When you differentiate a constant number like 5, it vanishes to 0. When we run the math in reverse, we don't know what that vanished number was. That is why we must always add 'plus C'.",
+      "visual_hints": "Hook: Split screen showing water dripping OUT (derivative) vs calculating total volume IN (integral). Board: Write x^3 -> 3x^2. Then draw a giant reverse arrow showing 3x^2 turning back into x^3, but with a glowing '+ C' appearing at the end.",
+      "common_mistake": "Forgetting the '+ C' (constant of integration). This is the single most common docked point in all of calculus exams worldwide. Frame '+ C' as the 'ghost of the lost constant'. It is not optional; it must be there to balance the universe.",
+      "board_examples": {
+        "formula": "\\int x^n \\, dx = \\frac{x^{n+1}}{n+1} + C \\quad (n \\neq -1)",
+        "worked_example": [
+          "\\text{Find } \\int 4x^3 \\, dx",
+          "\\text{Rule: Add 1 to power, divide by new power.}",
+          "= \\frac{4x^4}{4} + C",
+          "= x^4 + C",
+          "\\text{Check by differentiating: } \\frac{d}{dx}(x^4 + C) = 4x^3 \\ \\checkmark"
+        ],
+        "practice": [
+          "\\text{Find } \\int 6x^2 \\, dx",
+          "= \\frac{6x^3}{3} + C",
+          "= 2x^3 + C"
+        ]
+      }
+    },
+    {
+      "day": 37,
+      "global_track": "SAT",
+      "subject": "SAT Math",
+      "concept_cluster": "Heart of Algebra",
+      "topic": "Linear Equations and Inequalities",
+      "subtopic": "Solving, graphing, word problems — SAT style",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "SAT"
+      ],
+      "video_type": "exam_practice",
+      "lesson_goal": "Student stops doing unnecessary algebra and learns to instantly extract the slope and y-intercept from SAT word problems",
+      "prerequisite": "Linear equations, graphing lines",
+      "key_formula": "y = mx + b",
+      "formula_spoken": "y equals m x plus b",
+      "visual_type": "worked_examples",
+      "narration_style": "sharp, strategic, exposing the hidden mechanics of the test",
+      "estimated_minutes": 14,
+      "seo_title": "SAT Linear Equations — Strategy and Practice",
+      "thumbnail_angle": "SAT Algebra — score 800 strategy",
+      "playlist": "SAT — Heart of Algebra",
+      "status": "active",
+      "real_world_hook": "The SAT is not just a math test; it is a reading and time-management test. If a question gives you a 4-line paragraph about a plumber charging a flat fee plus an hourly rate, doing full algebra is a trap. You don't have time.",
+      "concept_intuition": "Every linear word problem on the SAT is just y = mx + b wearing a disguise. The 'flat fee' or 'starting amount' is always the y-intercept. The 'hourly rate' or 'cost per item' is always the slope. Once you train your eyes to see past the English and spot those two numbers, you can answer the question in 10 seconds.",
+      "visual_hints": "Hook: Show a dense paragraph of text. Hit it with a highlighter: green for the starting fee (b) and red for the hourly rate (m). Visually drag those highlighted numbers straight into the y=mx+b equation.",
+      "common_mistake": "Solving for 'x' when the question asked for '2x' or 'y'. The SAT loves to let you do 2 minutes of perfect algebra, get x=5, see '5' in the answer choices, and pick it. Always circle exactly what the question is asking for before doing math.",
+      "board_examples": {
+        "formula": "\\text{SAT Translation: } y = (\\text{Rate})x + (\\text{Start})",
+        "worked_example": [
+          "\\text{A plumber charges } \\$50 \\text{ to visit, plus } \\$75 \\text{ per hour } (h).",
+          "\\text{Total cost } C \\text{ is given by: } C = 75h + 50",
+          "\\text{What does the 75 mean in this context?}",
+          "\\Rightarrow \\text{It is the slope. The cost increases by 75 for each additional hour.}"
+        ],
+        "practice": [
+          "\\text{If } 3x - y = 12, \\text{ what is the value of } \\frac{8^x}{2^y}?",
+          "\\text{Trick: Convert bases: } 8 = 2^3 \\Rightarrow \\frac{(2^3)^x}{2^y} = \\frac{2^{3x}}{2^y}",
+          "= 2^{3x - y}",
+          "\\text{Substitute given info: } 3x - y = 12 \\Rightarrow 2^{12}"
+        ]
+      }
+    },
+    {
+      "day": 38,
+      "global_track": "SAT",
+      "subject": "SAT Math",
+      "concept_cluster": "Passport to Advanced Math",
+      "topic": "Quadratic Equations on SAT",
+      "subtopic": "All three solving methods, word problems, trap questions",
+      "difficulty": "advanced",
+      "exam_tags": [
+        "SAT"
+      ],
+      "video_type": "exam_practice",
+      "lesson_goal": "Student can bypass the quadratic formula by recognising vertex form and using the sum/product of roots shortcuts",
+      "prerequisite": "Quadratic formula, factorisation, discriminant",
+      "key_formula": "y = a(x-h)^2 + k",
+      "formula_spoken": "y equals a times x minus h squared, plus k",
+      "visual_type": "worked_examples",
+      "narration_style": "focused, warning against time-wasting calculations",
+      "estimated_minutes": 16,
+      "seo_title": "SAT Quadratic Equations — All Types Solved",
+      "thumbnail_angle": "SAT quadratics — 3 trap questions EXPOSED",
+      "playlist": "SAT — Passport to Advanced Math",
+      "status": "active",
+      "real_world_hook": "If the SAT gives you a quadratic equation and asks for the maximum height of a rocket, 90% of students will use the quadratic formula to find the roots, average them, and plug them back in. That takes 3 minutes. The student who gets an 800 just reads the vertex directly from the equation in 5 seconds.",
+      "concept_intuition": "The SAT rewards students who know multiple forms of the same equation. Standard form is great for the y-intercept. Factored form is great for the zeroes. Vertex form is great for the maximum or minimum. Your job is not to calculate blindly; your job is to choose the right form for the question.",
+      "visual_hints": "Hook: Show a stopwatch ticking down while a hand frantically does the quadratic formula. Concept: Show the 3 forms of a quadratic side-by-side. Highlight what each form reveals instantly (y-int, zeroes, vertex) without doing any math.",
+      "common_mistake": "Blindly expanding Vertex form back into Standard form. If the equation is y = 2(x-3)^2 + 4, students will multiply the whole thing out just because they are used to standard form. Stop. The vertex is staring right at you: (3, 4).",
+      "board_examples": {
+        "formula": "\\text{Vertex Form: } y = a(x-h)^2 + k \\Rightarrow \\text{Vertex at } (h, k)",
+        "worked_example": [
+          "\\text{Equation: } y = -3(x - 4)^2 + 10",
+          "\\text{What is the maximum value of } y?",
+          "\\text{Step 1: Recognise this is vertex form.}",
+          "\\text{Step 2: The parabola opens downward (negative 3).}",
+          "\\text{Step 3: The vertex is } (4, 10).",
+          "\\Rightarrow \\text{The maximum value is } 10."
+        ],
+        "practice": [
+          "\\text{What is the sum of the solutions to } 2x^2 - 6x + 4 = 0?",
+          "\\text{Do NOT use the quadratic formula! Use the shortcut:}",
+          "\\text{Sum } = -\\frac{b}{a}",
+          "\\text{Sum } = -\\frac{(-6)}{2} = \\frac{6}{2} = 3"
+        ]
+      }
+    },
+    {
+      "day": 39,
+      "global_track": "SAT",
+      "subject": "SAT Math",
+      "concept_cluster": "Additional Topics",
+      "topic": "Trigonometry on SAT",
+      "subtopic": "Unit circle, radians, sin cos identities in SAT context",
+      "difficulty": "advanced",
+      "exam_tags": [
+        "SAT"
+      ],
+      "video_type": "exam_practice",
+      "lesson_goal": "Student can instantly recognise the complementary angle trick, saving massive amounts of time on trig questions",
+      "prerequisite": "Trig ratios, identities, radians",
+      "key_formula": "\\sin(x) = \\cos(90^\\circ - x)",
+      "formula_spoken": "sine of x equals cosine of ninety minus x",
+      "visual_type": "diagram_and_board",
+      "narration_style": "revealing the 'magic trick' behind SAT geometry questions",
+      "estimated_minutes": 15,
+      "seo_title": "SAT Trigonometry — Complete Guide",
+      "thumbnail_angle": "SAT Trig — the ONE trick you need",
+      "playlist": "SAT — Additional Topics",
+      "status": "active",
+      "real_world_hook": "The SAT rarely asks you to calculate hard trigonometry. Instead, they test if you understand the geometry behind it. If they tell you that the sine of angle A is 4/5, and ask for the cosine of angle B, doing math is the wrong approach. The answer is already 4/5.",
+      "concept_intuition": "In a right triangle, the two sharp angles always add up to 90 degrees. Because of how SOH CAH TOA works, the 'Opposite' side for one angle is the exact same line as the 'Adjacent' side for the other angle. This means the Sine of one corner is always perfectly equal to the Cosine of the other corner.",
+      "visual_hints": "Hook: Draw a right triangle. Colour angle A blue and angle B green. Highlight the side between them. Show that from A's perspective, it is the Adjacent side. From B's perspective, it is the Opposite side. The ratio is the exact same line.",
+      "common_mistake": "Getting paralyzed when the SAT uses variables instead of numbers. e.g., 'If sin(x) = a, what is cos(90-x)?' Students try to plug in numbers and get lost. It's just testing the identity. The answer is 'a'.",
+      "board_examples": {
+        "formula": "\\text{Complementary Angles: } \\sin(x) = \\cos(90^\\circ - x)",
+        "worked_example": [
+          "\\text{In a right triangle, } \\sin(x^\\circ) = \\frac{4}{5}. \\text{ What is } \\cos(90^\\circ - x^\\circ)?",
+          "\\text{Step 1: Recognise } x \\text{ and } (90 - x) \\text{ are the two corners.}",
+          "\\text{Step 2: Apply the identity. Sine of one = Cosine of the other.}",
+          "\\Rightarrow \\cos(90^\\circ - x^\\circ) = \\frac{4}{5}"
+        ],
+        "practice": [
+          "\\text{If } \\sin(3a) = \\cos(2a-10^\\circ), \\text{ find } a.",
+          "\\text{Angles must add to } 90^\\circ.",
+          "3a + (2a - 10) = 90",
+          "5a - 10 = 90 \\Rightarrow 5a = 100 \\Rightarrow a = 20"
+        ]
+      }
+    },
+    {
+      "day": 40,
+      "global_track": "ACT",
+      "subject": "ACT Math",
+      "concept_cluster": "Pre-Algebra and Algebra",
+      "topic": "ACT Algebra Strategy",
+      "subtopic": "Backsolving, plugging in numbers, time management",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "ACT"
+      ],
+      "video_type": "exam_strategy",
+      "lesson_goal": "Student masters 'Backsolving' and 'Plugging In' to bypass complicated algebra entirely",
+      "prerequisite": "All algebra topics",
+      "key_formula": "\\text{Backsolve: try } x = \\text{answer choice C first}",
+      "formula_spoken": "plug in answer choice C first, then move up or down",
+      "visual_type": "worked_examples",
+      "narration_style": "tactical, fast-paced, treating the exam like a game to be won",
+      "estimated_minutes": 14,
+      "seo_title": "ACT Algebra Strategy — Shortcuts and Time Savers",
+      "thumbnail_angle": "ACT Algebra — solve in half the time",
+      "playlist": "ACT — Algebra",
+      "status": "active",
+      "real_world_hook": "The ACT Math section gives you 60 questions to finish in 60 minutes. If you try to do textbook algebra for every question, you will run out of time with 15 questions left. You need a strategy that bypasses the algebra completely.",
+      "concept_intuition": "The ACT gives you five answer choices, perfectly sorted from smallest to largest. This is a massive weakness you can exploit. We call it Backsolving. Instead of building a complex equation, just take the middle answer choice (C or H) and plug it directly into the word problem. If it's too big, you instantly know the answer must be A or B. You just eliminated 3 wrong answers with one test.",
+      "visual_hints": "Hook: Show a countdown timer ticking aggressively. Concept: Display 5 answer choices (A=10, B=20, C=30, D=40, E=50). Highlight C. Animate plugging C into the problem. Show it outputting a number that is 'too big'. Cross out C, D, and E in red immediately.",
+      "common_mistake": "Backsolving starting with choice A. If A is wrong, you learn nothing about the other choices, so you have to test them all. Always start in the middle (C) to cut the remaining options in half.",
+      "board_examples": {
+        "formula": "\\text{Strategy: Plug in C. Too big? } \\Rightarrow \\text{ Pick A or B. Too small? } \\Rightarrow \\text{ Pick D or E.}",
+        "worked_example": [
+          "\\text{A car rents for \\$30/day plus \\$0.15/mile. Total bill for 1 day is \\$52.50. Miles driven?}",
+          "A) 100 \\quad B) 120 \\quad C) 150 \\quad D) 180 \\quad E) 200",
+          "\\text{Test C (150 miles): } 30 + 0.15(150) = 30 + 22.50 = \\$52.50",
+          "\\text{Perfect match! The answer is C.}"
+        ],
+        "practice": [
+          "\\text{Variables in choices? Use PLUG-IN strategy.}",
+          "\\text{Q: If } p \\text{ is odd and } q \\text{ is even, which is odd?}",
+          "\\text{Step 1: Pick numbers. Let } p=3,\\ q=2.",
+          "\\text{A) } p+q \\Rightarrow 3+2=5 \\text{ (Odd. This is it!)}",
+          "\\text{B) } p \\times q \\Rightarrow 3 \\times 2=6 \\text{ (Even)}"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+# Video production pipeline
+manim>=0.18
+edge-tts>=6.1
+gTTS>=2.5
+nest_asyncio>=1.6
+ffmpeg-python>=0.2
+pillow>=10.0
+sympy>=1.12
+
+# YouTube auto-posting (activated once the channel is linked)
+google-api-python-client>=2.100
+google-auth-oauthlib>=1.1
+google-auth-httplib2>=0.1

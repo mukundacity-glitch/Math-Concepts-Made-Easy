@@ -1,0 +1,14 @@
+# Generated lesson output (videos, audio, renders)
+output/
+Math-9/
+
+# YouTube credentials — NEVER commit these
+secrets/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Manim / media scratch
+media/
