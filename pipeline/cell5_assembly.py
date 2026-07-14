@@ -230,8 +230,11 @@ def assemble_video(script):
 
     print()
 
-    if missing_files or len(muxed_files) != len(script["scenes"]):
-        raise SystemExit("🛑 Missing or failed chunks. Assembly aborted.")
+    if len(muxed_files) == 0:
+        raise SystemExit("🛑 No scenes rendered successfully. Assembly aborted.")
+    if missing_files:
+        skipped = len(script["scenes"]) - len(muxed_files)
+        print(f"  ⚠️  {skipped} scene(s) missing — assembling with {len(muxed_files)}/{len(script['scenes'])} available scenes.\n")
 
     # 2. Concatenation Phase with crossfades
     print(f"  🎬 Rendering Final Output with Crossfades...")
