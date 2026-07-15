@@ -53,13 +53,10 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      - name: Produce today's lesson (and upload if YouTube is linked)
+      - name: Produce today's lesson (render only — no upload)
         env:
           LESSON_DAY: ${{ github.event.inputs.day }}
-          YT_CLIENT_SECRET_JSON: ${{ secrets.YT_CLIENT_SECRET_JSON }}
-          YT_TOKEN_JSON: ${{ secrets.YT_TOKEN_JSON }}
-          YT_PRIVACY: ${{ vars.YT_PRIVACY }}
-        run: python autopilot.py --upload
+        run: python autopilot.py
 
       - name: Save finished videos as workflow artifacts
         if: always()

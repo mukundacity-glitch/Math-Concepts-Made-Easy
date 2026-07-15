@@ -683,37 +683,60 @@ class Scene03_Concept(Scene):
         self.play(Create(tbl), run_time=1.4)
 
     def _draw_visual_card(self):
-        # Number line
+        # Number line with rational vs irrational distinction
         nl = NumberLine(
             x_range=[-3, 3, 1],
             length=11,
             include_numbers=True,
             color=mc(C_SECOND),
             numbers_with_elongated_ticks=[-2,-1,0,1,2],
-        ).shift(DOWN * 0.2)
-
-        rational_points = [
-            (Dot(nl.n2p(-1.5), color=mc(C_GREEN), radius=0.1),
-             MathTex(r"-\tfrac{3}{2}", font_size=28, color=mc(C_GREEN))),
-            (Dot(nl.n2p(0.333), color=mc(C_BLUE),  radius=0.1),
-             MathTex(r"\tfrac{1}{3}",  font_size=28, color=mc(C_BLUE))),
-            (Dot(nl.n2p(0.75),  color=mc(C_GREEN), radius=0.1),
-             MathTex(r"\tfrac{3}{4}",  font_size=28, color=mc(C_GREEN))),
-            (Dot(nl.n2p(2.0),   color=mc(C_YELLOW),radius=0.1),
-             MathTex(r"2",             font_size=28, color=mc(C_YELLOW))),
-        ]
+        ).shift(DOWN * 0.5)
 
         heading2 = Text(
-            "Rational numbers live on the number line",
+            "Rational numbers fit exactly on the number line",
             font_size=26, color=mc(C_SECOND), font="Arial"
-        ).shift(UP * 2.5)
+        ).shift(UP * 3.0)
+
+        rational_label = Text(
+            "RATIONAL  (exact fraction)",
+            font_size=20, color=mc(C_GREEN), font="Arial"
+        ).to_corner(UL, buff=1.0).shift(DOWN * 1.2)
+
+        irrational_label = Text(
+            "IRRATIONAL  (no exact fraction)",
+            font_size=20, color=mc(C_RED), font="Arial"
+        ).to_corner(UR, buff=1.0).shift(DOWN * 1.2)
+
+        rational_points = [
+            (nl.n2p(-1.5),  r"-\tfrac{3}{2}",  C_GREEN, UP),
+            (nl.n2p(0.333), r"\tfrac{1}{3}",   C_GREEN, UP),
+            (nl.n2p(0.75),  r"\tfrac{3}{4}",   C_GREEN, DOWN),
+            (nl.n2p(2.0),   r"2 = \tfrac{2}{1}", C_GREEN, UP),
+        ]
+        irrational_point = (nl.n2p(1.4142), r"\sqrt{2}", C_RED)
 
         self.play(Create(nl), run_time=1.0)
         self.play(FadeIn(heading2), run_time=0.4)
-        for dot, lbl in rational_points:
-            lbl.next_to(dot, UP, buff=0.25)
+        self.play(FadeIn(rational_label), FadeIn(irrational_label), run_time=0.4)
+
+        for pos, tex, col, direction in rational_points:
+            dot = Dot(pos, color=mc(col), radius=0.1)
+            lbl = MathTex(tex, font_size=26, color=mc(col))
+            lbl.next_to(dot, direction, buff=0.25)
             self.play(FadeIn(dot), Write(lbl), run_time=0.45)
-            self.wait(0.2)
+            self.wait(0.15)
+
+        # Irrational point shown in red — never a clean fraction
+        irr_pos, irr_tex, irr_col = irrational_point
+        irr_dot = Dot(irr_pos, color=mc(irr_col), radius=0.1)
+        irr_lbl = MathTex(irr_tex, font_size=28, color=mc(irr_col))
+        irr_lbl.next_to(irr_dot, DOWN, buff=0.25)
+        irr_note = Text("≈ 1.41421…  never ends, never repeats",
+                        font_size=18, color=mc(irr_col), font="Arial")
+        irr_note.next_to(irr_lbl, DOWN, buff=0.15)
+        self.play(FadeIn(irr_dot), Write(irr_lbl), run_time=0.5)
+        self.play(FadeIn(irr_note), run_time=0.4)
+        self.wait(0.3)
 # ════════════════════════════════════════════════════════════
 # SCENE 04 — DEFINITION (VISUAL_ONLY)
 # Formal definition shown on clean card.
@@ -916,7 +939,15 @@ class Scene06_WorkedExample(Scene):
 
         per_step = max(0.5, (dur - 2.0) / max(len(steps), 1))
 
-        y_pos  = 2.2
+        # Adapt layout to step count so nothing falls off screen
+        if len(steps) <= 4:
+            font_size, y_spacing, y_start = 44, 0.92, 2.2
+        elif len(steps) <= 6:
+            font_size, y_spacing, y_start = 36, 0.80, 2.4
+        else:
+            font_size, y_spacing, y_start = 30, 0.68, 2.6
+
+        y_pos  = y_start
         mobs   = []
         for i, step_tex in enumerate(steps):
             if not step_tex.strip():
@@ -924,12 +955,12 @@ class Scene06_WorkedExample(Scene):
                 continue
             try:
                 mob = MathTex(
-                    step_tex, font_size=44,
+                    step_tex, font_size=font_size,
                     color=mc(C_YELLOW if i == 0 else C_PRIMARY)
                 )
             except Exception:
                 mob = Text(
-                    step_tex, font_size=26,
+                    step_tex, font_size=max(22, font_size - 8),
                     color=mc(C_PRIMARY), font="Arial"
                 )
             mob.to_edge(LEFT, buff=0.9)
@@ -937,7 +968,7 @@ class Scene06_WorkedExample(Scene):
             self.play(Write(mob), run_time=0.65)
             self.wait(per_step - 0.65)
             mobs.append(mob)
-            y_pos -= 0.92
+            y_pos -= y_spacing
 
         # Final answer highlight
         if mobs:
@@ -1071,17 +1102,27 @@ class Scene08_Practice(Scene):
         self.play(Write(q_mob), Create(q_box), run_time=0.8)
 
         per_step = max(0.5, (dur - 3.0) / max(len(solution_steps), 1))
-        y_pos    = 1.8
+
+        # Adapt layout to step count
+        n = len(solution_steps)
+        if n <= 3:
+            font_size, y_spacing, y_start = 42, 0.88, 1.8
+        elif n <= 5:
+            font_size, y_spacing, y_start = 34, 0.76, 2.0
+        else:
+            font_size, y_spacing, y_start = 28, 0.66, 2.2
+
+        y_pos    = y_start
 
         sol_mobs = []
         for step_tex in solution_steps:
             if not step_tex.strip():
                 continue
             try:
-                mob = MathTex(step_tex, font_size=42,
+                mob = MathTex(step_tex, font_size=font_size,
                               color=mc(C_PRIMARY))
             except Exception:
-                mob = Text(step_tex, font_size=26,
+                mob = Text(step_tex, font_size=max(20, font_size - 8),
                            color=mc(C_PRIMARY), font="Arial")
 
             mob.to_edge(LEFT, buff=0.9)
@@ -1089,7 +1130,7 @@ class Scene08_Practice(Scene):
             self.play(Write(mob), run_time=0.6)
             self.wait(per_step - 0.6)
             sol_mobs.append(mob)
-            y_pos -= 0.88
+            y_pos -= y_spacing
 
         # Final answer green highlight
         if sol_mobs:

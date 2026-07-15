@@ -1,0 +1,90 @@
+# Publish a finished lesson to YouTube.
+#
+# Run this AFTER you have reviewed the video in the lesson-output artifact
+# from the daily-video workflow and decided it is ready to go live.
+#
+# How to use:
+#   GitHub repo → Actions → "Publish Lesson to YouTube" → Run workflow
+#   Fill in the day number (e.g. 1) and choose privacy (private / public).
+#
+# Requires repository secrets:
+#   YT_CLIENT_SECRET_JSON   contents of secrets/client_secret.json
+#   YT_TOKEN_JSON           contents of secrets/token.json
+
+name: Publish Lesson to YouTube
+
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: "Lesson day to publish (e.g. 1)"
+        required: true
+      privacy:
+        description: "Privacy setting"
+        required: false
+        default: "private"
+        type: choice
+        options:
+          - private
+          - unlisted
+          - public
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download lesson artifact from daily-video run
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          name: lesson-output
+          path: output/final_videos
+          workflow: daily-video.yml
+          search_artifacts: true
+        continue-on-error: true
+
+      - name: Upload Day ${{ github.event.inputs.day }} to YouTube
+        env:
+          LESSON_DAY: ${{ github.event.inputs.day }}
+          YT_CLIENT_SECRET_JSON: ${{ secrets.YT_CLIENT_SECRET_JSON }}
+          YT_TOKEN_JSON: ${{ secrets.YT_TOKEN_JSON }}
+          YT_PRIVACY: ${{ github.event.inputs.privacy }}
+        run: |
+          python -m uploader.youtube_upload \
+            --day ${{ github.event.inputs.day }} \
+            --privacy ${{ github.event.inputs.privacy }}
+
+      - name: Mark day as uploaded in progress state
+        run: |
+          python - <<'EOF'
+          import json, sys
+          from pathlib import Path
+          p = Path("state/progress.json")
+          state = json.loads(p.read_text())
+          day = int("${{ github.event.inputs.day }}")
+          if day not in state.setdefault("uploaded", []):
+              state["uploaded"].append(day)
+          p.write_text(json.dumps(state, indent=2) + "\n")
+          print(f"Marked day {day} as uploaded.")
+          EOF
+
+      - name: Commit progress state
+        run: |
+          git config user.name "autopilot"
+          git config user.email "actions@users.noreply.github.com"
+          git add state/progress.json
+          git diff --cached --quiet || git commit -m "autopilot: mark day ${{ github.event.inputs.day }} as uploaded"
+          git push
