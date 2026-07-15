@@ -180,7 +180,17 @@ def add_banner(scene_obj):
     return None
 
 def set_background(scene_obj):
+    # Belt-and-braces: set on camera AND draw a full-frame dark rect BEHIND
+    # everything so no LaTeX SVG bounding-box ever bleeds pale artefacts.
     scene_obj.camera.background_color = mc(C_BG)
+    bg_rect = Rectangle(
+        width=config.frame_width + 2,
+        height=config.frame_height + 2,
+        fill_color=mc(C_BG), fill_opacity=1.0,
+        stroke_width=0,
+    )
+    bg_rect.set_z_index(-100)
+    scene_obj.add(bg_rect)
 
 def attach_audio(scene_obj, scene_id: int):
     mp3 = LESSON_AUDIO / f"scene_{scene_id:02d}.mp3"
@@ -209,6 +219,51 @@ def board_write_steps(scene_obj, steps: list, start_y: float = 2.0, color: str =
         scene_obj.play(Write(mob), run_time=0.7)
         scene_obj.wait(0.3)
         y -= 0.95
+
+def build_step_column(steps, font_size=44, buff=0.42, first_color=None,
+                      other_color=None, per_line_color=None,
+                      top_y=2.55, left_buff=0.9, max_height=5.9, max_width=12.4):
+    """
+    Build a VGroup of math/text steps arranged straight down with GUARANTEED
+    no overlap. VGroup.arrange measures each rendered mob's real height, so
+    tall fractions (\\tfrac, \\frac) never collide.
+
+    Returns the list of individual mobs so scenes can .play(Write(m)) one
+    at a time in sync with narration.
+    """
+    first_color = first_color or C_YELLOW
+    other_color = other_color or C_PRIMARY
+    mobs = []
+    for i, step_tex in enumerate(steps):
+        if not step_tex or not step_tex.strip():
+            continue
+        if per_line_color:
+            col = per_line_color(i, step_tex)
+        else:
+            col = first_color if i == 0 else other_color
+        try:
+            m = MathTex(step_tex, font_size=font_size, color=mc(col))
+        except Exception:
+            m = Text(step_tex, font_size=max(20, font_size - 14),
+                     color=mc(col), font="Arial")
+        mobs.append(m)
+
+    if not mobs:
+        return mobs
+
+    grp = VGroup(*mobs).arrange(DOWN, aligned_edge=LEFT, buff=buff)
+
+    # Auto-shrink so the whole column fits inside the safe area
+    scale_h = min(1.0, max_height / max(grp.height, 0.01))
+    scale_w = min(1.0, max_width  / max(grp.width,  0.01))
+    scale   = min(scale_h, scale_w)
+    if scale < 1.0:
+        grp.scale(scale)
+
+    # Anchor: left-aligned, top of column at top_y
+    grp.to_edge(LEFT, buff=left_buff)
+    grp.shift(UP * (top_y - grp.get_top()[1]))
+    return mobs
 
 def sync_to_audio(scene_obj, scene_id: int):
     """Extend scene duration to match audio. Call as last line of every construct()."""
@@ -850,40 +905,27 @@ class Scene05_Formula(Scene):
         steps   = board.get("worked_example", [])
 
         if steps:
-            # Write each step one at a time — EQUATION_BUILD pattern
-            visible_mobs = []
-            y_pos = 1.8
             per_step = max(0.5, (dur - 2.5) / len(steps))
 
-            for i, step_tex in enumerate(steps):
-                try:
-                    mob = MathTex(
-                        step_tex, font_size=52,
-                        color=mc(C_YELLOW if i == 0 else C_PRIMARY)
-                    )
-                except Exception:
-                    mob = Text(
-                        step_tex, font_size=28,
-                        color=mc(C_PRIMARY), font="Arial"
-                    )
+            fs = 46 if len(steps) <= 4 else (38 if len(steps) <= 6 else 30)
+            visible_mobs = build_step_column(
+                steps, font_size=fs, buff=0.45,
+                first_color=C_YELLOW, other_color=C_PRIMARY,
+                top_y=2.4, left_buff=1.0, max_height=5.6,
+            )
 
-                mob.to_edge(LEFT, buff=1.0)
-                mob.shift(UP * y_pos)
-
-                # Dim previous mobs
-                if visible_mobs:
+            shown = []
+            for mob in visible_mobs:
+                if shown:
                     self.play(
-                        *[m.animate.set_opacity(0.4)
-                          for m in visible_mobs],
+                        *[m.animate.set_opacity(0.4) for m in shown],
                         Write(mob),
-                        run_time=0.7
+                        run_time=0.7,
                     )
                 else:
                     self.play(Write(mob), run_time=0.7)
-
-                visible_mobs.append(mob)
-                self.wait(per_step - 0.7)
-                y_pos -= 0.95
+                shown.append(mob)
+                self.wait(max(0.1, per_step - 0.7))
         else:
             # Fallback: write full formula centered
             try:
@@ -939,36 +981,25 @@ class Scene06_WorkedExample(Scene):
 
         per_step = max(0.5, (dur - 2.0) / max(len(steps), 1))
 
-        # Adapt layout to step count so nothing falls off screen
+        # Pre-build the whole column with VGroup.arrange so tall fractions
+        # like \tfrac{3}{8} cannot overlap the next line. Auto-shrinks if
+        # the column would exceed the safe area.
         if len(steps) <= 4:
-            font_size, y_spacing, y_start = 44, 0.92, 2.2
+            fs = 42
         elif len(steps) <= 6:
-            font_size, y_spacing, y_start = 36, 0.80, 2.4
+            fs = 34
         else:
-            font_size, y_spacing, y_start = 30, 0.68, 2.6
+            fs = 28
 
-        y_pos  = y_start
-        mobs   = []
-        for i, step_tex in enumerate(steps):
-            if not step_tex.strip():
-                y_pos -= 0.4
-                continue
-            try:
-                mob = MathTex(
-                    step_tex, font_size=font_size,
-                    color=mc(C_YELLOW if i == 0 else C_PRIMARY)
-                )
-            except Exception:
-                mob = Text(
-                    step_tex, font_size=max(22, font_size - 8),
-                    color=mc(C_PRIMARY), font="Arial"
-                )
-            mob.to_edge(LEFT, buff=0.9)
-            mob.shift(UP * y_pos)
-            self.play(Write(mob), run_time=0.65)
-            self.wait(per_step - 0.65)
-            mobs.append(mob)
-            y_pos -= y_spacing
+        mobs = build_step_column(
+            steps, font_size=fs, buff=0.45,
+            first_color=C_YELLOW, other_color=C_PRIMARY,
+            top_y=2.55, left_buff=0.9, max_height=5.9,
+        )
+
+        for m in mobs:
+            self.play(Write(m), run_time=0.65)
+            self.wait(max(0.1, per_step - 0.65))
 
         # Final answer highlight
         if mobs:
@@ -1010,37 +1041,39 @@ class Scene07_Mistakes(Scene):
         ])
 
         per_step = max(0.5, (dur - 2.0) / max(len(steps), 1))
-        y_pos    = 2.0
 
-        for i, step_tex in enumerate(steps):
-            if not step_tex.strip():
-                continue
-            is_wrong   = "Mistake" in step_tex or "Wrong" in step_tex
-            is_correct = "Correct" in step_tex or "checkmark" in step_tex or "\\checkmark" in step_tex
-            color      = C_RED if is_wrong else (C_GREEN if is_correct else C_PRIMARY)
+        def _line_color(i, txt):
+            if "Mistake" in txt or "Wrong" in txt:
+                return C_RED
+            if "Correct" in txt or "checkmark" in txt or "\\checkmark" in txt:
+                return C_GREEN
+            return C_PRIMARY
 
-            try:
-                mob = MathTex(step_tex, font_size=40, color=mc(color))
-            except Exception:
-                mob = Text(step_tex, font_size=24,
-                           color=mc(color), font="Arial")
+        # Guaranteed-no-overlap auto-arranged column
+        fs = 38 if len(steps) <= 4 else 30
+        mobs = build_step_column(
+            steps, font_size=fs, buff=0.45,
+            per_line_color=_line_color,
+            top_y=2.4, left_buff=1.3, max_height=5.6,
+        )
 
-            mob.to_edge(LEFT, buff=0.9)
-            mob.shift(UP * y_pos)
+        for i, mob in enumerate(mobs):
+            txt = steps[i] if i < len(steps) else ""
+            is_wrong   = "Mistake" in txt or "Wrong" in txt
+            is_correct = "Correct" in txt or "checkmark" in txt or "\\checkmark" in txt
 
             if is_wrong:
-                cross = Text("✗", font_size=36,
-                             color=mc(C_RED)).next_to(mob, LEFT, buff=0.2)
-                self.play(Write(mob), FadeIn(cross), run_time=0.65)
+                mark = Text("✗", font_size=32,
+                            color=mc(C_RED)).next_to(mob, LEFT, buff=0.25)
+                self.play(Write(mob), FadeIn(mark), run_time=0.65)
             elif is_correct:
-                tick = Text("✓", font_size=36,
-                            color=mc(C_GREEN)).next_to(mob, LEFT, buff=0.2)
-                self.play(Write(mob), FadeIn(tick), run_time=0.65)
+                mark = Text("✓", font_size=32,
+                            color=mc(C_GREEN)).next_to(mob, LEFT, buff=0.25)
+                self.play(Write(mob), FadeIn(mark), run_time=0.65)
             else:
                 self.play(Write(mob), run_time=0.65)
 
-            self.wait(per_step - 0.65)
-            y_pos -= 0.95
+            self.wait(max(0.1, per_step - 0.65))
 
         sync_to_audio(self, sd.get("scene_id", 7))
 
@@ -1103,34 +1136,26 @@ class Scene08_Practice(Scene):
 
         per_step = max(0.5, (dur - 3.0) / max(len(solution_steps), 1))
 
-        # Adapt layout to step count
         n = len(solution_steps)
         if n <= 3:
-            font_size, y_spacing, y_start = 42, 0.88, 1.8
+            fs = 40
         elif n <= 5:
-            font_size, y_spacing, y_start = 34, 0.76, 2.0
+            fs = 32
         else:
-            font_size, y_spacing, y_start = 28, 0.66, 2.2
+            fs = 26
 
-        y_pos    = y_start
+        # Anchor top of solution column just below the question box
+        q_bottom_y = q_box.get_bottom()[1] - 0.35
 
-        sol_mobs = []
-        for step_tex in solution_steps:
-            if not step_tex.strip():
-                continue
-            try:
-                mob = MathTex(step_tex, font_size=font_size,
-                              color=mc(C_PRIMARY))
-            except Exception:
-                mob = Text(step_tex, font_size=max(20, font_size - 8),
-                           color=mc(C_PRIMARY), font="Arial")
+        sol_mobs = build_step_column(
+            solution_steps, font_size=fs, buff=0.42,
+            first_color=C_PRIMARY, other_color=C_PRIMARY,
+            top_y=q_bottom_y, left_buff=0.9, max_height=q_bottom_y + 3.4,
+        )
 
-            mob.to_edge(LEFT, buff=0.9)
-            mob.shift(UP * y_pos)
-            self.play(Write(mob), run_time=0.6)
-            self.wait(per_step - 0.6)
-            sol_mobs.append(mob)
-            y_pos -= y_spacing
+        for m in sol_mobs:
+            self.play(Write(m), run_time=0.6)
+            self.wait(max(0.1, per_step - 0.6))
 
         # Final answer green highlight
         if sol_mobs:
