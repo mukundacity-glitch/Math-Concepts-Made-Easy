@@ -1,14 +1,17 @@
-# Daily lesson autopilot.
+# Full autopilot — renders AND uploads to YouTube every day automatically.
 #
-# OFF by default. To enable:
-#   Repo → Settings → Secrets and variables → Actions → Variables →
-#   add  AUTOPILOT_ENABLED = true
+# SETUP (one-time, in GitHub repo settings):
+#   Settings → Secrets and variables → Actions
 #
-# To auto-post to YouTube, also add these repository SECRETS
-# (see README → "Linking your YouTube channel"):
-#   YT_CLIENT_SECRET_JSON   contents of secrets/client_secret.json
-#   YT_TOKEN_JSON           contents of secrets/token.json
-# and optionally the variable YT_PRIVACY = public (default: private).
+#   Secrets required (contents of your local files):
+#     YT_CLIENT_SECRET_JSON   paste the full contents of secrets/client_secret.json
+#     YT_TOKEN_JSON           paste the full contents of secrets/token.json
+#
+#   Variables required to enable the schedule:
+#     AUTOPILOT_ENABLED = true          (prevents accidental runs on forks)
+#
+#   Optional variable:
+#     YT_PRIVACY = public               (default: public — change to private/unlisted to hold)
 
 name: Daily Lesson Video
 
@@ -16,18 +19,26 @@ on:
   schedule:
     # Target: 5:00 PM US Eastern daily — when Grade 9-10 students get home
     # and search for homework help. GitHub cron runs in UTC, so production
-    # starts ~2h earlier to allow render time:
-    #   19:00 UTC = 3:00 PM EDT (school year Mar-Nov) / 2:00 PM EST →
-    #   video goes live close to the 4-6 PM ET window.
+    # starts ~2h earlier to allow render + upload time:
+    #   19:00 UTC = 3:00 PM EDT (school year Mar-Nov) / 2:00 PM EST
     - cron: "0 19 * * *"
   workflow_dispatch:
     inputs:
       day:
         description: "Lesson day to produce (blank = next scheduled)"
         required: false
+      privacy:
+        description: "YouTube privacy"
+        required: false
+        default: "public"
+        type: choice
+        options:
+          - public
+          - unlisted
+          - private
 
 jobs:
-  produce:
+  produce-and-publish:
     if: ${{ vars.AUTOPILOT_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -53,10 +64,13 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      - name: Produce today's lesson (render only — no upload)
+      - name: Render and upload today's lesson to YouTube
         env:
           LESSON_DAY: ${{ github.event.inputs.day }}
-        run: python autopilot.py
+          YT_CLIENT_SECRET_JSON: ${{ secrets.YT_CLIENT_SECRET_JSON }}
+          YT_TOKEN_JSON: ${{ secrets.YT_TOKEN_JSON }}
+          YT_PRIVACY: ${{ github.event.inputs.privacy || vars.YT_PRIVACY || 'public' }}
+        run: python autopilot.py --upload
 
       - name: Save finished videos as workflow artifacts
         if: always()
