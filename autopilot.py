@@ -105,7 +105,8 @@ def main():
                 state["uploaded"].append(day)
             write_state(state)
 
-    safe = lesson["seo_title"].replace(" ", "_").replace("—", "-")
+    from pipeline.paths import safe_filename
+    safe = safe_filename(lesson["seo_title"])
     print(f"\n{'═' * 65}")
     print(f"  🎉 DAY {day} COMPLETE — {lesson['topic']}")
     print(f"  🎬 Video     : final_videos/Day_{day:03d}_{safe}.mp4")

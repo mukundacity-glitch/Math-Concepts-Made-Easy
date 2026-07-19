@@ -33,7 +33,8 @@ print("✅ cell1_config loaded.")
 
 lesson_data = cell1_config.CURRICULUM[0]
 lesson_id   = lesson_data['id']
-seo_title   = lesson_data['seo_title'].replace(" ", "_").replace("—", "-")
+from pipeline.paths import safe_filename
+seo_title   = safe_filename(lesson_data['seo_title'])
 
 SCRIPTS_DIR    = cell1_config.SCRIPTS_DIR
 THUMBNAILS_DIR = cell1_config.THUMBNAILS_DIR

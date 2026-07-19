@@ -26,7 +26,8 @@ MAX_CAPTION_SECONDS = 6  # split captions longer than this
 
 lesson_data = cell1_config.CURRICULUM[0]
 lesson_id   = lesson_data["id"]
-safe_title  = lesson_data["seo_title"].replace(" ", "_").replace("—", "-")
+from pipeline.paths import safe_filename
+safe_title  = safe_filename(lesson_data["seo_title"])
 
 SCRIPTS_DIR = cell1_config.SCRIPTS_DIR
 AUDIO_DIR   = cell1_config.AUDIO_DIR

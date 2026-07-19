@@ -14,9 +14,17 @@ The day to produce is resolved in this order:
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+_INVALID_CHARS = re.compile(r'[\\/:*?"<>|\r\n]')
+
+
+def safe_filename(title: str) -> str:
+    """Return a filesystem- and artifact-safe version of a lesson title."""
+    return _INVALID_CHARS.sub('', title).replace(" ", "_").replace("—", "-")
 STATE_PATH = REPO_ROOT / "state" / "progress.json"
 
 OUTPUT_FOLDERS = [

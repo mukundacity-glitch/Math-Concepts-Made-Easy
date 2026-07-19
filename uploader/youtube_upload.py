@@ -152,7 +152,8 @@ def build_tags(lesson: dict) -> list:
 
 def lesson_paths(lesson: dict) -> dict:
     day = lesson["day"]
-    safe = lesson["seo_title"].replace(" ", "_").replace("—", "-")
+    from pipeline.paths import safe_filename
+    safe = safe_filename(lesson["seo_title"])
     final_dir = BASE_DIR / "final_videos"
     return {
         "video": final_dir / f"Day_{day:03d}_{safe}.mp4",
