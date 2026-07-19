@@ -14,6 +14,7 @@ The day to produce is resolved in this order:
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -69,6 +70,21 @@ def get_day_number() -> int:
     if env:
         return int(env)
     return int(read_state().get("next_day", 1))
+
+
+_INVALID_FILENAME_CHARS = re.compile(r'[\\/:*?"<>|\r\n]')
+
+
+def safe_filename(title: str) -> str:
+    """
+    Convert an SEO title to a safe cross-platform filename component.
+    Strips characters invalid on NTFS/GitHub Actions artifacts
+    (? " : < > | * \\ / \\r \\n), then replaces spaces with underscores
+    and em-dashes with hyphens.
+    """
+    safe = _INVALID_FILENAME_CHARS.sub("", title)
+    safe = safe.replace(" ", "_").replace("—", "-").replace("–", "-")
+    return safe.strip("_-")
 
 
 def load_cell1_config():

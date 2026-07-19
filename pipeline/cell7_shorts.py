@@ -14,12 +14,12 @@ from pathlib import Path
 import sys as _sys
 from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
-from pipeline.paths import load_cell1_config
+from pipeline.paths import load_cell1_config, safe_filename
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 lesson_data   = cell1_config.CURRICULUM[0]
 lesson_id     = lesson_data['id']
-safe_title    = lesson_data['seo_title'].replace(" ", "_").replace("—", "-")
+safe_title    = safe_filename(lesson_data['seo_title'])
 
 SCRIPTS_DIR   = cell1_config.SCRIPTS_DIR
 AUDIO_DIR     = cell1_config.AUDIO_DIR

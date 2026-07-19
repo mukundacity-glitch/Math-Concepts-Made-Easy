@@ -22,7 +22,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from pipeline.paths import BASE_DIR, read_state, write_state
+from pipeline.paths import BASE_DIR, read_state, write_state, safe_filename
 from pipeline.curriculum import MASTER_CURRICULUM, TOTAL_DAYS, get_lesson
 
 STAGES = [
@@ -105,7 +105,7 @@ def main():
                 state["uploaded"].append(day)
             write_state(state)
 
-    safe = lesson["seo_title"].replace(" ", "_").replace("—", "-")
+    safe = safe_filename(lesson["seo_title"])
     print(f"\n{'═' * 65}")
     print(f"  🎉 DAY {day} COMPLETE — {lesson['topic']}")
     print(f"  🎬 Video     : final_videos/Day_{day:03d}_{safe}.mp4")
