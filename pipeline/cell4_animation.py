@@ -124,6 +124,19 @@ C_YELLOW  = "{C_YELLOW}"
 C_RED     = "{C_RED}"
 C_CARD    = "{C_CARD}"
 
+# ── Premium design-system constants (hardcoded, not per-theme) ──
+C_GOLD    = "#FFB300"   # warm amber gold — key equations, curves
+C_TEAL    = "#1A7070"   # teal — graph area fill, coordinate shading
+C_NEON    = "#1C72CC"   # electric blue — neon wireframe geometry
+C_CHALK   = "#E0EAD8"   # warm chalk white — chalkboard text
+C_COPPER  = "#B87333"   # copper — alternate title accent
+
+# Per-scene background colours — richer darks match reference palette
+C_BG_SPACE = "#06111E"  # deep navy/space for opening, summary, hook
+C_BG_TEAL  = "#091E1E"  # dark teal chalkboard for concept, practice
+C_BG_BLACK = "#070707"  # near-black for formula, graph
+C_BG_DARK  = "#0C0C0C"  # charcoal for worked_example, mistakes
+
 config.background_color = C_BG
 
 CHANNEL   = "MathConceptsMadeEasy"
@@ -179,18 +192,35 @@ def add_banner(scene_obj):
             pass
     return None
 
-def set_background(scene_obj):
+def set_background(scene_obj, bg_hex=None):
     # Belt-and-braces: set on camera AND draw a full-frame dark rect BEHIND
     # everything so no LaTeX SVG bounding-box ever bleeds pale artefacts.
-    scene_obj.camera.background_color = mc(C_BG)
+    color = bg_hex or C_BG
+    scene_obj.camera.background_color = mc(color)
     bg_rect = Rectangle(
         width=config.frame_width + 2,
         height=config.frame_height + 2,
-        fill_color=mc(C_BG), fill_opacity=1.0,
+        fill_color=mc(color), fill_opacity=1.0,
         stroke_width=0,
     )
     bg_rect.set_z_index(-100)
     scene_obj.add(bg_rect)
+
+SCENE_BG_MAP = {
+    "opening"       : C_BG_SPACE,
+    "hook"          : C_BG_SPACE,
+    "concept"       : C_BG_TEAL,
+    "definition"    : C_BG_TEAL,
+    "formula"       : C_BG_BLACK,
+    "worked_example": C_BG_DARK,
+    "mistakes"      : C_BG_DARK,
+    "practice"      : C_BG_TEAL,
+    "summary"       : C_BG_SPACE,
+}
+
+def set_scene_bg(scene_obj, step: str):
+    """Apply a rich, scene-specific dark background matching the visual brief."""
+    set_background(scene_obj, SCENE_BG_MAP.get(step, C_BG))
 
 def attach_audio(scene_obj, scene_id: int):
     mp3 = LESSON_AUDIO / f"scene_{scene_id:02d}.mp3"
@@ -662,6 +692,160 @@ def scene_title_reveal(scene_obj, title_text: str, accent_color: str,
 
     return VGroup(*[m for m in [title, sub_mob] if m is not None])
 
+# ═════════════════════════════════════════════════════════════════
+# VISUAL ENVIRONMENT PRIMITIVES
+# ─────────────────────────────────────────────────────────────────
+# Three scene-level atmosphere helpers that match the premium
+# reference image palette (deep space, chalkboard, near-black).
+# Call these right after set_scene_bg() in every scene.
+# ═════════════════════════════════════════════════════════════════
+
+def add_star_field(scene_obj, n_stars=90, max_opacity=0.55):
+    """
+    Tiny white dots scattered across the frame — creates the deep-space
+    depth seen in the dark-navy reference slides. Deterministic seed so
+    every render looks identical.
+    """
+    import numpy as np, random as _r
+    rng = _r.Random(42)
+    hw  = config.frame_width  / 2 - 0.1
+    hh  = config.frame_height / 2 - 0.1
+    for _ in range(n_stars):
+        x  = rng.uniform(-hw, hw)
+        y  = rng.uniform(-hh, hh)
+        r  = rng.uniform(0.012, 0.046)
+        op = rng.uniform(0.15, max_opacity)
+        s  = Dot(point=np.array([x, y, 0]), radius=r,
+                 color=WHITE, fill_opacity=op)
+        s.set_z_index(-50)
+        scene_obj.add(s)
+
+
+def add_floating_geometry(scene_obj, style="tech"):
+    """
+    Corner wireframe 3D-looking shapes — the premium signature seen in
+    the reference images (circle+inscribed triangle, diamond, frustum,
+    rectangle). Three presets:
+      'tech'   → neon blue, semi-opaque  (opening / summary / hook)
+      'chalk'  → warm off-white, softer  (concept / definition / practice)
+      'subtle' → very faint grey         (formula / worked_example / mistakes)
+    """
+    import numpy as np
+    col_map = {"tech": C_NEON, "chalk": "#A8BEA0", "subtle": "#283848"}
+    op_map  = {"tech": 0.55,   "chalk": 0.42,       "subtle": 0.22}
+    sw_map  = {"tech": 1.8,    "chalk": 1.6,         "subtle": 1.1}
+    col = col_map.get(style, C_NEON)
+    op  = op_map .get(style, 0.55)
+    sw  = sw_map .get(style, 1.8)
+
+    shapes = []
+
+    # ── Top-right: large circle with inscribed triangle + inner circle ──
+    TRCX, TRCY = 5.7, 3.0
+    big_c = Circle(radius=1.55, color=mc(col), stroke_width=sw)
+    big_c.move_to(np.array([TRCX, TRCY, 0])).set_stroke(opacity=op)
+    inn_c = Circle(radius=0.88, color=mc(col), stroke_width=sw * 0.75)
+    inn_c.move_to(np.array([TRCX, TRCY, 0])).set_stroke(opacity=op * 0.65)
+    # Inscribed triangle
+    tri_pts = [big_c.point_at_angle(a)
+               for a in [np.pi / 2, -np.pi / 6, -5 * np.pi / 6]]
+    tri = Polygon(*tri_pts, color=mc(col), stroke_width=sw * 0.75)
+    tri.set_fill(opacity=0).set_stroke(opacity=op * 0.60)
+    # Altitude from apex to base midpoint
+    alt = Line(tri_pts[0], (tri_pts[1] + tri_pts[2]) / 2,
+               color=mc(col), stroke_width=sw * 0.55)
+    alt.set_stroke(opacity=op * 0.45)
+    shapes += [big_c, inn_c, tri, alt]
+
+    # ── Bottom-right: diamond / rhombus ──
+    cx, cy = 5.9, -2.8
+    diamond = Polygon(
+        np.array([cx,        cy + 0.85, 0]),
+        np.array([cx + 0.85, cy,        0]),
+        np.array([cx,        cy - 0.85, 0]),
+        np.array([cx - 0.85, cy,        0]),
+        color=mc(col), stroke_width=sw
+    ).set_fill(opacity=0).set_stroke(opacity=op * 0.60)
+    shapes.append(diamond)
+
+    # ── Bottom-left: truncated cone (frustum) ──
+    fx, fy = -5.7, -2.4
+    tw, bw, h = 0.95, 1.45, 1.55
+    frustum = VMobject(color=mc(col), stroke_width=sw)
+    frustum.set_points_as_corners([
+        np.array([fx - tw, fy,     0]),
+        np.array([fx + tw, fy,     0]),
+        np.array([fx + bw, fy - h, 0]),
+        np.array([fx - bw, fy - h, 0]),
+        np.array([fx - tw, fy,     0]),
+    ])
+    frustum.set_fill(opacity=0).set_stroke(opacity=op * 0.52)
+    ell_t = Ellipse(width=tw * 2 + 0.08, height=0.36,
+                    color=mc(col), stroke_width=sw * 0.7)
+    ell_t.move_to(np.array([fx, fy,     0])).set_stroke(opacity=op * 0.46)
+    ell_b = Ellipse(width=bw * 2,         height=0.46,
+                    color=mc(col), stroke_width=sw * 0.7)
+    ell_b.move_to(np.array([fx, fy - h, 0])).set_stroke(opacity=op * 0.42)
+    shapes += [frustum, ell_t, ell_b]
+
+    # ── Top-left: rectangle tablet outline ──
+    rect = Rectangle(width=1.85, height=1.25,
+                     color=mc(col), stroke_width=sw * 0.85)
+    rect.move_to(np.array([-6.05, 2.85, 0]))
+    rect.set_fill(opacity=0).set_stroke(opacity=op * 0.48)
+    shapes.append(rect)
+
+    # Tiny crosshair / plus marks — atmospheric scatter
+    for pos in [
+        np.array([ 1.6,  3.6, 0]),
+        np.array([ 4.0, -0.6, 0]),
+        np.array([-2.2,  1.1, 0]),
+    ]:
+        arm = 0.14
+        for ln in [
+            Line(pos + LEFT * arm, pos + RIGHT * arm,
+                 color=mc(col), stroke_width=sw * 0.6),
+            Line(pos + UP   * arm, pos + DOWN  * arm,
+                 color=mc(col), stroke_width=sw * 0.6),
+        ]:
+            ln.set_stroke(opacity=op * 0.38)
+            shapes.append(ln)
+
+    for s in shapes:
+        s.set_z_index(-30)
+        scene_obj.add(s)
+    return shapes
+
+
+def add_math_scatter(scene_obj, opacity=0.07, n=24):
+    """
+    Faint math symbols scattered across the background as a texture layer —
+    inspired by the 'math symbol pattern' reference slide. Gives educational
+    depth without cluttering content.
+    """
+    import numpy as np, random as _r
+    symbols = [
+        "\\div", "\\times", "+", "=", "-", "\\sqrt{x}",
+        "\\pi", "\\infty", "f(x)", "\\Delta", "\\Sigma", "\\alpha",
+    ]
+    rng = _r.Random(13)
+    hw  = config.frame_width  / 2 - 0.6
+    hh  = config.frame_height / 2 - 0.4
+    for _ in range(n):
+        sym = rng.choice(symbols)
+        x   = rng.uniform(-hw, hw)
+        y   = rng.uniform(-hh, hh)
+        sz  = rng.uniform(16, 30)
+        try:
+            m = MathTex(sym, font_size=sz, color=mc(C_PRIMARY))
+        except Exception:
+            m = Text(sym, font_size=int(sz), color=mc(C_PRIMARY), font="Arial")
+        m.move_to(np.array([x, y, 0]))
+        m.set_opacity(opacity)
+        m.set_z_index(-20)
+        scene_obj.add(m)
+
+
 # ════════════════════════════════════════════════════════════
 # SCENE 01 — WHAT IS A RATIONAL NUMBER?
 # Layout  : Title top | Fraction large center | Content below
@@ -674,7 +858,9 @@ def scene_title_reveal(scene_obj, title_text: str, accent_color: str,
 class Scene01_Opening(Scene):
     def construct(self):
         sd = get_scene_data("opening")
-        set_background(self)
+        set_scene_bg(self, "opening")
+        add_star_field(self)
+        add_floating_geometry(self, "tech")
         attach_audio(self, sd.get("scene_id", 1))
         add_broadcast_chrome(self, "opening")
 
@@ -1004,7 +1190,9 @@ class Scene02_Hook(Scene):
     def construct(self):
         sd  = get_scene_data("hook")
         dur = sd.get("duration_seconds", 20.0)
-        set_background(self)
+        set_scene_bg(self, "hook")
+        add_star_field(self, n_stars=60, max_opacity=0.40)
+        add_floating_geometry(self, "tech")
         attach_audio(self, sd.get("scene_id", 2))
         add_broadcast_chrome(self, "hook")
 
@@ -1058,7 +1246,9 @@ class Scene03_Concept(Scene):
         sd       = get_scene_data("concept")
         dur      = sd.get("duration_seconds", 22.0)
         vis_type = SCRIPT_DATA.get("visual_type", "board_write")
-        set_background(self)
+        set_scene_bg(self, "concept")
+        add_floating_geometry(self, "chalk")
+        add_math_scatter(self)
         attach_audio(self, sd.get("scene_id", 3))
         add_broadcast_chrome(self, "concept")
 
@@ -1184,7 +1374,8 @@ class Scene04_Definition(Scene):
     def construct(self):
         sd  = get_scene_data("definition")
         dur = sd.get("duration_seconds", 16.0)
-        set_background(self)
+        set_scene_bg(self, "definition")
+        add_floating_geometry(self, "chalk")
         attach_audio(self, sd.get("scene_id", 4))
         add_broadcast_chrome(self, "definition")
 
@@ -1266,17 +1457,28 @@ class Scene05_Formula(Scene):
     def construct(self):
         sd  = get_scene_data("formula")
         dur = sd.get("duration_seconds", 20.0)
-        set_background(self)
+        set_scene_bg(self, "formula")
+        add_math_scatter(self, opacity=0.05)
         attach_audio(self, sd.get("scene_id", 5))
         add_broadcast_chrome(self, "formula")
 
+        # Gold/amber heading on near-black — matches the premium
+        # "pure black + gold curve" reference image
         heading = Text(
             "The Formula",
-            font_size=42, color=mc(C_YELLOW),
+            font_size=42, color=mc(C_GOLD),
             font="Arial", weight=BOLD
         ).to_edge(UP, buff=0.55)
 
+        underline = Line(
+            heading.get_left() + DOWN * 0.1,
+            heading.get_right() + DOWN * 0.1,
+            color=mc(C_GOLD), stroke_width=2.5,
+        )
+        underline.shift(DOWN * heading.height * 0.5 + DOWN * 0.08)
+
         self.play(Write(heading), run_time=0.6)
+        self.play(Create(underline), run_time=0.4)
 
         # Read board_examples formula field
         board   = sd.get("board_examples", {})
@@ -1290,9 +1492,10 @@ class Scene05_Formula(Scene):
             per_step = max(0.5, (dur - 2.5) / len(steps))
 
             fs = 46 if len(steps) <= 4 else (38 if len(steps) <= 6 else 30)
+            # First line in gold, rest in chalk-white
             visible_mobs = build_step_column(
                 steps, font_size=fs, buff=0.45,
-                first_color=C_YELLOW, other_color=C_PRIMARY,
+                first_color=C_GOLD, other_color=C_CHALK,
                 top_y=2.4, left_buff=1.0, max_height=5.6,
             )
 
@@ -1309,18 +1512,18 @@ class Scene05_Formula(Scene):
                 shown.append(mob)
                 self.wait(max(0.1, per_step - 0.7))
         else:
-            # Fallback: write full formula centered
+            # Fallback: gold formula centred on black — premium look
             try:
                 fml = MathTex(formula_str, font_size=80,
-                              color=mc(C_PRIMARY))
+                              color=mc(C_GOLD))
             except Exception:
                 fml = Text(SCRIPT_DATA.get("formula_spoken", ""),
-                           font_size=32, color=mc(C_PRIMARY),
+                           font_size=32, color=mc(C_GOLD),
                            font="Arial")
             fml.shift(UP * 0.5)
             box = SurroundingRectangle(
-                fml, color=mc(C_YELLOW),
-                stroke_width=2.5, buff=0.4, corner_radius=0.2
+                fml, color=mc(C_GOLD),
+                stroke_width=2.0, buff=0.4, corner_radius=0.2
             )
             self.play(Write(fml), run_time=1.4)
             self.play(Create(box), run_time=0.5)
@@ -1338,7 +1541,8 @@ class Scene06_WorkedExample(Scene):
     def construct(self):
         sd  = get_scene_data("worked_example")
         dur = sd.get("duration_seconds", 24.0)
-        set_background(self)
+        set_scene_bg(self, "worked_example")
+        add_floating_geometry(self, "subtle")
         attach_audio(self, sd.get("scene_id", 6))
         add_broadcast_chrome(self, "worked_example")
 
@@ -1429,7 +1633,8 @@ class Scene07_Mistakes(Scene):
     def construct(self):
         sd  = get_scene_data("mistakes")
         dur = sd.get("duration_seconds", 22.0)
-        set_background(self)
+        set_scene_bg(self, "mistakes")
+        add_floating_geometry(self, "subtle")
         attach_audio(self, sd.get("scene_id", 7))
         add_broadcast_chrome(self, "mistakes")
 
@@ -1551,7 +1756,9 @@ class Scene08_Practice(Scene):
     def construct(self):
         sd  = get_scene_data("practice")
         dur = sd.get("duration_seconds", 20.0)
-        set_background(self)
+        set_scene_bg(self, "practice")
+        add_floating_geometry(self, "chalk")
+        add_math_scatter(self)
         attach_audio(self, sd.get("scene_id", 8))
         add_broadcast_chrome(self, "practice")
 
@@ -1652,7 +1859,9 @@ class Scene09_Summary(Scene):
     def construct(self):
         sd  = get_scene_data("summary")
         dur = sd.get("duration_seconds", 24.0)
-        set_background(self)
+        set_scene_bg(self, "summary")
+        add_star_field(self, n_stars=70, max_opacity=0.45)
+        add_floating_geometry(self, "tech")
         attach_audio(self, sd.get("scene_id", 9))
         add_broadcast_chrome(self, "summary")
 
