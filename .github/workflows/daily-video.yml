@@ -1,31 +1,25 @@
-# Full autopilot — renders AND uploads to YouTube every day automatically.
+# Full autopilot — renders AND uploads to YouTube every day, no manual step.
 #
-# SETUP (one-time, in GitHub repo settings):
-#   Settings → Secrets and variables → Actions
+# ONE-TIME SETUP (GitHub repo → Settings → Secrets and variables → Actions):
 #
-#   Secrets required (contents of your local files):
-#     YT_CLIENT_SECRET_JSON   paste the full contents of secrets/client_secret.json
-#     YT_TOKEN_JSON           paste the full contents of secrets/token.json
+#   SECRETS (paste full file contents):
+#     YT_CLIENT_SECRET_JSON   →  contents of secrets/client_secret.json
+#     YT_TOKEN_JSON           →  contents of secrets/token.json
 #
-#   Variables required to enable the schedule:
-#     AUTOPILOT_ENABLED = true          (prevents accidental runs on forks)
-#
-#   Optional variable:
-#     YT_PRIVACY = public               (default: public — change to private/unlisted to hold)
+#   No variables needed — schedule runs automatically every day.
+#   To temporarily pause posting, set variable  AUTOPILOT_PAUSED = true
 
 name: Daily Lesson Video
 
 on:
   schedule:
-    # Target: 5:00 PM US Eastern daily — when Grade 9-10 students get home
-    # and search for homework help. GitHub cron runs in UTC, so production
-    # starts ~2h earlier to allow render + upload time:
-    #   19:00 UTC = 3:00 PM EDT (school year Mar-Nov) / 2:00 PM EST
+    # 19:00 UTC = 3 PM EDT (summer) / 2 PM EST (winter)
+    # Gives ~2 h render time before the 5 PM homework-help window.
     - cron: "0 19 * * *"
   workflow_dispatch:
     inputs:
       day:
-        description: "Lesson day to produce (blank = next scheduled)"
+        description: "Lesson day number (leave blank = next in sequence)"
         required: false
       privacy:
         description: "YouTube privacy"
@@ -39,11 +33,12 @@ on:
 
 jobs:
   produce-and-publish:
-    if: ${{ vars.AUTOPILOT_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
+    # Always run — paused only when owner explicitly sets AUTOPILOT_PAUSED=true
+    if: ${{ vars.AUTOPILOT_PAUSED != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:
-      contents: write   # to push the updated state/progress.json
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -64,7 +59,7 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      - name: Render and upload today's lesson to YouTube
+      - name: Render and upload lesson to YouTube
         env:
           LESSON_DAY: ${{ github.event.inputs.day }}
           YT_CLIENT_SECRET_JSON: ${{ secrets.YT_CLIENT_SECRET_JSON }}
@@ -72,23 +67,23 @@ jobs:
           YT_PRIVACY: ${{ github.event.inputs.privacy || vars.YT_PRIVACY || 'public' }}
         run: python autopilot.py --upload
 
-      - name: Save finished videos as workflow artifacts
+      - name: Save video as downloadable artifact (7-day backup)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lesson-output
+          name: lesson-output-day${{ github.event.inputs.day || 'auto' }}
           retention-days: 7
           path: |
             output/final_videos/*.mp4
             output/final_videos/*.srt
             output/final_videos/*.vtt
             output/thumbnails/*.jpg
-            output/logs/*.json
 
-      - name: Commit progress state
+      - name: Commit updated progress state
+        if: always()
         run: |
           git config user.name "autopilot"
           git config user.email "actions@users.noreply.github.com"
           git add state/progress.json
-          git diff --cached --quiet || git commit -m "autopilot: advance lesson progress"
-          git push
+          git diff --cached --quiet || git commit -m "autopilot: advance lesson day"
+          git push || true
