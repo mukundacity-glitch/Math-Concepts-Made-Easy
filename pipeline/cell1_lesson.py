@@ -458,19 +458,19 @@ LOGO_PATH       = ASSETS_DIR / "logo.png"
 
 
 THEME = {{
-    "bg"        : "#FFFFFF",
-    "primary"   : "#1A1A1A",
-    "secondary" : "#333333",
-    "blue"      : "#1A5FBF",
-    "green"     : "#1A7A3C",
-    "yellow"    : "#B8860B",
-    "red"       : "#CC2200",
-    "card_bg"   : "#F0F0F0",
+    "bg"        : "#0D1B2A",
+    "primary"   : "#F0F4F8",
+    "secondary" : "#8899AA",
+    "blue"      : "#3B9EFF",
+    "green"     : "#2ECC71",
+    "yellow"    : "#F6C90E",
+    "red"       : "#E74C3C",
+    "card_bg"   : "#1A2B3C",
 }}
 
 TTS_CONFIG = {{
     "voice" : "en-GB-RyanNeural",
-    "rate"  : "+7%",
+    "rate"  : "-12%",
     "pitch" : "-1Hz",
 }}
 

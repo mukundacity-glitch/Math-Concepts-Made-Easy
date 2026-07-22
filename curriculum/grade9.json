@@ -36,14 +36,20 @@
       "board_examples": {
         "formula": "\\text{Rational Number} = \\frac{p}{q},\\ q \\neq 0",
         "worked_example": [
-          "\\text{Is } \\frac{3}{4} \\text{ rational?} \\Rightarrow \\text{Yes, integer over integer.}",
-          "\\text{Is } \\frac{5}{2} \\text{ rational?} \\Rightarrow \\text{Yes.}",
-          "\\text{Is } 7 \\text{ rational?} \\Rightarrow \\text{Yes, because } 7 = \\frac{7}{1}"
+          "\\text{Ex 1: Is } \\tfrac{3}{4} \\text{ rational?}",
+          "p=3,\\ q=4,\\ q \\neq 0 \\;\\Rightarrow\\; \\checkmark \\text{ Yes}",
+          "\\text{Ex 2: Is } 7 \\text{ rational?}",
+          "7 = \\tfrac{7}{1},\\ q=1 \\neq 0 \\;\\Rightarrow\\; \\checkmark \\text{ Yes}",
+          "\\text{Ex 3: Is } -\\tfrac{2}{5} \\text{ rational?}",
+          "p=-2,\\ q=5,\\ q \\neq 0 \\;\\Rightarrow\\; \\checkmark \\text{ Yes}"
         ],
         "practice": [
-          "\\text{Can we have } \\frac{5}{0}?",
-          "\\text{No. Division by zero is undefined.}",
-          "\\Rightarrow q \\neq 0 \\text{ is a strict rule.}"
+          "\\text{Which are rational?}",
+          "\\tfrac{3}{7},\\quad -5,\\quad 0.25,\\quad \\tfrac{6}{0}",
+          "\\tfrac{3}{7} \\Rightarrow q=7 \\neq 0 \\;\\checkmark",
+          "-5 = \\tfrac{-5}{1} \\Rightarrow q=1 \\neq 0 \\;\\checkmark",
+          "0.25 = \\tfrac{1}{4} \\Rightarrow q=4 \\neq 0 \\;\\checkmark",
+          "\\tfrac{6}{0} \\Rightarrow q=0 \\;\\times\\; \\text{Undefined!}"
         ]
       }
     },

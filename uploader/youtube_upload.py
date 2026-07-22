@@ -22,7 +22,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
-from pipeline.paths import BASE_DIR
+from pipeline.paths import BASE_DIR, safe_filename
 from pipeline.curriculum import get_lesson
 
 SECRETS_DIR = REPO_ROOT / "secrets"
@@ -152,7 +152,7 @@ def build_tags(lesson: dict) -> list:
 
 def lesson_paths(lesson: dict) -> dict:
     day = lesson["day"]
-    safe = lesson["seo_title"].replace(" ", "_").replace("—", "-")
+    safe = safe_filename(lesson["seo_title"])
     final_dir = BASE_DIR / "final_videos"
     return {
         "video": final_dir / f"Day_{day:03d}_{safe}.mp4",
