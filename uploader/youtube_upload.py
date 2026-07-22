@@ -31,7 +31,7 @@ TOKEN_PATH = SECRETS_DIR / "token.json"
 
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
-    "https://www.googleapis.com/auth/youtube.force-ssl",
+    "https://www.googleapis.com/auth/youtube",
 ]
 
 CHANNEL_TAGLINE = "New math lessons every day on Math Concepts Made Easy."

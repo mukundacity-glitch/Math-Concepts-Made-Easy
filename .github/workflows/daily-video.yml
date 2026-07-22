@@ -61,11 +61,13 @@ jobs:
 
       - name: Render and upload lesson to YouTube
         env:
-          LESSON_DAY: ${{ github.event.inputs.day }}
           YT_CLIENT_SECRET_JSON: ${{ secrets.YT_CLIENT_SECRET_JSON }}
           YT_TOKEN_JSON: ${{ secrets.YT_TOKEN_JSON }}
           YT_PRIVACY: ${{ github.event.inputs.privacy || vars.YT_PRIVACY || 'public' }}
-        run: python autopilot.py --upload
+        run: |
+          DAY_ARG=""
+          [ -n "${{ github.event.inputs.day }}" ] && DAY_ARG="--day ${{ github.event.inputs.day }}"
+          python autopilot.py --upload $DAY_ARG
 
       - name: Save video as downloadable artifact (7-day backup)
         if: always()
