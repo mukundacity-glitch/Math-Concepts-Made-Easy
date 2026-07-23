@@ -45,13 +45,7 @@ if not INTRO_TEASER:
 PREV_RECAP = ""
 for row in MASTER_CURRICULUM:
     if row["day"] == DAY_NUMBER - 1:
-        PREV_RECAP = (
-            f"Before we start, a quick recap. "
-            f"In our last lesson, Day {row['day']}, we studied {row['topic']} — "
-            f"{row['subtopic']}. "
-            f"If any of that feels unclear, pause here and rewatch Day {row['day']} first, "
-            f"because today builds directly on it. "
-        )
+        PREV_RECAP = f"Quick recap: yesterday we covered {row['topic']}. Today builds on that. "
         break
 
 print(f"\n{'═'*60}")
@@ -187,7 +181,6 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     # SCENE 3: CONCEPT — the intuition behind the idea
     # ════════════════════════════════════════════════════════
     concept = (
-        f"So what is really going on here? "
         f"{concept_intuition} "
         f"Keep that picture in your mind, because everything else in this "
         f"lesson grows out of it."
@@ -197,9 +190,8 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     # SCENE 4: FORMAL DEFINITION
     # ════════════════════════════════════════════════════════
     definition = (
-        f"Now we are ready to say this precisely, the way mathematicians do. "
         f"Here is our focus for today: {subtopic}. "
-        f"In symbols, we write it as {formula}. "
+        f"In symbols, that looks like this. "
         f"Every word of that definition matters, so read it slowly. "
         f"You already know {prereq} — this definition simply builds on "
         f"those familiar ideas."
@@ -259,10 +251,10 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     summary = (
         f"Let us bring today's lesson together in one picture. "
         f"At the center of everything sits {topic}. "
-        f"We explored {subtopic}. "
-        f"The one formula to remember is {formula}. "
+        f"We explored that idea in detail a moment ago. "
+        f"The one formula from today, we already built together. "
         f"Watch out for the common trap we discussed. "
-        f"And remember our goal: {goal}. "
+        f"And we reached our goal for today. "
         f"{teaser}. "
         f"New lessons every day on Math Concepts Made Easy. "
         f"Thank you for learning with me — see you tomorrow."
@@ -326,32 +318,6 @@ if not check_math(TODAY):
     raise SystemExit("🛑 Pipeline stopped: Invalid mathematical syntax detected.")
 
 # ══════════════════════════════════════════════════════════════
-# OUTRO NARRATION
-# ══════════════════════════════════════════════════════════════
-
-OUTRO_NARRATION = (
-    f"That brings us to the end of Day {DAY_NUMBER} — {TODAY['topic']}. "
-    f"Today we worked carefully through the key ideas step by step. "
-    f"And hopefully what once felt confusing now feels much clearer. "
-    f"{TODAY['lesson_goal'].capitalize()}. "
-    f"But remember something important: "
-    f"understanding grows through practice. "
-    f"Watching a lesson is the first step, "
-    f"but trying questions on your own is where real learning begins. "
-    f"So before the next lesson, "
-    f"take a few minutes to review your notes and practice what we covered today. "
-    f"Even ten or fifteen minutes of focused practice can make a huge difference. "
-    f"If something still feels difficult, "
-    f"that is completely normal. "
-    f"Learning difficult ideas takes time, repetition, and patience. "
-    f"Keep showing up, keep practicing, and trust the process. "
-    f"{INTRO_TEASER}. "
-    f"We are building understanding one lesson at a time, one step at a time. "
-    f"New lessons every day on MathConceptsMadeEasy. "
-    f"Thank you for learning with me today, and I will see you tomorrow."
-)
-
-# ══════════════════════════════════════════════════════════════
 # BUILD CELL1_CONFIG.PY  — used by all downstream cells
 # ══════════════════════════════════════════════════════════════
 
@@ -401,7 +367,6 @@ curriculum_data = {
     "heading"         : HEADING,
     "subheading"      : SUBHEADING,
     "intro_teaser"    : INTRO_TEASER,
-    "outro_message"   : OUTRO_NARRATION,
         "scene_narrations": {
     "opening"       : NARRATIONS.get('opening', {}),
     "hook"          : NARRATIONS.get('hook', {}),
@@ -492,7 +457,6 @@ with open(log_path, "w", encoding="utf-8") as f:
         "concept_intuition" : TODAY.get("concept_intuition", ""),
         "common_mistake"    : TODAY.get("common_mistake", ""),
         "narrations"        : NARRATIONS,
-        "outro"             : OUTRO_NARRATION,
         "banner_path"       : str(BANNER_PATH),
         "output_base"       : str(BASE_DIR),
     }, f, indent=2, ensure_ascii=False)

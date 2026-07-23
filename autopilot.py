@@ -32,6 +32,7 @@ STAGES = [
     ("Manim animation engine",     "pipeline.cell4_animation"),
     ("Video assembly",             "pipeline.cell5_assembly"),
     ("Subtitle engine",            "pipeline.cell8_subtitles"),
+    ("Caption burn-in",            "pipeline.cell9_captions"),
     ("Thumbnail engine",           "pipeline.cell6_thumbnail"),
     ("Shorts generator",           "pipeline.cell7_shorts"),
 ]
