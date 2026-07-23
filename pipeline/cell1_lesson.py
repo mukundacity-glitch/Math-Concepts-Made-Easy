@@ -112,35 +112,13 @@ def validate_lesson(lesson: dict) -> bool:
 
 import re
 
+from pipeline.mathtext import latex_to_speech, split_sentences
+
+
 def clean_math_for_speech(text_or_list) -> str:
-    """Translates LaTeX into spoken English so Rayan literally reads the math."""
-    if not text_or_list: return ""
-    if isinstance(text_or_list, list):
-        text = " ... ".join(text_or_list)
-    else:
-        text = str(text_or_list)
+    """Translates LaTeX into spoken English so Ryan literally reads the math."""
+    return latex_to_speech(text_or_list)
 
-    # Translate fractions: \frac{p}{q} -> p over q
-    text = re.sub(r'\\frac{([^}]+)}{([^}]+)}', r'\1 over \2', text)
-    # Extract plain text
-    text = re.sub(r'\\text{([^}]+)}', r'\1', text)
-
-    replacements = [
-        (r'\Rightarrow', ' which gives '), (r'\iff', ' if and only if '),
-        (r'\neq', ' is not equal to '), (r'\approx', ' is approximately '),
-        (r'\perp', ' is perpendicular to '), (r'\parallel', ' is parallel to '),
-        (r'\cong', ' is perfectly congruent to '), (r'\triangle', ' triangle '),
-        (r'\angle', ' angle '), (r'\sqrt', ' the square root of '),
-        (r'^2', ' squared '), (r'^3', ' cubed '), (r'\cdot', ' times '),
-        (r'\times', ' times '), (r'\div', ' divided by '), (r'\dots', ' dot dot dot '),
-        (r'\pi', ' pi '), (r'\theta', ' theta '), (r'\alpha', ' alpha '),
-        (r'\beta', ' beta '), (r'\Delta', ' delta '), (r'\sin', ' sine '),
-        (r'\cos', ' cosine '), (r'\tan', ' tangent '), ('=', ' equals '),
-        ('+', ' plus '), ('-', ' minus '), ('$', ''), ('\\', ''), ('{', ''), ('}', '')
-    ]
-    for old, new in replacements:
-        text = text.replace(old, new)
-    return " ".join(text.split())
 
 def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -> dict:
     topic             = lesson['topic']
@@ -152,158 +130,157 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     real_world_hook   = lesson.get('real_world_hook', '')
     concept_intuition = lesson.get('concept_intuition', '')
     common_mistake    = lesson.get('common_mistake', '')
-    visual_hints      = lesson.get('visual_hints', '')
 
     board             = lesson.get('board_examples', {})
     # Dynamically translate the math for this specific day!
     spoken_worked     = clean_math_for_speech(board.get('worked_example', []))
-    spoken_practice   = clean_math_for_speech(board.get('practice', []))
+
+    # Split the practice board into question lines and solution lines so
+    # the question is read BEFORE the pause-countdown and the solution
+    # after it (Cell 4 uses the same split for the on-screen cards).
+    practice_lines = board.get('practice', [])
+    q_take = 1 if practice_lines else 0
+    if (len(practice_lines) > 1
+            and "\\Rightarrow" not in str(practice_lines[1])
+            and "\\checkmark" not in str(practice_lines[1])):
+        q_take = 2
+    spoken_practice_q   = clean_math_for_speech(practice_lines[:q_take])
+    spoken_practice_sol = clean_math_for_speech(practice_lines[q_take:])
+
+    # Every scene narrates ITS OWN on-screen content, so Cell 4 can show
+    # each visual at the exact moment it is spoken. Never narrate stage
+    # directions (visual_hints) — they drive visuals, not the voice.
+
+    # The curiosity question: the first sentence of the real-world hook,
+    # asked as a mystery BEFORE any welcome or branding (5-second hook).
+    hook_sentences = split_sentences(real_world_hook)
+    curiosity = hook_sentences[0] if hook_sentences else (
+        f"What secret rule connects every {topic} problem you will ever see?")
 
     # ════════════════════════════════════════════════════════
-    # SCENE 1: OPENING
+    # SCENE 1: OPENING — curiosity first, then orientation
+    # ════════════════════════════════════════════════════════
+    opening = (
+        f"Here is a little mystery before we start. "
+        f"{curiosity} "
+        f"Hold that thought — because today it becomes mathematics. "
+        f"Welcome to Math Concepts Made Easy. "
+        f"Today is Day {day}, and our lesson is all about {topic}. "
+        f"{recap}"
+        f"By the end of this lesson, {goal}. "
+        f"Grab a notebook, get comfortable, and let us begin."
+    )
+
+    # ════════════════════════════════════════════════════════
+    # SCENE 2: HOOK — the real-world story, spoken while the
+    # matching illustration plays on screen
     # ════════════════════════════════════════════════════════
     hook = (
-        f"Welcome to Math Concepts Made Easy. "
-        f"Today is Day {day}. "
-        f"Our lesson is on {topic}. "
-        f"{recap}"
-        f"Look at the screen right now. "
+        f"Before we touch any formulas, let me show you where this idea "
+        f"already lives in your everyday life. "
         f"{real_world_hook} "
-        f"By the end of this lesson, {goal}. "
-        f"Let us begin."
+        f"You have been using this idea all along — today we simply give "
+        f"it a name and learn its rules."
     )
 
     # ════════════════════════════════════════════════════════
-    # SCENE 2 & 3: CONCEPT INTUITION & VISUALS
+    # SCENE 3: CONCEPT — the intuition behind the idea
     # ════════════════════════════════════════════════════════
     concept = (
-        f"Okay students. Before we write any formulas, let us look at the concept. "
-        f"Watch the screen carefully as I explain. "
+        f"So what is really going on here? "
         f"{concept_intuition} "
-        f"Do you see what is happening here? Every part of this diagram has a purpose."
-    )
-
-    concrete = (
-        f"Let us watch this happen step by step on the screen. "
-        f"{visual_hints} "
-        f"See how the visual perfectly reveals the structure of the math?"
+        f"Keep that picture in your mind, because everything else in this "
+        f"lesson grows out of it."
     )
 
     # ════════════════════════════════════════════════════════
     # SCENE 4: FORMAL DEFINITION
     # ════════════════════════════════════════════════════════
-    pictorial = (
-        f"Okay students. Now let us learn the formal definition. "
-        f"Watch the board. "
-        f"A {topic} is defined as: {subtopic}. "
-        f"Every word in this definition matters. "
-        f"You already know {prereq}. This definition builds directly on those ideas."
+    definition = (
+        f"Now we are ready to say this precisely, the way mathematicians do. "
+        f"Here is our focus for today: {subtopic}. "
+        f"In symbols, we write it as {formula}. "
+        f"Every word of that definition matters, so read it slowly. "
+        f"You already know {prereq} — this definition simply builds on "
+        f"those familiar ideas."
     )
 
     # ════════════════════════════════════════════════════════
     # SCENE 5: FORMULA BUILD
     # ════════════════════════════════════════════════════════
-    abstract = (
-        f"Now watch the board carefully. The key formula for {topic} is about to appear. "
+    formula_scene = (
+        f"Here is the key formula for {topic}. "
         f"The formula is: {formula}. "
-        f"Read along with me as each symbol appears on the board. "
-        f"Do not just memorise the symbols. Understand what each one represents."
+        f"Watch how each part appears as I say it. "
+        f"Do not just memorise the symbols — make sure you understand "
+        f"what each one represents, because that is what the exam really tests."
     )
 
     # ════════════════════════════════════════════════════════
-    # SCENE 6: WORKED EXAMPLE (Dynamically reads the math)
+    # SCENE 6: WORKED EXAMPLE (dynamically reads the math)
     # ════════════════════════════════════════════════════════
-    why_rule = (
-        f"Now students, watch the board. We are going to work through a complete example. "
-        f"I will explain every single step as it appears. Read it with me: "
-        f"{spoken_worked}. "
-        f"Notice how each line logically follows the one before it. Always verify your answer."
+    worked_example = (
+        f"Let us put this to work with real examples, one step at a time. "
+        f"{spoken_worked} "
+        f"Notice how every line follows logically from the one before it. "
+        f"That habit — checking each step — is what makes your answers reliable."
     )
 
     # ════════════════════════════════════════════════════════
     # SCENE 7: COMMON MISTAKES
     # ════════════════════════════════════════════════════════
     mistakes = (
-        f"Before we practice, let us talk about mistakes. "
-        f"Watch the board carefully. I am going to show you where students go wrong. "
-        f"Here is the most common mistake: {common_mistake}. "
-        f"Look at the difference between the wrong version and the correct version. "
-        f"This mistake costs students marks every year. Do not make it."
+        f"Now, a quick warning, because I see students lose marks on this "
+        f"every single year. "
+        f"Before I show you, think about what could possibly go wrong here. "
+        f"Three. Two. One. "
+        f"{common_mistake} "
+        f"Compare the wrong way and the right way on screen, and promise "
+        f"yourself you will never fall for this one."
     )
 
     # ════════════════════════════════════════════════════════
-    # SCENE 8: PRACTICE (Dynamically reads the math)
+    # SCENE 8: PRACTICE (dynamically reads the math)
     # ════════════════════════════════════════════════════════
     practice = (
-        f"Now it is your turn. Watch the top of the board. A question is appearing right now. "
-        f"Let us solve it together step by step. Follow along with me: "
-        f"{spoken_practice}. "
-        f"There it is. Check your working against mine on the board."
+        f"Time to try it yourself. Here is your practice question. "
+        f"{spoken_practice_q} "
+        f"Pause the video now, or take a few seconds with me. "
+        f"Five. Four. Three. Two. One. "
+        f"Okay — let us solve it together. "
+        f"{spoken_practice_sol} "
+        f"How did you do? If you slipped anywhere, rewind and watch that "
+        f"step again — that is exactly how strong students learn."
     )
 
     # ════════════════════════════════════════════════════════
     # SCENE 9: SUMMARY
     # ════════════════════════════════════════════════════════
     summary = (
-        f"Let us bring today together. Watch the summary card on screen. "
-        f"First: {subtopic}. "
-        f"Second: The formula is {formula}. "
-        f"Today was Day {day}. Topic: {topic}. {goal}. "
+        f"Let us bring today's lesson together in one picture. "
+        f"At the center of everything sits {topic}. "
+        f"We explored {subtopic}. "
+        f"The one formula to remember is {formula}. "
+        f"Watch out for the common trap we discussed. "
+        f"And remember our goal: {goal}. "
         f"{teaser}. "
-        f"New lessons every day on Math Concepts Made Easy. See you tomorrow."
+        f"New lessons every day on Math Concepts Made Easy. "
+        f"Thank you for learning with me — see you tomorrow."
     )
-    def split_beats(text):
-        return [
-            s.strip() + "."
-            for s in text.split(".")
-            if s.strip()
-        ]
+    def block(text):
+        text = " ".join(str(text).split())
+        return {"full": text, "beats": split_sentences(text)}
 
     return {
-        "opening": {
-            "full": hook,
-            "beats": split_beats(hook),
-        },
-
-        "hook": {
-            "full": concept,
-            "beats": split_beats(concept),
-        },
-
-        "concept": {
-            "full": concrete,
-            "beats": split_beats(concrete),
-        },
-
-        "definition": {
-            "full": pictorial,
-            "beats": split_beats(pictorial),
-        },
-
-        "formula": {
-            "full": abstract,
-            "beats": split_beats(abstract),
-        },
-
-        "worked_example": {
-            "full": why_rule,
-            "beats": split_beats(why_rule),
-        },
-
-        "mistakes": {
-            "full": mistakes,
-            "beats": split_beats(mistakes),
-        },
-
-        "practice": {
-            "full": practice,
-            "beats": split_beats(practice),
-        },
-
-        "summary": {
-            "full": summary,
-            "beats": split_beats(summary),
-        },
+        "opening"       : block(opening),
+        "hook"          : block(hook),
+        "concept"       : block(concept),
+        "definition"    : block(definition),
+        "formula"       : block(formula_scene),
+        "worked_example": block(worked_example),
+        "mistakes"      : block(mistakes),
+        "practice"      : block(practice),
+        "summary"       : block(summary),
     }
 
 

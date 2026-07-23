@@ -16,6 +16,7 @@ import sys as _sys
 from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 from pipeline.paths import load_cell1_config
+from pipeline.mathtext import latex_to_plain, spoken_lines, split_sentences
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 # ══════════════════════════════════════════════════════════════
@@ -247,6 +248,9 @@ def build_script(config) -> dict:
 
             # ── Narration (used by Cell 3 for TTS) ───────────
             "narration"       : narration_text,
+            "narration_beats" : (narration_block.get("beats")
+                                 if isinstance(narration_block, dict)
+                                 else split_sentences(narration_text)),
             "word_count"      : wc,
             "estimated_seconds": est_secs,
             "duration_seconds": 0.0,   # filled by Cell 3 (ffprobe)
@@ -266,8 +270,28 @@ def build_script(config) -> dict:
             "formula_spoken"  : lesson["formula_spoken"],
             "visual_type"     : lesson.get("visual_type", "board_write"),
             "real_world_hook" : lesson.get("real_world_hook", ""),
+            "concept_intuition": lesson.get("concept_intuition", ""),
+            "common_mistake"  : lesson.get("common_mistake", ""),
             "visual_hints"    : lesson.get("visual_hints", ""),
             "board_examples"  : lesson.get("board_examples", {}),
+
+            # ── Sync + display forms (used by Cell 4) ─────────
+            # For every board line: what the voice says (to locate the
+            # exact spoken moment in the word timestamps) and the clean
+            # human-readable form to draw on screen.
+            "board_spoken"    : {
+                "worked_example": spoken_lines(
+                    lesson.get("board_examples", {}).get("worked_example", [])),
+                "practice"      : spoken_lines(
+                    lesson.get("board_examples", {}).get("practice", [])),
+            },
+            "board_plain"     : {
+                "worked_example": [latex_to_plain(l) for l in
+                    lesson.get("board_examples", {}).get("worked_example", [])],
+                "practice"      : [latex_to_plain(l) for l in
+                    lesson.get("board_examples", {}).get("practice", [])],
+            },
+            "formula_plain"   : latex_to_plain(lesson["key_formula"]),
             "animation_type"  : cell1_config.SCENE_ANIMATION_MAP.get(step, "VISUAL_ONLY"),
         }
         scenes.append(scene)
@@ -292,6 +316,9 @@ def build_script(config) -> dict:
         "key_formula"          : lesson["key_formula"],
         "formula_spoken"       : lesson["formula_spoken"],
         "visual_type"          : lesson["visual_type"],
+        "concept_intuition"    : lesson.get("concept_intuition", ""),
+        "common_mistake"       : lesson.get("common_mistake", ""),
+        "visual_hints"         : lesson.get("visual_hints", ""),
         "video_type"           : lesson["video_type"],
         "seo_title"            : lesson["seo_title"],
         "thumbnail_angle"      : lesson["thumbnail_angle"],

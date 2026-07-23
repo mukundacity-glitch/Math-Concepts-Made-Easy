@@ -1,11 +1,20 @@
 # ==========================================
 # CELL 4: MANIM ANIMATION ENGINE
 # CHANNEL: MathConceptsMadeEasy
-# Reads: lesson_001_script_timed.json
-# Reads: Math-9/audio/lesson_001/scene_XX.mp3
-# Reads: Math-9/audio/lesson_001/scene_XX.words.json
-# Writes: Math-9/renders/lesson_001/scene_XX.mp4
-# Logo: always top-left corner, no margin
+# Reads: lesson_XXX_script_timed.json
+# Reads: audio/lesson_XXX/scene_XX.mp3
+# Reads: audio/lesson_XXX/scene_XX.words.json
+# Writes: renders/lesson_XXX/scene_XX.mp4
+#
+# Design contract (applies to every scene):
+#   * NOTHING appears on screen as raw LaTeX — math is compiled with
+#     MathTex or converted to clean unicode via pipeline.mathtext.
+#   * Text is never truncated — it wraps and scales to fit.
+#   * Every visual appears at the moment the narration speaks about it,
+#     driven by the per-word timestamps from Cell 3 (words.json).
+#   * Real-world sentences (pizza, chocolate, money, fruit …) get a
+#     matching drawn illustration, generated dynamically from the words
+#     of the narration — no lesson-specific hard-coding.
 # ==========================================
 
 import sys, json, subprocess, shutil, os
@@ -15,7 +24,8 @@ from pathlib import Path
 # ── Load Cell 1 config (written by pipeline/cell1_lesson.py) ──
 import sys as _sys
 from pathlib import Path as _Path
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+REPO_ROOT = _Path(__file__).resolve().parents[1]
+_sys.path.insert(0, str(REPO_ROOT))
 from pipeline.paths import load_cell1_config
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
@@ -69,39 +79,19 @@ C_YELLOW   = T["yellow"]    # #F6C90E  gold/yellow
 C_RED      = T["red"]       # #E74C3C  red
 C_CARD     = T["card_bg"]   # #1A2B3C  card background
 
-# Manim colour helper
-def mc(hex_color: str):
-    """Convert hex string to Manim ManimColor."""
-    from manim import ManimColor
-    return ManimColor(hex_color)
-
 # ══════════════════════════════════════════════════════════════
-# WORD BOUNDARY LOADER
-# Returns list of {word, norm, start, end} dicts.
-# Used by scenes that sync text highlights to audio.
-# ══════════════════════════════════════════════════════════════
-
-def load_word_boundaries(scene_id: int) -> list:
-    path = LESSON_AUDIO / f"scene_{scene_id:02d}.words.json"
-    if path.exists():
-        try:
-            with open(str(path), "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return []
-    return []
-
-
-# ══════════════════════════════════════════════════════════════
-# BASE SCENE CLASS
-# All 9 scene types inherit from this.
-# Handles: background colour, logo, audio attachment,
-#          scene duration from timed script.
+# MANIM SOURCE TEMPLATE
+# Rendered per scene by the manim CLI. Placeholders (__X__ and
+# {C_X}) are substituted by build_manim_source().
 # ══════════════════════════════════════════════════════════════
 MANIM_SCENE_CODE = r'''
 from manim import *
-import json, math, random, re, textwrap
+import json, math, random, re, textwrap, sys
 from pathlib import Path
+
+# ── Repo imports (shared LaTeX → text/speech translation) ─────
+sys.path.insert(0, r"__REPO_ROOT__")
+from pipeline.mathtext import latex_to_plain, normalize_word, split_sentences
 
 # ── Data loading ──────────────────────────────────────────────
 SCRIPT_PATH  = Path(r"__SCRIPT_PATH__")
@@ -141,8 +131,34 @@ C_HEADER = "#0A1628"
 C_FOOTER = "#050D1A"
 C_CBG    = "#0D2045"
 
+# Illustration palette
+C_CRUST   = "#D97706"
+C_CHEESE  = "#FBBF24"
+C_PEPPER  = "#B91C1C"
+C_CHOCO   = "#7C4A12"
+C_CHOCO_D = "#5B3610"
+C_COIN    = "#FDE68A"
+C_APPLE   = "#DC2626"
+C_LEAF    = "#16A34A"
+C_SKIN    = "#F5C99B"
+C_CYAN    = "#22D3EE"
+
+# Semantic color system — every color means one thing, lesson after
+# lesson, so students build the association over time:
+#   definitions → blue, correct → green, examples → orange,
+#   theorems/structure → purple, key ideas → gold, mistakes → red,
+#   formulas → cyan
+C_SEM_DEF     = C_BLUE_P
+C_SEM_CORRECT = C_GGREEN
+C_SEM_EXAMPLE = C_ORANGE
+C_SEM_THEOREM = C_PURPLE
+C_SEM_KEY     = C_GOLD
+C_SEM_WRONG   = C_RRED
+C_SEM_FORMULA = C_CYAN
+
 CHANNEL = "Math Concept Made Easy"
 TAGLINE = "LEARN  •  PRACTICE  •  MASTER"
+FONT    = "DejaVu Sans"   # present on every CI runner, full unicode math
 
 config.background_color = C_NAVY1
 
@@ -153,23 +169,22 @@ def mc(h):
 FW = 14.222   # config.frame_width default for 1080p60
 FH = 8.0      # config.frame_height default
 
-HEADER_TOP  =  3.70
-HEADER_BOT  =  2.85
-CONTENT_TOP =  2.75
-CONTENT_BOT = -3.25
-FOOTER_TOP  = -3.35
+HEADER_TOP  =  4.00
+HEADER_BOT  =  3.02
+CONTENT_TOP =  2.92
+CONTENT_BOT = -3.12
+FOOTER_TOP  = -3.22
 FOOTER_BOT  = -4.00
 
-# ── Helpers ───────────────────────────────────────────────────
+import numpy as np
+
+# ── Basic helpers ─────────────────────────────────────────────
 
 def get_scene_by_step(step):
     for s in SCRIPT_DATA["scenes"]:
         if s.get("step") == step:
             return s
     return SCRIPT_DATA["scenes"][0] if SCRIPT_DATA["scenes"] else {}
-
-def _wrap(text, width=52):
-    return "\n".join(textwrap.wrap(str(text), width))
 
 def attach_audio(scene_obj, scene_id):
     mp3 = LESSON_AUDIO / f"scene_{scene_id:02d}.mp3"
@@ -179,19 +194,572 @@ def attach_audio(scene_obj, scene_id):
         except Exception:
             pass
 
+def scene_time(scene_obj):
+    try:
+        return float(scene_obj.renderer.time)
+    except Exception:
+        return 0.0
+
 def sync_to_audio(scene_obj, scene_id):
     target = 20.0
     for s in SCRIPT_DATA["scenes"]:
         if s.get("scene_id") == scene_id:
             target = float(s.get("duration_seconds", 20.0))
             break
-    try:
-        elapsed = scene_obj.renderer.time
-    except Exception:
-        elapsed = 0.0
-    remaining = target - elapsed - 0.1
+    remaining = target - scene_time(scene_obj) - 0.1
     if remaining > 0.05:
         scene_obj.wait(remaining)
+
+
+# ═════════════════════════════════════════════════════════════
+# NARRATION TIMELINE — the sync engine
+#
+# Cell 3 saved one timestamp per spoken word (scene_XX.words.json).
+# Narration.when_spoken("three over four rational") returns the second
+# at which the voice starts saying that phrase, so every visual can be
+# scheduled to appear exactly when it is being talked about.
+# ═════════════════════════════════════════════════════════════
+
+class Narration:
+    def __init__(self, sd):
+        self.sd       = sd
+        self.scene_id = int(sd.get("scene_id", 1))
+        self.duration = float(sd.get("duration_seconds", 20.0))
+        self.text     = str(sd.get("narration", ""))
+        self.words    = self._load_words()
+        self.cursor   = 0       # word index — matches advance forward only
+        self.char_pos = 0       # char cursor for the estimate fallback
+
+    def _load_words(self):
+        path = LESSON_AUDIO / f"scene_{self.scene_id:02d}.words.json"
+        if path.exists():
+            try:
+                with open(str(path), "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                return []
+        return []
+
+    def when_spoken(self, phrase, advance=True):
+        """Second at which `phrase` starts being spoken (None if unknown)."""
+        toks = [normalize_word(w) for w in str(phrase).split()]
+        toks = [t for t in toks if t]
+        if not toks:
+            return None
+        if self.words:
+            for need in (4, 3, 2, 1):
+                if len(toks) < need:
+                    continue
+                idx = self._find(toks[:need])
+                if idx is not None:
+                    if advance:
+                        self.cursor = idx + need
+                    return float(self.words[idx]["start"])
+        return self._estimate(phrase)
+
+    def _find(self, sub):
+        n, k = len(self.words), len(sub)
+        for i in range(self.cursor, n - k + 1):
+            if all(self.words[i + j].get("norm") == sub[j] for j in range(k)):
+                return i
+        return None
+
+    def _estimate(self, phrase):
+        """Proportional fallback when word timestamps are unavailable."""
+        hay = self.text.lower()
+        for probe_len in (32, 16, 8):
+            probe = str(phrase)[:probe_len].lower().strip()
+            if len(probe) < 4:
+                continue
+            pos = hay.find(probe, self.char_pos)
+            if pos >= 0:
+                self.char_pos = pos + 1
+                frac = pos / max(len(hay), 1)
+                return frac * max(self.duration - 1.2, 1.0)
+        return None
+
+
+def wait_until(scene_obj, t, lead=0.25):
+    """Wait so the next animation lands just before second `t` of audio."""
+    if t is None:
+        return
+    gap = (t - lead) - scene_time(scene_obj)
+    if gap > 0.02:
+        scene_obj.wait(gap)
+
+
+def reveal(scene_obj, nar, mobj, spoken=None, run_time=0.55, anim=None, lead=0.30):
+    """FadeIn `mobj` at the moment `spoken` is narrated (or now)."""
+    if spoken is not None and nar is not None:
+        wait_until(scene_obj, nar.when_spoken(spoken), lead=lead)
+    a = (anim or FadeIn)(mobj)
+    scene_obj.play(a, run_time=run_time)
+
+
+# ═════════════════════════════════════════════════════════════
+# TEXT FACTORIES — nothing raw, nothing truncated
+# ═════════════════════════════════════════════════════════════
+
+def TXT(s, size=28, color=None, bold=False, max_w=None, wrap=None,
+        line_spacing=0.95):
+    """Clean prose Text. Always passes through latex_to_plain first."""
+    s = latex_to_plain(s)
+    if not s:
+        s = " "
+    if wrap:
+        s = "\n".join(textwrap.wrap(s, wrap)) or " "
+    try:
+        t = Text(s, font_size=size, color=mc(color or C_WHITE), font=FONT,
+                 weight="BOLD" if bold else "NORMAL", line_spacing=line_spacing)
+    except Exception:
+        t = Text(s.encode("ascii", "ignore").decode() or " ",
+                 font_size=size, color=mc(color or C_WHITE), font=FONT)
+    if max_w and t.width > max_w:
+        t.scale_to_fit_width(max_w)
+    return t
+
+
+def MATH(s, size=48, color=None, max_w=None):
+    """Compiled math. Falls back to clean unicode text — NEVER raw LaTeX."""
+    raw = str(s)
+    try:
+        m = MathTex(raw, font_size=size, color=mc(color or C_WHITE))
+    except Exception:
+        m = TXT(raw, size=max(18, int(size * 0.55)), color=color or C_WHITE)
+    if max_w and m.width > max_w:
+        m.scale_to_fit_width(max_w)
+    return m
+
+
+# ═════════════════════════════════════════════════════════════
+# VERDICT PARSING — board lines like "q ≠ 0 → Yes" get a clean
+# YES / NO pill instead of trailing checkmark clutter.
+# ═════════════════════════════════════════════════════════════
+
+_VERDICT_RE = re.compile(
+    r"(?:→\s*)?(?:✗\s*)?\b(Yes|No|Undefined)\b[!.]?\s*$", re.IGNORECASE)
+
+
+def split_verdict(plain_line):
+    m = _VERDICT_RE.search(plain_line)
+    if not m:
+        return plain_line.strip(), None
+    head = plain_line[:m.start()].strip().rstrip("→✗ ,").strip()
+    verdict = m.group(1).upper()
+    return (head or plain_line.strip()), verdict
+
+
+def verdict_pill(verdict):
+    good = verdict.upper() == "YES"
+    col  = C_GGREEN if good else C_RRED
+    lbl  = "YES" if good else ("NO" if verdict.upper() == "NO" else "UNDEFINED")
+    txt  = TXT(lbl, size=20, color=col, bold=True)
+    box  = RoundedRectangle(
+        width=txt.width + 0.42, height=0.52, corner_radius=0.14,
+        fill_color=mc(col), fill_opacity=0.16,
+        stroke_color=mc(col), stroke_width=2.2,
+    )
+    txt.move_to(box.get_center())
+    return VGroup(box, txt)
+
+
+def number_chip(n, col=None):
+    c = Circle(radius=0.26, fill_color=mc(col or C_BLUE_P),
+               fill_opacity=1.0, stroke_width=0)
+    t = TXT(str(n), size=20, color=C_WHITE, bold=True)
+    t.move_to(c.get_center())
+    return VGroup(c, t)
+
+
+# ═════════════════════════════════════════════════════════════
+# REAL-WORLD ILLUSTRATION LIBRARY
+# All drawn with vector shapes — no external assets, works for
+# any lesson. story_visual(sentence) picks one from the words of
+# the narration itself.
+# ═════════════════════════════════════════════════════════════
+
+def _sector(r, start_angle, angle, **kw):
+    """Sector compatible with both Manim 0.18 (outer_radius) and 0.19 (radius)."""
+    try:
+        return Sector(radius=r, start_angle=start_angle, angle=angle, **kw)
+    except TypeError:
+        return Sector(outer_radius=r, start_angle=start_angle, angle=angle, **kw)
+
+
+def viz_pizza(total=4, taken=3, r=1.15):
+    """Pizza cut into `total` slices, `taken` of them highlighted (eaten)."""
+    total = max(2, min(int(total or 4), 12))
+    taken = max(0, min(int(taken if taken is not None else 0), total))
+    g = VGroup()
+    crust = Circle(radius=r, fill_color=mc(C_CRUST), fill_opacity=1.0,
+                   stroke_color=mc("#92400E"), stroke_width=4)
+    cheese = Circle(radius=r * 0.86, fill_color=mc(C_CHEESE),
+                    fill_opacity=1.0, stroke_width=0)
+    g.add(crust, cheese)
+    slice_ang = TAU / total
+    rng = random.Random(7)
+    for i in range(total):
+        a0 = i * slice_ang
+        eaten = i < taken
+        if eaten:
+            sec = _sector(r * 0.86, a0, slice_ang,
+                          fill_color=mc(C_ORANGE), fill_opacity=0.92,
+                          stroke_color=mc("#92400E"), stroke_width=2)
+            mid = a0 + slice_ang / 2
+            sec.shift(0.10 * np.array([math.cos(mid), math.sin(mid), 0]))
+            g.add(sec)
+        # pepperoni on every slice
+        mid = a0 + slice_ang / 2
+        rr = r * rng.uniform(0.38, 0.62)
+        g.add(Dot(point=np.array([rr * math.cos(mid), rr * math.sin(mid), 0]),
+                  radius=0.09, color=mc(C_PEPPER)))
+    for i in range(total):
+        a0 = i * slice_ang
+        g.add(Line(ORIGIN, r * np.array([math.cos(a0), math.sin(a0), 0]),
+                   stroke_color=mc("#92400E"), stroke_width=3))
+    lbl = TXT(f"{taken} of {total} slices  =  {taken}/{total}",
+              size=24, color=C_GOLD, bold=True)
+    lbl.next_to(g, DOWN, buff=0.30)
+    return VGroup(g, lbl)
+
+
+def viz_chocolate(pieces=5, people=None, per_share=None):
+    """Chocolate bars and (optionally) the people sharing them."""
+    pieces = max(1, min(int(pieces or 4), 12))
+    bar = VGroup()
+    for i in range(pieces):
+        sq = RoundedRectangle(
+            width=0.62, height=0.62, corner_radius=0.08,
+            fill_color=mc(C_CHOCO), fill_opacity=1.0,
+            stroke_color=mc(C_CHOCO_D), stroke_width=3)
+        inner = RoundedRectangle(
+            width=0.40, height=0.40, corner_radius=0.06,
+            fill_color=mc(C_CHOCO_D), fill_opacity=0.55, stroke_width=0)
+        inner.move_to(sq.get_center())
+        bar.add(VGroup(sq, inner))
+    per_row = min(pieces, 6)
+    rows = VGroup()
+    for start in range(0, pieces, per_row):
+        rows.add(VGroup(*bar[start:start + per_row]).arrange(RIGHT, buff=0.06))
+    g = rows.arrange(DOWN, buff=0.06)
+    out = VGroup(g)
+    if people:
+        ppl = viz_people(people)
+        ppl.next_to(g, DOWN, buff=0.34)
+        out.add(ppl)
+    cap = f"{pieces} pieces"
+    if people:
+        cap += f" ÷ {people} people"
+        if per_share:
+            cap += f"  =  {per_share} each"
+    lbl = TXT(cap, size=24, color=C_GOLD, bold=True)
+    lbl.next_to(out, DOWN, buff=0.28)
+    out.add(lbl)
+    return out
+
+
+def viz_people(n=2):
+    n = max(1, min(int(n), 6))
+    g = VGroup()
+    for _ in range(n):
+        head = Circle(radius=0.16, fill_color=mc(C_SKIN),
+                      fill_opacity=1.0, stroke_color=mc("#B45309"),
+                      stroke_width=2)
+        body = _sector(0.30, 0, PI,
+                       fill_color=mc(C_BLUE_L), fill_opacity=1.0,
+                       stroke_width=0)
+        body.next_to(head, DOWN, buff=0.02)
+        g.add(VGroup(head, body))
+    g.arrange(RIGHT, buff=0.30)
+    return g
+
+
+def viz_money(amount=None):
+    g = VGroup()
+    for i in range(3):
+        coin = Circle(radius=0.42, fill_color=mc(C_COIN), fill_opacity=1.0,
+                      stroke_color=mc(C_ORANGE), stroke_width=4)
+        sym = TXT("$", size=30, color=C_ORANGE, bold=True)
+        sym.move_to(coin.get_center())
+        c = VGroup(coin, sym).shift(RIGHT * i * 0.55 + UP * (i % 2) * 0.10)
+        g.add(c)
+    if amount:
+        lbl = TXT(str(amount), size=24, color=C_GOLD, bold=True)
+        lbl.next_to(g, DOWN, buff=0.28)
+        g = VGroup(g, lbl)
+    return g
+
+
+def viz_fruits(n=3, kind="apple"):
+    n = max(1, min(int(n), 8))
+    g = VGroup()
+    for _ in range(n):
+        if kind == "orange":
+            body = Circle(radius=0.30, fill_color=mc(C_ORANGE),
+                          fill_opacity=1.0, stroke_width=0)
+        else:
+            body = Circle(radius=0.30, fill_color=mc(C_APPLE),
+                          fill_opacity=1.0, stroke_width=0)
+        stem = Line(body.get_top(), body.get_top() + UP * 0.14,
+                    stroke_color=mc("#78350F"), stroke_width=4)
+        leaf = Ellipse(width=0.20, height=0.10, fill_color=mc(C_LEAF),
+                       fill_opacity=1.0, stroke_width=0)
+        leaf.move_to(body.get_top() + UP * 0.10 + RIGHT * 0.12)
+        g.add(VGroup(body, stem, leaf))
+    g.arrange(RIGHT, buff=0.22)
+    return g
+
+
+def viz_fraction_pie(p, q, r=1.0, label=True):
+    """Generic 'p of q parts' pie — the universal fraction picture."""
+    q = max(1, min(int(q), 16))
+    p = max(0, min(int(p), q))
+    g = VGroup()
+    base = Circle(radius=r, fill_color=mc(C_CBG), fill_opacity=1.0,
+                  stroke_color=mc(C_BLUE_L), stroke_width=3)
+    g.add(base)
+    ang = TAU / q
+    for i in range(q):
+        if i < p:
+            g.add(_sector(r, i * ang, ang,
+                          fill_color=mc(C_BLUE_L), fill_opacity=0.85,
+                          stroke_width=0))
+    for i in range(q):
+        g.add(Line(ORIGIN, r * np.array(
+            [math.cos(i * ang), math.sin(i * ang), 0]),
+            stroke_color=mc(C_NAVY1), stroke_width=2.5))
+    if label:
+        lbl = MATH(rf"\tfrac{{{p}}}{{{q}}}", size=44, color=C_GOLD)
+        lbl.next_to(g, DOWN, buff=0.28)
+        g = VGroup(g, lbl)
+    return g
+
+
+def viz_mystery_box(symbol=None):
+    """Glowing mystery box with a '?' — the face of every unknown."""
+    box = RoundedRectangle(
+        width=1.8, height=1.5, corner_radius=0.16,
+        fill_color=mc(C_CBG), fill_opacity=1.0,
+        stroke_color=mc(C_SEM_KEY), stroke_width=3.5)
+    glow = RoundedRectangle(
+        width=2.1, height=1.8, corner_radius=0.22,
+        fill_color=mc(C_SEM_KEY), fill_opacity=0.14, stroke_width=0)
+    glow.move_to(box.get_center())
+    q = TXT("?", size=64, color=C_SEM_KEY, bold=True)
+    q.move_to(box.get_center())
+    g = VGroup(glow, box, q)
+    if symbol:
+        lab = TXT(str(symbol), size=30, color=C_CYAN, bold=True)
+        lab.next_to(box, DOWN, buff=0.26)
+        g.add(lab)
+    return g
+
+
+def viz_thermometer(temps=None):
+    """Thermometer with a mercury level and the temperatures mentioned."""
+    tube = RoundedRectangle(width=0.42, height=2.4, corner_radius=0.21,
+                            fill_color=mc(C_CBG), fill_opacity=1.0,
+                            stroke_color=mc(C_LGRAY), stroke_width=2.5)
+    bulb = Circle(radius=0.34, fill_color=mc(C_RRED), fill_opacity=1.0,
+                  stroke_color=mc(C_LGRAY), stroke_width=2.5)
+    bulb.move_to(tube.get_bottom() + DOWN * 0.12)
+    mercury = RoundedRectangle(width=0.20, height=1.35, corner_radius=0.10,
+                               fill_color=mc(C_RRED), fill_opacity=1.0,
+                               stroke_width=0)
+    mercury.move_to(tube.get_bottom() + UP * (1.35 / 2 + 0.08))
+    g = VGroup(tube, mercury, bulb)
+    if temps:
+        labs = VGroup(*[TXT(f"{t}°", size=24, color=C_GOLD, bold=True)
+                        for t in temps[:3]]).arrange(DOWN, buff=0.18)
+        labs.next_to(g, RIGHT, buff=0.35)
+        g = VGroup(g, labs)
+    return g
+
+
+def viz_car(dist=None):
+    """Car on a road with an optional distance label."""
+    road = Line(LEFT * 2.6, RIGHT * 2.6, stroke_color=mc(C_LGRAY),
+                stroke_width=6)
+    dashes = VGroup(*[Line(LEFT * 0.18, RIGHT * 0.18,
+                           stroke_color=mc(C_GOLD), stroke_width=3
+                           ).shift(RIGHT * x + UP * 0.001)
+                      for x in np.arange(-2.2, 2.4, 0.8)])
+    body = RoundedRectangle(width=1.5, height=0.52, corner_radius=0.16,
+                            fill_color=mc(C_BLUE_L), fill_opacity=1.0,
+                            stroke_width=0)
+    cabin = RoundedRectangle(width=0.75, height=0.38, corner_radius=0.12,
+                             fill_color=mc(C_BLUE_D), fill_opacity=1.0,
+                             stroke_width=0)
+    cabin.move_to(body.get_top() + UP * 0.08)
+    w1 = Circle(radius=0.15, fill_color=mc(C_NAVY1), fill_opacity=1.0,
+                stroke_color=mc(C_LGRAY), stroke_width=2.5)
+    w2 = w1.copy()
+    w1.move_to(body.get_bottom() + LEFT * 0.45 + DOWN * 0.05)
+    w2.move_to(body.get_bottom() + RIGHT * 0.45 + DOWN * 0.05)
+    car = VGroup(body, cabin, w1, w2)
+    car.move_to(road.get_left() + RIGHT * 1.0 + UP * 0.55)
+    g = VGroup(road, dashes, car)
+    if dist:
+        lab = TXT(str(dist), size=26, color=C_GOLD, bold=True)
+        lab.next_to(road, DOWN, buff=0.28)
+        g.add(lab)
+    return g
+
+
+def viz_classroom(n=5):
+    """A count of students as rows of people, with the number badge."""
+    n = max(1, min(int(n), 12))
+    rows = VGroup()
+    remaining = n
+    while remaining > 0:
+        rows.add(viz_people(min(remaining, 6)))
+        remaining -= 6
+    rows.arrange(DOWN, buff=0.22)
+    lab = TXT(f"{n} students", size=26, color=C_GOLD, bold=True)
+    lab.next_to(rows, DOWN, buff=0.26)
+    return VGroup(rows, lab)
+
+
+def viz_cake(age=None):
+    """Birthday cake with candles — ages and 'every year' stories."""
+    base = RoundedRectangle(width=2.0, height=0.85, corner_radius=0.14,
+                            fill_color=mc("#B45309"), fill_opacity=1.0,
+                            stroke_width=0)
+    icing = RoundedRectangle(width=2.0, height=0.30, corner_radius=0.12,
+                             fill_color=mc("#FDF2F8"), fill_opacity=1.0,
+                             stroke_width=0)
+    icing.move_to(base.get_top() + DOWN * 0.13)
+    candles = VGroup()
+    for x in (-0.55, 0.0, 0.55):
+        stick = Rectangle(width=0.09, height=0.42,
+                          fill_color=mc(C_CYAN), fill_opacity=1.0,
+                          stroke_width=0)
+        stick.move_to(base.get_top() + UP * 0.21 + RIGHT * x)
+        flame = Dot(radius=0.075, color=mc(C_GOLD))
+        flame.move_to(stick.get_top() + UP * 0.07)
+        candles.add(VGroup(stick, flame))
+    g = VGroup(base, icing, candles)
+    if age:
+        lab = TXT(f"age = {age}", size=26, color=C_GOLD, bold=True)
+        lab.next_to(g, DOWN, buff=0.26)
+        g.add(lab)
+    return g
+
+
+def viz_number_line(values, x_min=None, x_max=None):
+    """Number line with the given values plotted and labelled."""
+    vals = []
+    for v in values:
+        try:
+            vals.append(float(v))
+        except Exception:
+            pass
+    vals = sorted(set(round(v, 3) for v in vals))
+    # keep at most 4 values, dropping near-duplicates so labels never collide
+    spaced = []
+    for v in vals:
+        if not spaced or v - spaced[-1] >= 0.4:
+            spaced.append(v)
+    vals = spaced[:4]
+    if not vals:
+        vals = [0.5, 1.5]
+    lo = math.floor(min(vals + [0])) - 1
+    hi = math.ceil(max(vals + [1])) + 1
+    if hi - lo > 8:
+        lo, hi = math.floor(min(vals)) - 1, math.floor(min(vals)) + 7
+    # include_numbers=False: MathTex-free so this never depends on LaTeX
+    nl = NumberLine(x_range=[lo, hi, 1], length=6.4,
+                    color=mc(C_LGRAY), include_numbers=False)
+    g = VGroup(nl)
+    for n in range(int(lo), int(hi) + 1):
+        tick_lab = TXT(str(n), size=22, color=C_LGRAY)
+        tick_lab.next_to(nl.number_to_point(n), DOWN, buff=0.18)
+        g.add(tick_lab)
+    for i, v in enumerate(vals):
+        if v < lo or v > hi:
+            continue
+        pt = nl.number_to_point(v)
+        dot = Dot(point=pt, radius=0.09, color=mc(C_GOLD))
+        lab = TXT(f"{v:g}", size=20, color=C_GOLD, bold=True)
+        # alternate label heights so nearby values never overlap
+        lab.next_to(dot, UP, buff=0.14 if i % 2 == 0 else 0.52)
+        g.add(dot, lab)
+    return g
+
+
+# ── Dispatcher: sentence → matching illustration ──────────────
+
+_FRAC_WORD_RE = re.compile(r"(\d+)\s*(?:over|/)\s*(\d+)")
+_INTO_RE      = re.compile(r"into\s+(\d+)")
+_TAKE_RE      = re.compile(r"(?:eat|ate|take|took|use|used|shade|remove|colou?r)\s+(\d+)")
+_COUNT_RE     = re.compile(r"(\d+)\s+(pizzas?|chocolates?|apples?|oranges?|mangoes|fruits?|coins?|dollars?|rupees?|cookies?|slices?|pieces?|people|friends?|students?)")
+_AMONG_RE     = re.compile(r"(?:among|between)\s+(\d+)")
+
+
+def story_visual(sentence):
+    """Return a drawn illustration matching this narration sentence, or None."""
+    s = str(sentence).lower()
+    frac = _FRAC_WORD_RE.search(s)
+    p, q = (int(frac.group(1)), int(frac.group(2))) if frac else (None, None)
+    n_into  = int(_INTO_RE.search(s).group(1))  if _INTO_RE.search(s)  else None
+    n_take  = int(_TAKE_RE.search(s).group(1))  if _TAKE_RE.search(s)  else None
+    n_among = int(_AMONG_RE.search(s).group(1)) if _AMONG_RE.search(s) else None
+    n_count = int(_COUNT_RE.search(s).group(1)) if _COUNT_RE.search(s) else None
+
+    ints = [int(x) for x in re.findall(r"-?\d+", s)][:3]
+
+    try:
+        if "pizza" in s or ("slice" in s and (n_into or q)):
+            return viz_pizza(n_into or q or 4, n_take if n_take is not None else (p or 3))
+        if "chocolate" in s or "candy" in s or "cookie" in s:
+            share = f"{p}/{q}" if p is not None else None
+            return viz_chocolate(n_count or p or 4, n_among, share)
+        if any(k in s for k in ("temperature", "thermometer", "degrees",
+                                "weather", "celsius")):
+            return viz_thermometer(ints)
+        if any(k in s for k in ("students", "classroom", "class of")):
+            return viz_classroom(n_count or (ints[0] if ints else 5))
+        if any(k in s for k in ("birthday", "years old", "your age",
+                                "age changes")):
+            return viz_cake(ints[0] if ints else None)
+        if any(k in s for k in ("car ", " road", " km", " miles", "travel",
+                                "distance", "speed")):
+            return viz_car(f"{ints[0]} km" if ints else None)
+        if any(k in s for k in ("money", "dollar", "rupee", "coin", "price",
+                                "cost", "cent", "pound", "euro", "wallet",
+                                "earn", "spend")):
+            return viz_money(f"${ints[0]}" if ints else None)
+        if any(k in s for k in ("apple", "orange", "mango", "fruit", "banana")):
+            kind = "orange" if "orange" in s else "apple"
+            return viz_fruits(n_count or 3, kind)
+        if any(k in s for k in ("mystery", "secret", "unknown number",
+                                "chooses a number", "choose a number",
+                                "hidden", "guess my number")):
+            m_sym = re.search(r"call (?:it|this) ([a-z])\b", s)
+            return viz_mystery_box(m_sym.group(1) if m_sym else None)
+        if "number line" in s and p is not None:
+            return viz_number_line([p / q if q else p])
+        if ("share" in s or "divid" in s) and n_among:
+            return viz_chocolate(n_count or p or 4, n_among,
+                                 f"{p}/{q}" if p is not None else None)
+        if p is not None and q and q != 0 and p <= q:
+            return viz_fraction_pie(p, q)
+        if p is not None and q:
+            return viz_fraction_pie(min(p, 16), max(q, 1))
+    except Exception:
+        return None
+    return None
+
+
+def fractions_in(texts):
+    """All p/q values found in a list of plain-text lines."""
+    vals = []
+    for t in texts:
+        for m in re.finditer(r"(-?\d+)\s*/\s*(\d+)", str(t)):
+            p, q = int(m.group(1)), int(m.group(2))
+            if q != 0 and abs(p / q) < 50:
+                vals.append(p / q)
+    return vals
 
 
 # ═════════════════════════════════════════════════════════════
@@ -200,11 +768,8 @@ def sync_to_audio(scene_obj, scene_id):
 
 def setup_bg(scene_obj):
     """Dark navy background + 4%-opacity grid + tiny floating accent dots."""
-    import numpy as np
-
     scene_obj.camera.background_color = mc(C_NAVY1)
 
-    # Full-frame dark gradient rect
     bg = Rectangle(
         width=FW + 1.0, height=FH + 1.0,
         fill_color=[mc(C_NAVY1), mc(C_NAVY2)],
@@ -214,38 +779,28 @@ def setup_bg(scene_obj):
     bg.set_z_index(-200)
     scene_obj.add(bg)
 
-    # Faint grid (4 % opacity)
     grid = VGroup()
     for x in np.arange(-7.0, 7.5, 1.5):
-        ln = Line(
-            np.array([x, -4.2, 0]), np.array([x, 4.2, 0]),
-            stroke_width=0.5, color=mc(C_BLUE_L),
-        )
+        ln = Line(np.array([x, -4.2, 0]), np.array([x, 4.2, 0]),
+                  stroke_width=0.5, color=mc(C_BLUE_L))
         ln.set_stroke(opacity=0.04)
         grid.add(ln)
     for y in np.arange(-4.0, 4.5, 1.0):
-        ln = Line(
-            np.array([-7.3, y, 0]), np.array([7.3, y, 0]),
-            stroke_width=0.5, color=mc(C_BLUE_L),
-        )
+        ln = Line(np.array([-7.3, y, 0]), np.array([7.3, y, 0]),
+                  stroke_width=0.5, color=mc(C_BLUE_L))
         ln.set_stroke(opacity=0.04)
         grid.add(ln)
     grid.set_z_index(-190)
     scene_obj.add(grid)
 
-    # Tiny floating dots — atmospheric depth
     rng = random.Random(99)
     for _ in range(20):
         x   = rng.uniform(-6.9, 6.9)
         y   = rng.uniform(-3.9, 3.9)
-        r   = rng.uniform(0.018, 0.055)
-        op  = rng.uniform(0.05, 0.16)
-        dot = Dot(
-            point=np.array([x, y, 0]),
-            radius=r,
-            color=mc(C_BLUE_L),
-            fill_opacity=op,
-        )
+        dot = Dot(point=np.array([x, y, 0]),
+                  radius=rng.uniform(0.018, 0.055),
+                  color=mc(C_BLUE_L),
+                  fill_opacity=rng.uniform(0.05, 0.16))
         dot.set_z_index(-180)
         scene_obj.add(dot)
 
@@ -255,76 +810,43 @@ def setup_bg(scene_obj):
 # ═════════════════════════════════════════════════════════════
 
 def make_header(lesson_title="", day=1):
-    """
-    Premium top bar (HEADER_BOT → HEADER_TOP).
-    Left  : yellow 'M' logo circle + channel name + tagline
-    Center: lesson title
-    Right : purple DAY badge
-    Returns a VGroup (z_index=80).
-    """
-    import numpy as np
-    hcy = (HEADER_TOP + HEADER_BOT) / 2    # 3.275
-    hh  = HEADER_TOP - HEADER_BOT           # 0.85
+    """Premium top bar: brand block · bold lesson title · DAY badge."""
+    hcy = (HEADER_TOP + HEADER_BOT) / 2
+    hh  = HEADER_TOP - HEADER_BOT
 
-    # Background bar
     bg_bar = Rectangle(
         width=FW, height=hh,
         fill_color=mc(C_HEADER), fill_opacity=1.0, stroke_width=0,
     ).move_to(np.array([0.0, hcy, 0.0]))
 
-    # Bottom gold accent line
     accent = Rectangle(
-        width=FW, height=0.04,
+        width=FW, height=0.05,
         fill_color=mc(C_GOLD), fill_opacity=1.0, stroke_width=0,
-    ).move_to(np.array([0.0, HEADER_BOT + 0.02, 0.0]))
+    ).move_to(np.array([0.0, HEADER_BOT + 0.025, 0.0]))
 
-    # Logo circle with 'M'
-    logo_circ = Circle(
-        radius=0.26,
-        fill_color=mc(C_GOLD), fill_opacity=1.0, stroke_width=0,
-    )
-    logo_m = Text("M", font_size=18, color=mc(C_NAVY1),
-                  font="Arial", weight=BOLD)
+    logo_circ = Circle(radius=0.30, fill_color=mc(C_GOLD),
+                       fill_opacity=1.0, stroke_width=0)
+    logo_m = TXT("M", size=24, color=C_NAVY1, bold=True)
     logo_m.move_to(logo_circ.get_center())
     logo_grp = VGroup(logo_circ, logo_m)
-    logo_grp.move_to(np.array([-6.45, hcy + 0.10, 0.0]))
+    logo_grp.move_to(np.array([-6.35, hcy + 0.06, 0.0]))
 
-    # Channel name + tagline stacked
-    ch_name = Text(
-        CHANNEL, font_size=13,
-        color=mc(C_WHITE), font="Arial", weight=BOLD,
-    ).next_to(logo_grp, RIGHT, buff=0.10).align_to(logo_grp, UP).shift(DOWN * 0.01)
+    ch_name = TXT(CHANNEL, size=17, color=C_WHITE, bold=True)
+    ch_name.next_to(logo_grp, RIGHT, buff=0.14).align_to(logo_grp, UP)
 
-    tagline_txt = Text(
-        TAGLINE, font_size=9,
-        color=mc(C_GOLD), font="Arial",
-    ).next_to(ch_name, DOWN, buff=0.04).align_to(ch_name, LEFT)
+    tagline_txt = TXT(TAGLINE, size=12, color=C_GOLD, bold=True)
+    tagline_txt.next_to(ch_name, DOWN, buff=0.06).align_to(ch_name, LEFT)
 
-    # Lesson title — centered
     lt = str(lesson_title) if lesson_title else str(SCRIPT_DATA.get("title", ""))
-    lt = lt[:58]
-    try:
-        title_mob = Text(
-            lt, font_size=17,
-            color=mc(C_WHITE), font="Arial", weight=BOLD,
-        )
-    except Exception:
-        title_mob = Text("Lesson", font_size=17,
-                         color=mc(C_WHITE), font="Arial", weight=BOLD)
-    if title_mob.width > 6.2:
-        title_mob.scale_to_fit_width(6.2)
-    title_mob.move_to(np.array([0.0, hcy, 0.0]))
+    title_mob = TXT(lt, size=24, color=C_WHITE, bold=True, max_w=6.0)
+    title_mob.move_to(np.array([0.6, hcy, 0.0]))
 
-    # DAY badge — purple pill
     day_bg = RoundedRectangle(
-        width=1.25, height=0.46,
-        corner_radius=0.10,
+        width=1.55, height=0.58, corner_radius=0.12,
         fill_color=mc(C_PURPLE), fill_opacity=1.0, stroke_width=0,
-    ).move_to(np.array([6.22, hcy, 0.0]))
-    day_txt = Text(
-        "DAY " + str(day), font_size=13,
-        color=mc(C_WHITE), font="Arial", weight=BOLD,
-    ).move_to(day_bg.get_center())
+    ).move_to(np.array([6.10, hcy, 0.0]))
+    day_txt = TXT("DAY " + str(day), size=19, color=C_WHITE, bold=True)
+    day_txt.move_to(day_bg.get_center())
 
     grp = VGroup(bg_bar, accent, logo_grp, ch_name, tagline_txt,
                  title_mob, day_bg, day_txt)
@@ -334,19 +856,21 @@ def make_header(lesson_title="", day=1):
 
 # ═════════════════════════════════════════════════════════════
 # DESIGN SYSTEM — FOOTER
+# Lesson-journey chips (CONCEPT → EXAMPLE → PRACTICE → MASTER),
+# large and bold, with the current stage highlighted.
 # ═════════════════════════════════════════════════════════════
 
-def make_footer():
-    """
-    Premium bottom bar (FOOTER_BOT → FOOTER_TOP).
-    Left  : red YouTube circle + 'NEW VIDEOS EVERY DAY'
-    Center: bell + SUBSCRIBE & TURN ON NOTIFICATIONS in gold
-    Right : @MathConceptMadeEasy handle
-    Returns a VGroup (z_index=80).
-    """
-    import numpy as np
-    fcy = (FOOTER_TOP + FOOTER_BOT) / 2    # -3.675
-    fh  = FOOTER_TOP - FOOTER_BOT           #  0.65
+_FOOTER_STAGES = [
+    ("?",  "CONCEPT",  C_BLUE_L,  ("hook", "concept", "definition")),
+    ("★",  "EXAMPLE",  C_GGREEN,  ("formula", "worked_example")),
+    ("✎",  "PRACTICE", C_ORANGE,  ("mistakes", "practice")),
+    ("✓",  "MASTER",   C_PURPLE,  ("summary",)),
+]
+
+
+def make_footer(active_step=None):
+    fcy = (FOOTER_TOP + FOOTER_BOT) / 2
+    fh  = FOOTER_TOP - FOOTER_BOT
 
     bg_bar = Rectangle(
         width=FW, height=fh,
@@ -354,39 +878,31 @@ def make_footer():
     ).move_to(np.array([0.0, fcy, 0.0]))
 
     top_line = Rectangle(
-        width=FW, height=0.03,
+        width=FW, height=0.04,
         fill_color=mc(C_GOLD), fill_opacity=0.55, stroke_width=0,
-    ).move_to(np.array([0.0, FOOTER_TOP - 0.015, 0.0]))
+    ).move_to(np.array([0.0, FOOTER_TOP - 0.02, 0.0]))
 
-    # YouTube red circle
-    yt_circ = Circle(
-        radius=0.17,
-        fill_color=mc(C_RRED), fill_opacity=1.0, stroke_width=0,
-    ).move_to(np.array([-6.35, fcy, 0.0]))
-    yt_arrow = Text(
-        "▶", font_size=10,
-        color=mc(C_WHITE), font="Arial",
-    ).move_to(yt_circ.get_center()).shift(RIGHT * 0.01)
+    chips = VGroup()
+    for icon, label, col, steps in _FOOTER_STAGES:
+        active = active_step in steps
+        circ = Circle(
+            radius=0.27,
+            fill_color=mc(col), fill_opacity=1.0 if active else 0.28,
+            stroke_color=mc(C_GOLD if active else col),
+            stroke_width=3.0 if active else 1.6,
+        )
+        ic = TXT(icon, size=22, color=C_WHITE if active else C_LGRAY, bold=True)
+        ic.move_to(circ.get_center())
+        lab = TXT(label, size=17, color=C_GOLD if active else C_LGRAY, bold=True)
+        lab.next_to(circ, RIGHT, buff=0.14)
+        chips.add(VGroup(circ, ic, lab))
+    chips.arrange(RIGHT, buff=0.75)
+    chips.move_to(np.array([-1.4, fcy, 0.0]))
 
-    new_vid = Text(
-        "NEW VIDEOS EVERY DAY",
-        font_size=9, color=mc(C_WHITE), font="Arial",
-    ).next_to(yt_circ, RIGHT, buff=0.10).align_to(yt_circ, DOWN).shift(UP * 0.02)
+    handle = TXT("@MathConceptMadeEasy", size=15, color=C_LGRAY)
+    handle.move_to(np.array([5.55, fcy, 0.0]))
 
-    # Subscribe text in gold (center-left)
-    sub_txt = Text(
-        "\U0001f514  SUBSCRIBE & TURN ON NOTIFICATIONS",
-        font_size=10, color=mc(C_GOLD), font="Arial", weight=BOLD,
-    ).move_to(np.array([0.9, fcy, 0.0]))
-
-    # Channel handle right
-    handle = Text(
-        "@MathConceptMadeEasy",
-        font_size=11, color=mc(C_LGRAY), font="Arial",
-    ).move_to(np.array([5.65, fcy, 0.0]))
-
-    grp = VGroup(bg_bar, top_line, yt_circ, yt_arrow,
-                 new_vid, sub_txt, handle)
+    grp = VGroup(bg_bar, top_line, chips, handle)
     grp.set_z_index(80)
     return grp
 
@@ -397,1532 +913,931 @@ def make_footer():
 
 def make_card(w=4.5, h=5.5, border_color=None, fill_color=None,
               corner_radius=0.15):
-    """Rounded-rectangle content card."""
-    bc = border_color or C_BLUE_P
-    fc = fill_color   or C_CBG
     return RoundedRectangle(
         width=w, height=h,
         corner_radius=corner_radius,
-        fill_color=mc(fc), fill_opacity=0.97,
-        stroke_color=mc(bc), stroke_width=2.0,
+        fill_color=mc(fill_color or C_CBG), fill_opacity=0.97,
+        stroke_color=mc(border_color or C_BLUE_P), stroke_width=2.0,
     )
 
 
 def make_card_header(text, width=4.5, color=None):
-    """
-    Colored header strip with bold white label.
-    Returns a VGroup(strip, label).
-    """
-    col   = color or C_BLUE_P
     strip = RoundedRectangle(
-        width=width, height=0.46,
-        corner_radius=0.12,
-        fill_color=mc(col), fill_opacity=1.0, stroke_width=0,
+        width=width, height=0.56, corner_radius=0.12,
+        fill_color=mc(color or C_BLUE_P), fill_opacity=1.0, stroke_width=0,
     )
-    try:
-        label = Text(
-            str(text), font_size=14,
-            color=mc(C_WHITE), font="Arial", weight=BOLD,
-        )
-    except Exception:
-        label = Text("Header", font_size=14,
-                     color=mc(C_WHITE), font="Arial", weight=BOLD)
-    if label.width > width - 0.22:
-        label.scale_to_fit_width(width - 0.22)
+    label = TXT(text, size=21, color=C_WHITE, bold=True, max_w=width - 0.30)
     label.move_to(strip.get_center())
     return VGroup(strip, label)
 
 
-def make_formula_box(latex_str, width=5.2, height=1.8):
-    """
-    Purple-bordered card containing MathTex (or plain Text fallback).
-    Returns VGroup(box, formula_mob).
-    """
+def make_formula_box(latex_str, width=5.6, height=2.0, font_size=60):
     box = RoundedRectangle(
-        width=width, height=height,
-        corner_radius=0.18,
+        width=width, height=height, corner_radius=0.18,
         fill_color=mc(C_CBG), fill_opacity=1.0,
-        stroke_color=mc(C_PURPLE), stroke_width=2.5,
+        stroke_color=mc(C_SEM_FORMULA), stroke_width=2.5,
     )
-    try:
-        fml = MathTex(str(latex_str), font_size=54, color=mc(C_WHITE))
-        if fml.width > width - 0.45:
-            fml.scale_to_fit_width(width - 0.45)
-        if fml.height > height - 0.35:
-            fml.scale_to_fit_height(height - 0.35)
-    except Exception:
-        fml = Text(
-            str(latex_str)[:42], font_size=24,
-            color=mc(C_WHITE), font="Arial",
-        )
-        if fml.width > width - 0.45:
-            fml.scale_to_fit_width(width - 0.45)
+    fml = MATH(latex_str, size=font_size, color=C_WHITE, max_w=width - 0.5)
+    if fml.height > height - 0.35:
+        fml.scale_to_fit_height(height - 0.35)
     fml.move_to(box.get_center())
     return VGroup(box, fml)
 
 
-def make_bullet_list(items, color=None, font_size=16, max_width=4.0):
-    """VGroup of bullet-point Text mobs, arranged vertically."""
-    col  = color or C_LGRAY
-    mobs = []
-    for item in items:
-        try:
-            t = Text(
-                "•  " + str(item), font_size=font_size,
-                color=mc(col), font="Arial",
-            )
-        except Exception:
-            t = Text("•  item", font_size=font_size,
-                     color=mc(col), font="Arial")
-        if t.width > max_width:
-            t.scale_to_fit_width(max_width)
-        mobs.append(t)
-    grp = VGroup(*mobs).arrange(DOWN, aligned_edge=LEFT, buff=0.18)
-    return grp
-
-
-def make_step_solution(steps, max_width=3.4):
-    """
-    Build solution step mobs (MathTex with Text fallback).
-    Returns (grp, list_of_mobs) — first step in gold, last in green.
-    """
-    mobs = []
-    n    = len(steps)
-    for i, step in enumerate(steps):
-        if i == 0:
-            col = C_GOLD
-        elif i == n - 1:
-            col = C_GGREEN
-        else:
-            col = C_WHITE
-        try:
-            m = MathTex(str(step), font_size=26, color=mc(col))
-        except Exception:
-            m = Text(str(step)[:55], font_size=15,
-                     color=mc(col), font="Arial")
-        if m.width > max_width:
-            m.scale_to_fit_width(max_width)
-        mobs.append(m)
-    grp = VGroup(*mobs).arrange(DOWN, aligned_edge=LEFT, buff=0.20)
-    if grp.width > max_width:
-        grp.scale_to_fit_width(max_width)
-    return grp, mobs
-
-
-def make_takeaway_bar(items):
-    """Four numbered takeaway cards in a horizontal row."""
-    colors    = [C_BLUE_P, C_GGREEN, C_ORANGE, C_PURPLE]
-    card_list = []
-    for i, item in enumerate(items[:4]):
-        col = colors[i % 4]
-
-        tc_bg = RoundedRectangle(
-            width=5.4, height=0.90,
-            corner_radius=0.13,
-            fill_color=mc(C_CBG), fill_opacity=1.0,
-            stroke_color=mc(col), stroke_width=1.8,
-        )
-        # Number badge on left
-        num_circ = Circle(
-            radius=0.22,
-            fill_color=mc(col), fill_opacity=1.0, stroke_width=0,
-        )
-        num_txt = Text(
-            str(i + 1), font_size=15,
-            color=mc(C_WHITE), font="Arial", weight=BOLD,
-        )
-        num_txt.move_to(num_circ.get_center())
-        num_grp = VGroup(num_circ, num_txt)
-        num_grp.move_to(tc_bg.get_left() + RIGHT * 0.36)
-
-        try:
-            item_txt = Text(
-                str(item)[:42], font_size=13,
-                color=mc(C_WHITE), font="Arial",
-            )
-        except Exception:
-            item_txt = Text("Key takeaway", font_size=13,
-                            color=mc(C_WHITE), font="Arial")
-        if item_txt.width > 4.5:
-            item_txt.scale_to_fit_width(4.5)
-        item_txt.move_to(tc_bg.get_center() + RIGHT * 0.24)
-
-        card_list.append(VGroup(tc_bg, num_grp, item_txt))
-
-    row = VGroup(*card_list).arrange(RIGHT, buff=0.25)
-    return row
+def section_pill(text, color=None, width=None, size=22):
+    txt = TXT(text, size=size, color=C_WHITE, bold=True)
+    w = width or (txt.width + 0.7)
+    bg = RoundedRectangle(
+        width=w, height=0.60, corner_radius=0.30,
+        fill_color=mc(color or C_ORANGE), fill_opacity=1.0, stroke_width=0,
+    )
+    txt.move_to(bg.get_center())
+    return VGroup(bg, txt)
 
 
 # ═════════════════════════════════════════════════════════════
 # SCENE 01 — OPENING  (channel intro, no standard header)
-# ─────────────────────────────────────────────────────────────
-# Top-left : logo circle + "Math Concept / Made Easy" + tagline
-# Top-center: gold pill "LEARN • PRACTICE • MASTER"
-# Top-right : purple DAY badge
-# Center    : lesson title (2 lines: white / gold)
-# Below     : blue subtitle bar
-# Bottom    : 4 badge circles
-# Footer    : standard footer bar
+# Five-second curiosity hook FIRST: a glowing mystery box and the
+# lesson's real-world question, with a slow documentary zoom.
+# Then the title sequence lands on the beat of the narration:
+# DAY badge on "Day N", the big title on the topic words,
+# the goal bar on "By the end of this lesson".
 # ═════════════════════════════════════════════════════════════
 
-class Scene01_Opening(Scene):
+class Scene01_Opening(MovingCameraScene):
     def construct(self):
         sd  = get_scene_by_step("opening")
-        dur = float(sd.get("duration_seconds", 20.0))
+        nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 1))
-
         setup_bg(self)
 
-        import numpy as np
-
         lesson_title = SCRIPT_DATA.get("title", "Today's Lesson")
+        beats = sd.get("narration_beats") or split_sentences(sd.get("narration", ""))
 
-        # ── Scattered faint math symbols ─────────────────────────────
-        syms = ["+", "-", r"\times", r"\div", "=", r"\pi",
-                r"\Sigma", "f(x)", r"\infty", r"\alpha"]
+        # Scattered faint math symbols
+        syms = ["+", "-", "×", "÷", "=", "π", "Σ", "f(x)", "∞", "α"]
         rng2 = random.Random(77)
         for _ in range(16):
-            sym = rng2.choice(syms)
-            x   = rng2.uniform(-6.5, 6.5)
-            y   = rng2.uniform(-3.6, 3.6)
-            try:
-                sm = MathTex(sym, font_size=rng2.randint(18, 36),
-                             color=mc(C_BLUE_L))
-            except Exception:
-                sm = Text(sym, font_size=22, color=mc(C_BLUE_L), font="Arial")
-            sm.move_to(np.array([x, y, 0]))
+            sm = TXT(rng2.choice(syms), size=rng2.randint(20, 40), color=C_BLUE_L)
+            sm.move_to(np.array([rng2.uniform(-6.5, 6.5),
+                                 rng2.uniform(-3.4, 3.4), 0]))
             sm.set_opacity(rng2.uniform(0.04, 0.11))
             sm.set_z_index(-50)
             self.add(sm)
 
-        # ── Branding block (top-left) ─────────────────────────────────
-        logo_circ = Circle(
-            radius=0.40,
-            fill_color=mc(C_GOLD), fill_opacity=1.0, stroke_width=0,
-        )
-        logo_m = Text("M", font_size=28, color=mc(C_NAVY1),
-                      font="Arial", weight=BOLD)
+        # Branding block (top-left)
+        logo_circ = Circle(radius=0.42, fill_color=mc(C_GOLD),
+                           fill_opacity=1.0, stroke_width=0)
+        logo_m = TXT("M", size=32, color=C_NAVY1, bold=True)
         logo_m.move_to(logo_circ.get_center())
         logo_grp = VGroup(logo_circ, logo_m)
 
-        ch_line1 = Text("Math Concept", font_size=22,
-                        color=mc(C_WHITE), font="Arial", weight=BOLD)
-        ch_line2 = Text("Made Easy", font_size=22,
-                        color=mc(C_GOLD),  font="Arial", weight=BOLD)
+        ch_line1 = TXT("Math Concept", size=26, color=C_WHITE, bold=True)
+        ch_line2 = TXT("Made Easy",   size=26, color=C_GOLD,  bold=True)
         ch_stack = VGroup(ch_line1, ch_line2).arrange(
-            DOWN, buff=0.04, aligned_edge=LEFT)
+            DOWN, buff=0.05, aligned_edge=LEFT)
+        brand_row = VGroup(logo_grp, ch_stack).arrange(
+            RIGHT, buff=0.20, aligned_edge=UP)
+        brand_row.move_to(np.array([-4.75, 3.10, 0]))
 
-        tagline_sm = Text(TAGLINE, font_size=10,
-                          color=mc(C_LGRAY), font="Arial")
-
-        brand_col = VGroup(ch_stack, tagline_sm).arrange(
-            DOWN, buff=0.08, aligned_edge=LEFT)
-        brand_row = VGroup(logo_grp, brand_col).arrange(
-            RIGHT, buff=0.18, aligned_edge=UP)
-        brand_row.move_to(np.array([-4.65, 3.15, 0]))
-
-        # ── "LEARN • PRACTICE • MASTER" pill (top-center) ────────────
+        # "LEARN • PRACTICE • MASTER" — a headline element on its own
+        # band below the brand row, big and bold
+        pill_txt = TXT("LEARN  •  PRACTICE  •  MASTER",
+                       size=28, color=C_NAVY1, bold=True)
         pill_bg = RoundedRectangle(
-            width=4.6, height=0.50,
-            corner_radius=0.25,
+            width=pill_txt.width + 0.9, height=0.82, corner_radius=0.41,
             fill_color=mc(C_GOLD), fill_opacity=1.0, stroke_width=0,
-        ).move_to(np.array([0.0, 3.38, 0]))
-        pill_txt = Text(
-            "LEARN  •  PRACTICE  •  MASTER",
-            font_size=13, color=mc(C_NAVY1), font="Arial", weight=BOLD,
+        ).move_to(np.array([0.0, 2.28, 0]))
+        pill_glow = RoundedRectangle(
+            width=pill_txt.width + 1.10, height=0.98, corner_radius=0.49,
+            fill_color=mc(C_GOLD), fill_opacity=0.18, stroke_width=0,
         ).move_to(pill_bg.get_center())
-        pill_grp = VGroup(pill_bg, pill_txt)
+        pill_txt.move_to(pill_bg.get_center())
+        pill_grp = VGroup(pill_glow, pill_bg, pill_txt)
 
-        # ── DAY badge (top-right) ─────────────────────────────────────
+        # DAY badge (top-right)
         day_bg = RoundedRectangle(
-            width=1.55, height=0.62,
-            corner_radius=0.12,
+            width=1.85, height=0.72, corner_radius=0.14,
             fill_color=mc(C_PURPLE), fill_opacity=1.0, stroke_width=0,
-        ).move_to(np.array([6.15, 3.30, 0]))
-        day_txt = Text(
-            "DAY " + str(LESSON_ID), font_size=19,
-            color=mc(C_WHITE), font="Arial", weight=BOLD,
-        ).move_to(day_bg.get_center())
+        ).move_to(np.array([5.95, 3.22, 0]))
+        day_txt = TXT("DAY " + str(LESSON_ID), size=24, color=C_WHITE, bold=True)
+        day_txt.move_to(day_bg.get_center())
         day_grp = VGroup(day_bg, day_txt)
 
-        # ── Lesson title (two lines — white / gold) ───────────────────
+        # Lesson title (two lines — white / gold)
         words = lesson_title.split()
         half  = max(1, len(words) // 2)
         l1_str = " ".join(words[:half])
         l2_str = " ".join(words[half:]) if len(words) > half else lesson_title
+        title_l1 = TXT(l1_str, size=68, color=C_WHITE, bold=True, max_w=11.8)
+        title_l2 = TXT(l2_str, size=68, color=C_GOLD,  bold=True, max_w=11.8)
+        title_grp = VGroup(title_l1, title_l2).arrange(DOWN, buff=0.12)
+        title_grp.move_to(np.array([0.0, 0.52, 0]))
 
-        try:
-            title_l1 = Text(l1_str, font_size=62,
-                            color=mc(C_WHITE), font="Arial", weight=BOLD)
-        except Exception:
-            title_l1 = Text("Today's", font_size=62,
-                            color=mc(C_WHITE), font="Arial", weight=BOLD)
-        if title_l1.width > 11.8:
-            title_l1.scale_to_fit_width(11.8)
-
-        try:
-            title_l2 = Text(l2_str, font_size=62,
-                            color=mc(C_GOLD), font="Arial", weight=BOLD)
-        except Exception:
-            title_l2 = Text("Lesson", font_size=62,
-                            color=mc(C_GOLD), font="Arial", weight=BOLD)
-        if title_l2.width > 11.8:
-            title_l2.scale_to_fit_width(11.8)
-
-        title_grp = VGroup(title_l1, title_l2).arrange(DOWN, buff=0.10)
-        title_grp.move_to(np.array([0.0, 0.65, 0]))
-
-        # ── Subtitle bar ─────────────────────────────────────────────
-        subject  = SCRIPT_DATA.get("subject", "Mathematics")
-        sub_bg   = RoundedRectangle(
-            width=8.2, height=0.60, corner_radius=0.14,
+        # Goal bar
+        goal = SCRIPT_DATA.get("lesson_goal", "")
+        goal_txt = TXT("Today: " + goal, size=24, color=C_WHITE,
+                       bold=True, wrap=78, max_w=11.6)
+        goal_bg = RoundedRectangle(
+            width=min(12.4, goal_txt.width + 0.9),
+            height=goal_txt.height + 0.42,
+            corner_radius=0.16,
             fill_color=mc(C_BLUE_P), fill_opacity=1.0, stroke_width=0,
-        ).move_to(np.array([0.0, -0.92, 0]))
-        try:
-            sub_txt = Text(str(subject), font_size=20,
-                           color=mc(C_WHITE), font="Arial", weight=BOLD)
-        except Exception:
-            sub_txt = Text("Mathematics", font_size=20,
-                           color=mc(C_WHITE), font="Arial", weight=BOLD)
-        if sub_txt.width > 7.6:
-            sub_txt.scale_to_fit_width(7.6)
-        sub_txt.move_to(sub_bg.get_center())
-        sub_grp = VGroup(sub_bg, sub_txt)
+        ).move_to(np.array([0.0, -1.10, 0]))
+        goal_txt.move_to(goal_bg.get_center())
+        goal_grp = VGroup(goal_bg, goal_txt)
 
-        # ── Four badge circles ────────────────────────────────────────
+        # Four bigger promise badges
         badge_data = [
-            ("\U0001f4a1", "EASY",    "EXPLANATIONS", C_BLUE_P),
-            ("\U0001f3af", "CONCEPT", "CLARITY",      C_GGREEN),
-            ("⚡",     "SMART",   "STRATEGIES",   C_ORANGE),
-            ("\U0001f3c6", "BETTER",  "RESULTS",      C_PURPLE),
+            ("?", "EASY",    "EXPLANATIONS", C_BLUE_P),
+            ("◆", "CONCEPT", "CLARITY",      C_GGREEN),
+            ("★", "SMART",   "STRATEGIES",   C_ORANGE),
+            ("✓", "BETTER",  "RESULTS",      C_PURPLE),
         ]
         badge_mobs = []
         for icon_ch, top_lbl, bot_lbl, col in badge_data:
-            circ = Circle(
-                radius=0.64,
-                fill_color=mc(col), fill_opacity=0.16,
-                stroke_color=mc(col), stroke_width=2.0,
-            )
-            try:
-                icon_m = Text(icon_ch, font_size=22)
-            except Exception:
-                icon_m = Text("*", font_size=22, color=mc(col), font="Arial")
-            icon_m.move_to(circ.get_center() + UP * 0.19)
-            top_m = Text(top_lbl, font_size=11, color=mc(col),
-                         font="Arial", weight=BOLD)
-            top_m.move_to(circ.get_center() + DOWN * 0.12)
-            bot_m = Text(bot_lbl, font_size=9, color=mc(C_LGRAY), font="Arial")
-            bot_m.move_to(circ.get_center() + DOWN * 0.28)
+            circ = Circle(radius=0.80,
+                          fill_color=mc(col), fill_opacity=0.16,
+                          stroke_color=mc(col), stroke_width=2.6)
+            icon_m = TXT(icon_ch, size=30, color=col, bold=True)
+            icon_m.move_to(circ.get_center() + UP * 0.24)
+            top_m = TXT(top_lbl, size=16, color=col, bold=True)
+            top_m.move_to(circ.get_center() + DOWN * 0.14)
+            bot_m = TXT(bot_lbl, size=12, color=C_LGRAY, bold=True)
+            bot_m.move_to(circ.get_center() + DOWN * 0.40)
             badge_mobs.append(VGroup(circ, icon_m, top_m, bot_m))
+        badges_row = VGroup(*badge_mobs).arrange(RIGHT, buff=0.62)
+        badges_row.move_to(np.array([0.0, -2.45, 0]))
 
-        badges_row = VGroup(*badge_mobs).arrange(RIGHT, buff=0.52)
-        badges_row.move_to(np.array([0.0, -2.55, 0]))
-
-        # ── Footer ───────────────────────────────────────────────────
-        footer = make_footer()
+        footer = make_footer("opening")
         self.add(footer)
 
-        # ── Animate ──────────────────────────────────────────────────
-        ta = 0.0   # total animation time accumulated
+        # ── LAYER 1: the mystery hook (first ~8 seconds) ──────
+        # The curiosity question is the 2nd narration beat (after
+        # "Here is a little mystery before we start.").
+        curiosity = beats[1] if len(beats) > 1 else ""
+        mystery = viz_mystery_box()
+        mystery.move_to(np.array([0.0, 1.05, 0]))
+        q_txt = TXT(curiosity, size=30, color=C_WHITE, bold=True,
+                    wrap=50, max_w=11.0)
+        q_txt.move_to(np.array([0.0, -0.85, 0]))
 
-        self.play(FadeIn(brand_row, shift=DOWN * 0.12), run_time=0.65)
-        ta += 0.65
-        self.play(FadeIn(pill_grp, shift=DOWN * 0.08), run_time=0.50)
-        ta += 0.50
-        self.play(FadeIn(day_grp,  shift=LEFT * 0.08), run_time=0.40)
-        ta += 0.40
-        self.play(Write(title_l1),  run_time=0.85)
-        ta += 0.85
-        self.play(Write(title_l2),  run_time=0.85)
-        ta += 0.85
-        self.play(FadeIn(sub_grp,  shift=UP * 0.08), run_time=0.50)
-        ta += 0.50
+        self.play(FadeIn(mystery, scale=0.6), run_time=0.7)
+        try:
+            self.play(self.camera.frame.animate.scale(0.92).move_to(
+                np.array([0.0, 0.35, 0])), run_time=1.4)
+        except Exception:
+            pass
+        wait_until(self, nar.when_spoken(curiosity), lead=0.25)
+        self.play(Write(q_txt), run_time=1.0)
+        try:
+            self.play(Indicate(mystery, scale_factor=1.06,
+                               color=mc(C_SEM_KEY)), run_time=0.8)
+        except Exception:
+            pass
+
+        # ── Transition: mystery dissolves into the title card ──
+        wait_until(self, nar.when_spoken("Hold that thought"), lead=0.20)
+        anims = [FadeOut(mystery, scale=0.8), FadeOut(q_txt, shift=DOWN * 0.3)]
+        try:
+            anims.append(self.camera.frame.animate.scale(1 / 0.92).move_to(ORIGIN))
+        except Exception:
+            pass
+        self.play(*anims, run_time=0.9)
+
+        # ── Title sequence on the narration beat ──────────────
+        reveal(self, nar, brand_row, spoken="Welcome to Math Concepts",
+               run_time=0.6, anim=lambda m: FadeIn(m, shift=DOWN * 0.12))
+        self.play(FadeIn(pill_grp, shift=DOWN * 0.08), run_time=0.5)
+
+        reveal(self, nar, day_grp, spoken="Today is Day", run_time=0.45,
+               anim=lambda m: FadeIn(m, shift=LEFT * 0.10))
+        wait_until(self, nar.when_spoken(SCRIPT_DATA.get("title", "")), lead=0.25)
+        self.play(Write(title_l1), run_time=0.8)
+        self.play(Write(title_l2), run_time=0.8)
+
+        reveal(self, nar, goal_grp, spoken="By the end of this lesson",
+               run_time=0.5, anim=lambda m: FadeIn(m, shift=UP * 0.08))
         self.play(
             LaggedStart(*[FadeIn(b, shift=UP * 0.14) for b in badge_mobs],
                         lag_ratio=0.22),
-            run_time=1.00,
+            run_time=1.0,
         )
-        ta += 1.00
-
-        self.wait(max(0.5, dur - ta - 0.5))
         sync_to_audio(self, sd.get("scene_id", 1))
 
 
 # ═════════════════════════════════════════════════════════════
 # SCENE 02 — HOOK
-# ─────────────────────────────────────────────────────────────
-# Orange "DID YOU KNOW?" pill at top-center.
-# Large centered card (9 × 3.5) with hook text.
-# "?" icon on the left side of the card.
+# The real-world story scene. Each narration sentence that
+# mentions a real object (pizza, chocolate, money …) triggers a
+# drawn illustration at the exact second it is spoken, with the
+# sentence as a clean caption below.
 # ═════════════════════════════════════════════════════════════
 
 class Scene02_Hook(Scene):
     def construct(self):
         sd  = get_scene_by_step("hook")
-        dur = float(sd.get("duration_seconds", 20.0))
+        nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 2))
 
         lesson_title = SCRIPT_DATA.get("title", "")
         setup_bg(self)
-        header = make_header(lesson_title, LESSON_ID)
-        footer = make_footer()
-        self.add(header, footer)
+        self.add(make_header(lesson_title, LESSON_ID), make_footer("hook"))
 
-        import numpy as np
-        narration  = sd.get("narration", "")
-        hook_text  = sd.get("real_world_hook", narration) or narration
+        beats = sd.get("narration_beats") or split_sentences(sd.get("narration", ""))
 
-        content_cy = (CONTENT_TOP + CONTENT_BOT) / 2   # -0.25
+        pill = section_pill("SEEN IN REAL LIFE", C_ORANGE, size=24)
+        pill.move_to(np.array([0.0, CONTENT_TOP - 0.42, 0]))
 
-        # ── "DID YOU KNOW?" pill ──────────────────────────────────────
-        pill_bg = RoundedRectangle(
-            width=4.3, height=0.52, corner_radius=0.26,
-            fill_color=mc(C_ORANGE), fill_opacity=1.0, stroke_width=0,
-        ).move_to(np.array([0.0, CONTENT_TOP - 0.45, 0]))
-        pill_txt = Text(
-            "DID YOU KNOW?", font_size=18,
-            color=mc(C_WHITE), font="Arial", weight=BOLD,
-        ).move_to(pill_bg.get_center())
-        pill_grp = VGroup(pill_bg, pill_txt)
+        stage_c  = np.array([0.0, 0.45, 0])       # where illustrations live
+        cap_y    = -2.30                           # caption band
 
-        # ── Main hook card ────────────────────────────────────────────
-        card = make_card(9.2, 3.6, border_color=C_ORANGE, fill_color=C_CBG)
-        card.move_to(np.array([0.4, content_cy - 0.2, 0]))
+        self.play(FadeIn(pill, shift=DOWN * 0.10), run_time=0.5)
 
-        # "?" bubble on the left
-        q_circ = Circle(
-            radius=0.52,
-            fill_color=mc(C_ORANGE), fill_opacity=1.0, stroke_width=0,
-        ).move_to(np.array([-4.05, content_cy - 0.2, 0]))
-        q_icon = Text("?", font_size=38, color=mc(C_WHITE),
-                      font="Arial", weight=BOLD)
-        q_icon.move_to(q_circ.get_center())
-        q_grp = VGroup(q_circ, q_icon)
+        visuals_on_stage = []
+        caption = None
 
-        # Hook text — split into lines
-        lines = textwrap.wrap(str(hook_text), 62)[:5]
-        if not lines:
-            lines = ["Hook content will appear here."]
-        line_mobs = []
-        for ln in lines:
-            try:
-                t = Text(ln, font_size=21, color=mc(C_WHITE), font="Arial")
-            except Exception:
-                t = Text(ln[:60], font_size=21, color=mc(C_WHITE), font="Arial")
-            if t.width > 7.9:
-                t.scale_to_fit_width(7.9)
-            line_mobs.append(t)
-        text_grp = VGroup(*line_mobs).arrange(
-            DOWN, buff=0.22, aligned_edge=LEFT)
-        if text_grp.height > 3.2:
-            text_grp.scale_to_fit_height(3.2)
-        text_grp.move_to(np.array([0.55, content_cy - 0.2, 0]))
+        def set_caption(text):
+            nonlocal caption
+            new_cap = TXT(text, size=25, color=C_WHITE, wrap=64, max_w=11.8)
+            new_cap.move_to(np.array([0.0, cap_y, 0]))
+            underline = Rectangle(width=min(new_cap.width + 0.4, 12.0),
+                                  height=0.03,
+                                  fill_color=mc(C_GOLD), fill_opacity=0.6,
+                                  stroke_width=0)
+            underline.next_to(new_cap, DOWN, buff=0.16)
+            grp = VGroup(new_cap, underline)
+            if caption is None:
+                self.play(FadeIn(grp, shift=UP * 0.10), run_time=0.45)
+            else:
+                self.play(FadeOut(caption, run_time=0.25),
+                          FadeIn(grp, shift=UP * 0.10, run_time=0.45))
+            caption = grp
 
-        # ── Animate ──────────────────────────────────────────────────
-        ta = 0.0
-        self.play(FadeIn(pill_grp, shift=DOWN * 0.10), run_time=0.55)
-        ta += 0.55
-        self.play(FadeIn(card),               run_time=0.40)
-        ta += 0.40
-        self.play(FadeIn(q_grp, scale=0.80),  run_time=0.45)
-        ta += 0.45
-        for lm in line_mobs:
-            self.play(FadeIn(lm, shift=RIGHT * 0.10), run_time=0.42)
-            ta += 0.42
+        for beat in beats:
+            t = nar.when_spoken(beat)
+            wait_until(self, t, lead=0.35)
+            vis = story_visual(beat)
+            if vis is not None:
+                if vis.height > 3.1:
+                    vis.scale_to_fit_height(3.1)
+                if vis.width > 5.4:
+                    vis.scale_to_fit_width(5.4)
+                visuals_on_stage.append(vis)
+                # Re-arrange all visuals side by side on the stage
+                stage = VGroup(*visuals_on_stage)
+                targets = VGroup(*[v.copy() for v in visuals_on_stage])
+                targets.arrange(RIGHT, buff=0.9)
+                if targets.width > 12.6:
+                    targets.scale_to_fit_width(12.6)
+                targets.move_to(stage_c)
+                anims = []
+                for v, tgt in zip(visuals_on_stage[:-1], targets[:-1]):
+                    anims.append(v.animate.become(tgt))
+                vis.move_to(targets[-1].get_center())
+                vis.scale(targets[-1].width / max(vis.width, 1e-6))
+                anims.append(FadeIn(vis, scale=0.7))
+                self.play(*anims, run_time=0.7)
+            set_caption(beat)
 
-        self.wait(max(0.5, dur - ta - 0.5))
         sync_to_audio(self, sd.get("scene_id", 2))
 
 
 # ═════════════════════════════════════════════════════════════
-# SCENE 03 — CONCEPT  (three-panel layout)
-# ─────────────────────────────────────────────────────────────
-# Left  (30 %) : "WHAT IS [TOPIC]?" — bullet sentences  (blue)
-# Center(40 %) : "CONCEPT INTUITION" — explanation text (green)
-# Right (30 %) : "KEY TERMS"         — keyword pills    (orange)
-# Vertical dividers at x = ±1.9
+# SCENE 03 — CONCEPT
+# Left: the key idea, sentence by sentence, timed to the voice.
+# Right: an automatic visual — a number line of the lesson's
+# actual values, a story illustration, or the formula.
 # ═════════════════════════════════════════════════════════════
 
 class Scene03_Concept(Scene):
     def construct(self):
         sd  = get_scene_by_step("concept")
-        dur = float(sd.get("duration_seconds", 22.0))
+        nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 3))
 
         lesson_title = SCRIPT_DATA.get("title", "")
         setup_bg(self)
-        header = make_header(lesson_title, LESSON_ID)
-        footer = make_footer()
-        self.add(header, footer)
+        self.add(make_header(lesson_title, LESSON_ID), make_footer("concept"))
 
-        import numpy as np
-        narration   = sd.get("narration", "")
-        concept_int = sd.get("concept_intuition", narration)
-        topic       = SCRIPT_DATA.get("topic", lesson_title)
+        beats = sd.get("narration_beats") or split_sentences(sd.get("narration", ""))
+        content_cy = (CONTENT_TOP + CONTENT_BOT) / 2
 
-        content_cy = (CONTENT_TOP + CONTENT_BOT) / 2   # -0.25
-        content_h  = CONTENT_TOP - CONTENT_BOT          #  6.00
-        card_h     = content_h - 0.22                   #  5.78
+        # ── Left: THE KEY IDEA card ───────────────────────────
+        left_card = make_card(7.0, 5.4, border_color=C_GGREEN)
+        left_card.move_to(np.array([-3.30, content_cy, 0]))
+        l_hdr = make_card_header("THE KEY IDEA", 7.0, C_GGREEN)
+        l_hdr.move_to(left_card.get_top() + DOWN * (l_hdr.height / 2 + 0.07))
 
-        left_w   = 4.5
-        center_w = 3.8
-        right_w  = 4.5
+        idea_mobs = []
+        for b in beats:
+            m = TXT(b, size=24, color=C_WHITE, wrap=44, max_w=6.3)
+            idea_mobs.append(m)
+        idea_grp = VGroup(*idea_mobs).arrange(DOWN, aligned_edge=LEFT, buff=0.34)
+        if idea_grp.height > 4.3:
+            idea_grp.scale_to_fit_height(4.3)
+        idea_grp.move_to(left_card.get_center() + DOWN * 0.24)
+        idea_grp.align_to(left_card.get_left() + RIGHT * 0.30, LEFT)
 
-        # ── Three cards ───────────────────────────────────────────────
-        left_card = make_card(left_w,   card_h, border_color=C_BLUE_P)
-        left_card.move_to(np.array([-4.80, content_cy, 0]))
+        # ── Right: automatic visual ───────────────────────────
+        right_card = make_card(5.6, 5.4, border_color=C_BLUE_P)
+        right_card.move_to(np.array([3.60, content_cy, 0]))
+        r_hdr = make_card_header("SEE IT", 5.6, C_BLUE_P)
+        r_hdr.move_to(right_card.get_top() + DOWN * (r_hdr.height / 2 + 0.07))
 
-        center_card = make_card(center_w, card_h, border_color=C_GGREEN)
-        center_card.move_to(np.array([0.00, content_cy, 0]))
+        board_plain = sd.get("board_plain", {})
+        all_lines   = (board_plain.get("worked_example", []) +
+                       board_plain.get("practice", []))
+        vals = fractions_in(all_lines)
 
-        right_card = make_card(right_w,  card_h, border_color=C_ORANGE)
-        right_card.move_to(np.array([4.80, content_cy, 0]))
+        vis = None
+        if vals:
+            vis = viz_number_line(vals)
+        if vis is None:
+            for b in beats:
+                vis = story_visual(b)
+                if vis is not None:
+                    break
+        if vis is None:
+            vis = make_formula_box(sd.get("key_formula", ""), 4.8, 1.9)
 
-        # ── Left: "WHAT IS [TOPIC]?" + bullets ───────────────────────
-        l_hdr_str = "WHAT IS " + str(topic).upper()[:20] + "?"
-        l_hdr = make_card_header(l_hdr_str, left_w, C_BLUE_P)
-        l_hdr.move_to(
-            left_card.get_top() + DOWN * (l_hdr.height / 2 + 0.07))
+        if vis.width > 5.0:
+            vis.scale_to_fit_width(5.0)
+        if vis.height > 3.9:
+            vis.scale_to_fit_height(3.9)
+        vis.move_to(right_card.get_center() + DOWN * 0.24)
 
-        sentences = [s.strip() for s in
-                     re.split(r'[.!?]', str(narration)) if len(s.strip()) > 8][:5]
-        if not sentences:
-            sentences = ["Core concept explained here.",
-                         "Study this definition.", "Apply to problems."]
-        l_bullets = make_bullet_list(sentences, C_LGRAY,
-                                     font_size=15, max_width=left_w - 0.38)
-        if l_bullets.height > card_h - 0.80:
-            l_bullets.scale_to_fit_height(card_h - 0.80)
-        l_bullets.move_to(left_card.get_center() + DOWN * 0.22)
-        l_bullets.align_to(left_card.get_left() + RIGHT * 0.22, LEFT)
+        # ── Animate on the narration beat ─────────────────────
+        self.play(FadeIn(left_card), FadeIn(right_card), run_time=0.5)
+        self.play(FadeIn(l_hdr), FadeIn(r_hdr), run_time=0.4)
 
-        # ── Center: "CONCEPT INTUITION" + explanation ─────────────────
-        c_hdr = make_card_header("CONCEPT INTUITION", center_w, C_GGREEN)
-        c_hdr.move_to(
-            center_card.get_top() + DOWN * (c_hdr.height / 2 + 0.07))
+        shown_vis = False
+        for b, m in zip(beats, idea_mobs):
+            t = nar.when_spoken(b)
+            wait_until(self, t, lead=0.30)
+            self.play(FadeIn(m, shift=RIGHT * 0.10), run_time=0.45)
+            if not shown_vis:
+                self.play(FadeIn(vis, scale=0.85), run_time=0.6)
+                shown_vis = True
 
-        int_lines = textwrap.wrap(str(concept_int), 32)[:9]
-        if not int_lines:
-            int_lines = ["Intuitive explanation here."]
-        c_mobs = []
-        for ln in int_lines:
-            try:
-                t = Text(ln, font_size=14, color=mc(C_LGRAY), font="Arial")
-            except Exception:
-                t = Text(ln[:30], font_size=14, color=mc(C_LGRAY), font="Arial")
-            if t.width > center_w - 0.28:
-                t.scale_to_fit_width(center_w - 0.28)
-            c_mobs.append(t)
-        c_grp = VGroup(*c_mobs).arrange(
-            DOWN, buff=0.14, aligned_edge=LEFT)
-        if c_grp.height > card_h - 0.80:
-            c_grp.scale_to_fit_height(card_h - 0.80)
-        c_grp.move_to(center_card.get_center() + DOWN * 0.22)
-
-        # ── Right: "KEY TERMS" + keyword pills ────────────────────────
-        r_hdr = make_card_header("KEY TERMS", right_w, C_ORANGE)
-        r_hdr.move_to(
-            right_card.get_top() + DOWN * (r_hdr.height / 2 + 0.07))
-
-        keywords = SCRIPT_DATA.get("keywords", [])
-        if not keywords:
-            kw_raw  = SCRIPT_DATA.get("key_terms", "")
-            keywords = [k.strip() for k in str(kw_raw).split(",")
-                        if k.strip()][:7]
-        if not keywords:
-            keywords = [str(topic), "Definition", "Formula", "Application"]
-
-        pill_mobs = []
-        for kw in keywords[:8]:
-            kw_str   = str(kw)[:24]
-            pill_w   = min(right_w - 0.38, max(1.4, len(kw_str) * 0.13 + 0.55))
-            p_bg = RoundedRectangle(
-                width=pill_w, height=0.38, corner_radius=0.10,
-                fill_color=mc(C_CBG), fill_opacity=1.0,
-                stroke_color=mc(C_GOLD), stroke_width=1.4,
-            )
-            try:
-                p_txt = Text(kw_str, font_size=12,
-                             color=mc(C_GOLD), font="Arial", weight=BOLD)
-            except Exception:
-                p_txt = Text("term", font_size=12,
-                             color=mc(C_GOLD), font="Arial", weight=BOLD)
-            if p_txt.width > pill_w - 0.14:
-                p_txt.scale_to_fit_width(pill_w - 0.14)
-            p_txt.move_to(p_bg.get_center())
-            pill_mobs.append(VGroup(p_bg, p_txt))
-
-        r_pills = VGroup(*pill_mobs).arrange(
-            DOWN, aligned_edge=LEFT, buff=0.13)
-        if r_pills.width > right_w - 0.34:
-            r_pills.scale_to_fit_width(right_w - 0.34)
-        if r_pills.height > card_h - 0.80:
-            r_pills.scale_to_fit_height(card_h - 0.80)
-        r_pills.move_to(right_card.get_center() + DOWN * 0.22)
-        r_pills.align_to(right_card.get_left() + RIGHT * 0.22, LEFT)
-
-        # ── Vertical dividers ──────────────────────────────────────────
-        div_l = Line(
-            np.array([-1.90, CONTENT_TOP - 0.12, 0]),
-            np.array([-1.90, CONTENT_BOT + 0.12, 0]),
-            stroke_width=1.0, color=mc(C_SECOND),
-        ).set_stroke(opacity=0.38)
-        div_r = Line(
-            np.array([ 1.90, CONTENT_TOP - 0.12, 0]),
-            np.array([ 1.90, CONTENT_BOT + 0.12, 0]),
-            stroke_width=1.0, color=mc(C_SECOND),
-        ).set_stroke(opacity=0.38)
-
-        # ── Animate ───────────────────────────────────────────────────
-        ta = 0.0
-        self.play(
-            FadeIn(left_card), FadeIn(center_card), FadeIn(right_card),
-            run_time=0.60,
-        )
-        ta += 0.60
-        self.play(Create(div_l), Create(div_r), run_time=0.30)
-        ta += 0.30
-        self.play(
-            FadeIn(l_hdr), FadeIn(c_hdr), FadeIn(r_hdr),
-            run_time=0.45,
-        )
-        ta += 0.45
-        if l_bullets:
-            self.play(
-                LaggedStart(*[FadeIn(b, shift=RIGHT * 0.07) for b in l_bullets],
-                            lag_ratio=0.18),
-                run_time=0.85,
-            )
-            ta += 0.85
-        if c_grp:
-            self.play(FadeIn(c_grp, shift=UP * 0.06), run_time=0.65)
-            ta += 0.65
-        if pill_mobs:
-            self.play(
-                LaggedStart(*[FadeIn(p, scale=0.85) for p in pill_mobs],
-                            lag_ratio=0.14),
-                run_time=0.75,
-            )
-            ta += 0.75
-
-        self.wait(max(0.5, dur - ta - 0.5))
         sync_to_audio(self, sd.get("scene_id", 3))
 
 
 # ═════════════════════════════════════════════════════════════
 # SCENE 04 — DEFINITION
-# ─────────────────────────────────────────────────────────────
-# Large centered definition card (8.5 × 4.0) with blue header.
-# Narration text inside card (wrapped, 3–4 lines).
-# Two small cards below: orange "Prerequisite" / green "Goal".
+# Big definition card: focus statement in large type, the formula
+# compiled below it. Prerequisite and goal chips arrive when the
+# narration reaches them.
 # ═════════════════════════════════════════════════════════════
 
 class Scene04_Definition(Scene):
     def construct(self):
         sd  = get_scene_by_step("definition")
-        dur = float(sd.get("duration_seconds", 18.0))
+        nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 4))
 
         lesson_title = SCRIPT_DATA.get("title", "")
         setup_bg(self)
-        header = make_header(lesson_title, LESSON_ID)
-        footer = make_footer()
-        self.add(header, footer)
+        self.add(make_header(lesson_title, LESSON_ID), make_footer("definition"))
 
-        import numpy as np
-        narration = sd.get("narration", "")
-        topic     = SCRIPT_DATA.get("topic", lesson_title)
+        topic    = SCRIPT_DATA.get("title", lesson_title)
+        subtopic = SCRIPT_DATA.get("subtopic", "")
+        formula  = sd.get("key_formula", SCRIPT_DATA.get("key_formula", ""))
 
-        # ── Large definition card ──────────────────────────────────────
-        def_card = make_card(8.5, 4.00, border_color=C_BLUE_P)
-        def_card.move_to(np.array([0.0, 0.42, 0]))
+        def_card = make_card(11.6, 3.9, border_color=C_BLUE_P)
+        def_card.move_to(np.array([0.0, 0.55, 0]))
+        def_hdr = make_card_header("DEFINITION — " + str(topic).upper(),
+                                   11.6, C_BLUE_P)
+        def_hdr.move_to(def_card.get_top() + DOWN * (def_hdr.height / 2 + 0.07))
 
-        hdr_str = "DEFINITION: " + str(topic).upper()[:30]
-        def_hdr = make_card_header(hdr_str, 8.5, C_BLUE_P)
-        def_hdr.move_to(
-            def_card.get_top() + DOWN * (def_hdr.height / 2 + 0.07))
+        sub_txt = TXT(subtopic, size=30, color=C_WHITE, bold=True,
+                      wrap=52, max_w=10.6)
+        sub_txt.move_to(def_card.get_center() + UP * 0.55)
 
-        nar_lines = textwrap.wrap(str(narration), 70)[:4]
-        if not nar_lines:
-            nar_lines = ["The formal definition will appear here."]
-        nar_mobs = []
-        for ln in nar_lines:
-            try:
-                t = Text(ln, font_size=19, color=mc(C_WHITE), font="Arial")
-            except Exception:
-                t = Text(ln[:68], font_size=19, color=mc(C_WHITE), font="Arial")
-            if t.width > 7.8:
-                t.scale_to_fit_width(7.8)
-            nar_mobs.append(t)
-        nar_grp = VGroup(*nar_mobs).arrange(
-            DOWN, buff=0.22, aligned_edge=LEFT)
-        if nar_grp.height > 2.9:
-            nar_grp.scale_to_fit_height(2.9)
-        nar_grp.move_to(def_card.get_center() + DOWN * 0.14)
+        fml = make_formula_box(formula, 6.2, 1.5, font_size=56)
+        fml.move_to(def_card.get_center() + DOWN * 0.90)
 
-        # ── Two small cards below ──────────────────────────────────────
-        prereq = SCRIPT_DATA.get("prerequisite", "Basic arithmetic and number sense.")
-        goal   = SCRIPT_DATA.get("lesson_goal",  "Understand and apply this concept.")
+        prereq = SCRIPT_DATA.get("prerequisite", "Basic arithmetic")
+        goal   = SCRIPT_DATA.get("lesson_goal",  "Understand this concept")
 
-        pre_card = make_card(4.1, 1.05, border_color=C_ORANGE)
-        pre_card.move_to(np.array([-2.35, -2.20, 0]))
-        pre_hdr = make_card_header("Prerequisite:", 4.1, C_ORANGE)
-        pre_hdr.move_to(
-            pre_card.get_top() + DOWN * (pre_hdr.height / 2 + 0.07))
-        try:
-            pre_txt = Text(str(prereq)[:50], font_size=12,
-                           color=mc(C_LGRAY), font="Arial")
-        except Exception:
-            pre_txt = Text("Basic concepts", font_size=12,
-                           color=mc(C_LGRAY), font="Arial")
-        if pre_txt.width > 3.6:
-            pre_txt.scale_to_fit_width(3.6)
-        pre_txt.move_to(pre_card.get_center() + DOWN * 0.08)
+        pre_card = make_card(5.6, 1.30, border_color=C_ORANGE)
+        pre_card.move_to(np.array([-3.05, -2.25, 0]))
+        pre_hdr = make_card_header("YOU ALREADY KNOW", 5.6, C_ORANGE)
+        pre_hdr.move_to(pre_card.get_top() + DOWN * (pre_hdr.height / 2 + 0.06))
+        pre_txt = TXT(prereq, size=18, color=C_LGRAY, wrap=44, max_w=5.1)
+        pre_txt.move_to(pre_card.get_center() + DOWN * 0.16)
 
-        goal_card = make_card(4.1, 1.05, border_color=C_GGREEN)
-        goal_card.move_to(np.array([2.35, -2.20, 0]))
-        goal_hdr = make_card_header("Goal:", 4.1, C_GGREEN)
-        goal_hdr.move_to(
-            goal_card.get_top() + DOWN * (goal_hdr.height / 2 + 0.07))
-        try:
-            goal_txt = Text(str(goal)[:50], font_size=12,
-                            color=mc(C_LGRAY), font="Arial")
-        except Exception:
-            goal_txt = Text("Learn the concept", font_size=12,
-                            color=mc(C_LGRAY), font="Arial")
-        if goal_txt.width > 3.6:
-            goal_txt.scale_to_fit_width(3.6)
-        goal_txt.move_to(goal_card.get_center() + DOWN * 0.08)
+        goal_card = make_card(5.6, 1.30, border_color=C_GGREEN)
+        goal_card.move_to(np.array([3.05, -2.25, 0]))
+        goal_hdr = make_card_header("TODAY'S GOAL", 5.6, C_GGREEN)
+        goal_hdr.move_to(goal_card.get_top() + DOWN * (goal_hdr.height / 2 + 0.06))
+        goal_txt = TXT(goal, size=18, color=C_LGRAY, wrap=44, max_w=5.1)
+        goal_txt.move_to(goal_card.get_center() + DOWN * 0.16)
 
-        # ── Animate ───────────────────────────────────────────────────
-        ta = 0.0
-        self.play(FadeIn(def_card), run_time=0.50)
-        ta += 0.50
-        self.play(FadeIn(def_hdr),  run_time=0.40)
-        ta += 0.40
-        for nm in nar_mobs:
-            self.play(FadeIn(nm, shift=RIGHT * 0.08), run_time=0.48)
-            ta += 0.48
-        self.play(
-            FadeIn(pre_card), FadeIn(goal_card),
-            run_time=0.48,
-        )
-        ta += 0.48
-        self.play(
-            FadeIn(pre_hdr), FadeIn(goal_hdr),
-            FadeIn(pre_txt), FadeIn(goal_txt),
-            run_time=0.45,
-        )
-        ta += 0.45
-
-        self.wait(max(0.5, dur - ta - 0.5))
+        # ── Animate on the narration beat ─────────────────────
+        self.play(FadeIn(def_card), FadeIn(def_hdr), run_time=0.55)
+        reveal(self, nar, sub_txt, spoken="Here is our focus",
+               run_time=0.6, anim=lambda m: FadeIn(m, shift=RIGHT * 0.10))
+        wait_until(self, nar.when_spoken("In symbols"), lead=0.20)
+        self.play(FadeIn(fml[0]), run_time=0.3)
+        self.play(Write(fml[1]), run_time=0.9)
+        reveal(self, nar, VGroup(pre_card, pre_hdr, pre_txt),
+               spoken="You already know", run_time=0.55)
+        self.play(FadeIn(goal_card), FadeIn(goal_hdr), FadeIn(goal_txt),
+                  run_time=0.5)
         sync_to_audio(self, sd.get("scene_id", 4))
 
 
 # ═════════════════════════════════════════════════════════════
-# SCENE 05 — FORMULA  (three-panel layout)
-# ─────────────────────────────────────────────────────────────
-# Left  : purple "THE FORMULA" — formula_spoken parts as bullets
-# Center: purple label + large formula_box (MathTex)
-# Right : orange "VARIABLES" — variable key-value pairs
-# Circumscribe formula box at the end.
+# SCENE 05 — FORMULA
+# The formula is the hero: huge, centered, written exactly when
+# the voice says "The formula is". The spoken meaning appears as
+# highlighted phrase chips underneath.
 # ═════════════════════════════════════════════════════════════
 
 class Scene05_Formula(Scene):
     def construct(self):
         sd  = get_scene_by_step("formula")
-        dur = float(sd.get("duration_seconds", 20.0))
+        nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 5))
 
         lesson_title   = SCRIPT_DATA.get("title", "")
-        formula_latex  = SCRIPT_DATA.get("key_formula",    "")
-        formula_spoken = SCRIPT_DATA.get("formula_spoken", "")
+        formula_latex  = sd.get("key_formula", SCRIPT_DATA.get("key_formula", ""))
+        formula_spoken = sd.get("formula_spoken",
+                                SCRIPT_DATA.get("formula_spoken", ""))
 
         setup_bg(self)
-        header = make_header(lesson_title, LESSON_ID)
-        footer = make_footer()
-        self.add(header, footer)
+        self.add(make_header(lesson_title, LESSON_ID), make_footer("formula"))
 
-        import numpy as np
-        content_cy = (CONTENT_TOP + CONTENT_BOT) / 2
-        content_h  = CONTENT_TOP - CONTENT_BOT
-        card_h     = content_h - 0.25
+        label = TXT("THE KEY FORMULA", size=34, color=C_GOLD, bold=True)
+        label.move_to(np.array([0.0, CONTENT_TOP - 0.55, 0]))
 
-        # ── Left card: formula introduction ───────────────────────────
-        left_card = make_card(4.5, card_h, border_color=C_PURPLE)
-        left_card.move_to(np.array([-4.80, content_cy, 0]))
+        box = RoundedRectangle(
+            width=9.4, height=2.8, corner_radius=0.22,
+            fill_color=mc(C_CBG), fill_opacity=1.0,
+            stroke_color=mc(C_SEM_FORMULA), stroke_width=3.0,
+        ).move_to(np.array([0.0, 0.45, 0]))
+        glow = RoundedRectangle(
+            width=9.8, height=3.2, corner_radius=0.26,
+            fill_color=mc(C_SEM_FORMULA), fill_opacity=0.10, stroke_width=0,
+        ).move_to(box.get_center())
+        fml = MATH(formula_latex, size=96, color=C_WHITE, max_w=8.6)
+        if fml.height > 2.3:
+            fml.scale_to_fit_height(2.3)
+        fml.move_to(box.get_center())
 
-        l_hdr = make_card_header("\U0001f4a1  THE FORMULA", 4.5, C_PURPLE)
-        l_hdr.move_to(
-            left_card.get_top() + DOWN * (l_hdr.height / 2 + 0.07))
-
-        narration    = sd.get("narration", formula_spoken)
-        spoken_parts = [p.strip()
-                        for p in str(narration).split(",") if p.strip()][:7]
-        if not spoken_parts:
-            spoken_parts = ["Apply this formula", "step by step",
-                            "to every problem."]
-        left_w = 4.5 - 0.40
-        l_bullets = make_bullet_list(spoken_parts, C_LGRAY,
-                                     font_size=14, max_width=left_w)
-        if l_bullets.height > card_h - 0.82:
-            l_bullets.scale_to_fit_height(card_h - 0.82)
-        l_bullets.move_to(left_card.get_center() + DOWN * 0.22)
-        l_bullets.align_to(left_card.get_left() + RIGHT * 0.22, LEFT)
-
-        # ── Center: label + formula box + spoken text below ───────────
-        center_lbl = Text(
-            "THE FORMULA", font_size=20,
-            color=mc(C_PURPLE), font="Arial", weight=BOLD,
-        ).move_to(np.array([0.0, CONTENT_TOP - 0.48, 0]))
-
-        formula_box = make_formula_box(str(formula_latex), width=5.4, height=2.10)
-        formula_box.move_to(np.array([0.0, content_cy + 0.35, 0]))
-
-        var_lines = textwrap.wrap(str(formula_spoken), 36)[:4]
-        v_mobs = []
-        for ln in var_lines:
-            try:
-                t = Text(ln, font_size=15, color=mc(C_LGRAY), font="Arial")
-            except Exception:
-                t = Text(ln[:34], font_size=15, color=mc(C_LGRAY), font="Arial")
-            if t.width > 5.5:
-                t.scale_to_fit_width(5.5)
-            v_mobs.append(t)
-        var_grp = VGroup(*v_mobs).arrange(
-            DOWN, buff=0.14, aligned_edge=LEFT) if v_mobs else VGroup()
-        if var_grp.height > 2.0:
-            var_grp.scale_to_fit_height(2.0)
-        var_grp.next_to(formula_box, DOWN, buff=0.32)
-        var_grp.move_to(np.array([0.0, var_grp.get_center()[1], 0]))
-
-        # ── Right card: variable breakdown ────────────────────────────
-        right_card = make_card(4.5, card_h, border_color=C_ORANGE)
-        right_card.move_to(np.array([4.80, content_cy, 0]))
-
-        r_hdr = make_card_header("⚡  VARIABLES", 4.5, C_ORANGE)
-        r_hdr.move_to(
-            right_card.get_top() + DOWN * (r_hdr.height / 2 + 0.07))
-
-        board      = sd.get("board_examples", {})
-        var_pairs  = board.get("worked_example", [])[:6]
-        if not var_pairs:
-            var_pairs = SCRIPT_DATA.get("keywords", [])[:6]
-        if not var_pairs:
-            var_pairs = ["Variable: see definition",
-                         "Apply to formula", "Check conditions"]
-
-        alt_cols = [C_GOLD, C_WHITE, C_GOLD, C_WHITE, C_GOLD, C_WHITE]
-        r_var_mobs = []
-        for i, vp in enumerate(var_pairs):
-            col = alt_cols[i % len(alt_cols)]
-            try:
-                t = Text(str(vp)[:44], font_size=15, color=mc(col), font="Arial")
-            except Exception:
-                t = Text("term", font_size=15, color=mc(col), font="Arial")
-            if t.width > 3.9:
-                t.scale_to_fit_width(3.9)
-            r_var_mobs.append(t)
-        r_var_grp = VGroup(*r_var_mobs).arrange(
-            DOWN, aligned_edge=LEFT, buff=0.22)
-        if r_var_grp.height > card_h - 0.82:
-            r_var_grp.scale_to_fit_height(card_h - 0.82)
-        r_var_grp.move_to(right_card.get_center() + DOWN * 0.22)
-        r_var_grp.align_to(right_card.get_left() + RIGHT * 0.22, LEFT)
-
-        # ── Dividers ──────────────────────────────────────────────────
-        div_l = Line(
-            np.array([-1.90, CONTENT_TOP - 0.12, 0]),
-            np.array([-1.90, CONTENT_BOT + 0.12, 0]),
-            stroke_width=1.0, color=mc(C_SECOND),
-        ).set_stroke(opacity=0.35)
-        div_r = Line(
-            np.array([ 1.90, CONTENT_TOP - 0.12, 0]),
-            np.array([ 1.90, CONTENT_BOT + 0.12, 0]),
-            stroke_width=1.0, color=mc(C_SECOND),
-        ).set_stroke(opacity=0.35)
-
-        # ── Animate ───────────────────────────────────────────────────
-        ta = 0.0
-        self.play(
-            FadeIn(left_card), FadeIn(right_card),
-            Create(div_l), Create(div_r),
-            run_time=0.60,
-        )
-        ta += 0.60
-        self.play(FadeIn(l_hdr), FadeIn(r_hdr), run_time=0.40)
-        ta += 0.40
-        self.play(FadeIn(l_bullets, shift=RIGHT * 0.05), run_time=0.60)
-        ta += 0.60
-        self.play(FadeIn(center_lbl, shift=DOWN * 0.08), run_time=0.38)
-        ta += 0.38
-        self.play(FadeIn(formula_box[0]), run_time=0.38)
-        ta += 0.38
-        self.play(Write(formula_box[1]), run_time=0.90)
-        ta += 0.90
-        if var_grp:
-            self.play(FadeIn(var_grp), run_time=0.48)
-            ta += 0.48
-        self.play(
-            LaggedStart(*[FadeIn(m, shift=RIGHT * 0.07) for m in r_var_mobs],
-                        lag_ratio=0.18),
-            run_time=0.80,
-        )
-        ta += 0.80
-
-        # Circumscribe at the end
-        pause = max(0.3, dur - ta - 1.60)
-        self.wait(pause)
-        ta += pause
-        try:
-            self.play(
-                Circumscribe(formula_box, color=mc(C_GOLD), run_time=1.20),
+        # Meaning chips — the formula in words, split into phrases
+        parts = [p.strip() for p in
+                 re.split(r",|\bwhere\b", str(formula_spoken)) if p.strip()]
+        chip_cols = [C_BLUE_P, C_GGREEN, C_ORANGE, C_PURPLE]
+        chips = []
+        for i, p in enumerate(parts[:4]):
+            col = chip_cols[i % 4]
+            t = TXT(p, size=22, color=C_WHITE, bold=True, max_w=5.4)
+            bg = RoundedRectangle(
+                width=t.width + 0.55, height=0.66, corner_radius=0.16,
+                fill_color=mc(col), fill_opacity=0.22,
+                stroke_color=mc(col), stroke_width=2.0,
             )
-            ta += 1.20
+            t.move_to(bg.get_center())
+            chips.append(VGroup(bg, t))
+        chips_row = VGroup(*chips).arrange(RIGHT, buff=0.35)
+        if chips_row.width > 12.8:
+            chips_row.arrange(DOWN, buff=0.22)
+            if chips_row.height > 2.2:
+                chips_row.scale_to_fit_height(2.2)
+        chips_row.move_to(np.array([0.0, -1.95, 0]))
+
+        # ── Animate on the narration beat ─────────────────────
+        self.play(FadeIn(label, shift=DOWN * 0.10), run_time=0.5)
+        self.play(FadeIn(glow), FadeIn(box), run_time=0.4)
+        wait_until(self, nar.when_spoken("The formula is"), lead=0.15)
+        self.play(Write(fml), run_time=1.4)
+        wait_until(self, nar.when_spoken("Watch how each part"), lead=0.25)
+        self.play(
+            LaggedStart(*[FadeIn(c, shift=UP * 0.12) for c in chips],
+                        lag_ratio=0.25),
+            run_time=1.0,
+        )
+        try:
+            self.play(Circumscribe(box, color=mc(C_GOLD)), run_time=1.1)
         except Exception:
             pass
-
-        self.wait(max(0.5, dur - ta - 0.5))
         sync_to_audio(self, sd.get("scene_id", 5))
 
 
 # ═════════════════════════════════════════════════════════════
-# SCENE 06 — WORKED EXAMPLE  (three-panel)
-# ─────────────────────────────────────────────────────────────
-# Left  : blue  "EXAMPLE 1"  — question text + calc icon
-# Center: green "SOLUTION"   — steps one-by-one + answer box + Flash
-# Right : blue  "CONCLUSION" — concept_intuition text
+# SCENE 06 — WORKED EXAMPLES
+# Full-width board. Every line of working appears at the exact
+# second the voice reads it (matched via board_spoken ↔ word
+# timestamps). Verdicts render as clean YES / NO pills.
 # ═════════════════════════════════════════════════════════════
+
+def build_board_rows(plain_lines, max_w=11.6):
+    """Rows for a worked board: question lines bold + numbered,
+    working lines in gold, verdict pills at line ends."""
+    rows, ex_no = [], 0
+    for line in plain_lines:
+        head, verdict = split_verdict(line)
+        is_q = bool(re.match(r"(?i)ex\s*\d", head)) or head.rstrip().endswith("?")
+        parts = []
+        if is_q:
+            ex_no += 1
+            head_clean = re.sub(r"(?i)^ex\s*\d+\s*:\s*", "", head)
+            parts.append(number_chip(ex_no))
+            parts.append(TXT(head_clean, size=29, color=C_WHITE, bold=True,
+                             max_w=max_w - 2.2))
+        else:
+            parts.append(TXT(head, size=26, color=C_GOLD, max_w=max_w - 2.2))
+        if verdict:
+            parts.append(verdict_pill(verdict))
+        row = VGroup(*parts).arrange(RIGHT, buff=0.30)
+        if row.width > max_w:
+            row.scale_to_fit_width(max_w)
+        rows.append((row, is_q))
+    return rows
+
 
 class Scene06_WorkedExample(Scene):
     def construct(self):
         sd  = get_scene_by_step("worked_example")
-        dur = float(sd.get("duration_seconds", 24.0))
+        nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 6))
 
         lesson_title = SCRIPT_DATA.get("title", "")
         setup_bg(self)
-        header = make_header(lesson_title, LESSON_ID)
-        footer = make_footer()
-        self.add(header, footer)
+        self.add(make_header(lesson_title, LESSON_ID),
+                 make_footer("worked_example"))
 
-        import numpy as np
-        board       = sd.get("board_examples", {})
-        steps       = board.get("worked_example", [])
-        practice_q  = (board.get("practice",   [""])[0]
-                       if board.get("practice") else "")
-        concept_int = sd.get("concept_intuition",
-                             sd.get("narration", ""))
+        plain_lines  = (sd.get("board_plain", {}) or {}).get("worked_example", [])
+        spoken_lines = (sd.get("board_spoken", {}) or {}).get("worked_example", [])
+        if not plain_lines:
+            plain_lines = ["Apply the formula step by step",
+                           "Check every condition", "Verify the answer"]
+            spoken_lines = [""] * len(plain_lines)
 
-        if not steps:
-            steps = [
-                r"\text{Step 1: Read the problem}",
-                r"\text{Step 2: Apply the formula}",
-                r"\text{Step 3: Simplify}",
-                r"\text{Answer verified}",
-            ]
+        pill = section_pill("★  WORKED EXAMPLES", C_BLUE_P, size=24)
+        pill.move_to(np.array([0.0, CONTENT_TOP - 0.42, 0]))
 
-        content_cy = (CONTENT_TOP + CONTENT_BOT) / 2
-        content_h  = CONTENT_TOP - CONTENT_BOT
-        card_h     = content_h - 0.25
+        board = make_card(12.6, 4.9, border_color=C_BLUE_P)
+        board.move_to(np.array([0.0, -0.42, 0]))
 
-        # ── Left card — question ──────────────────────────────────────
-        left_card = make_card(4.5, card_h, border_color=C_BLUE_P)
-        left_card.move_to(np.array([-4.80, content_cy, 0]))
-        l_hdr = make_card_header("★  EXAMPLE 1", 4.5, C_BLUE_P)
-        l_hdr.move_to(
-            left_card.get_top() + DOWN * (l_hdr.height / 2 + 0.07))
+        rows = build_board_rows(plain_lines, max_w=11.6)
+        grp = VGroup(*[r for r, _ in rows])
+        # extra breathing room before each new question
+        grp.arrange(DOWN, aligned_edge=LEFT, buff=0.26)
+        for i, (row, is_q) in enumerate(rows):
+            if is_q and i > 0:
+                row.shift(DOWN * 0.10)
+        if grp.height > 4.3:
+            grp.scale_to_fit_height(4.3)
+        if grp.width > 11.6:
+            grp.scale_to_fit_width(11.6)
+        grp.move_to(board.get_center())
+        grp.align_to(board.get_left() + RIGHT * 0.45, LEFT)
 
-        q_raw   = (str(practice_q)
-                   or str(sd.get("narration", "Solve using the formula."))[:90])
-        q_lines = textwrap.wrap(q_raw, 30)[:5]
-        q_mobs  = []
-        for ln in q_lines:
-            try:
-                t = Text(ln, font_size=15, color=mc(C_WHITE), font="Arial")
-            except Exception:
-                t = Text(ln[:28], font_size=15, color=mc(C_WHITE), font="Arial")
-            if t.width > 3.90:
-                t.scale_to_fit_width(3.90)
-            q_mobs.append(t)
-        q_grp = VGroup(*q_mobs).arrange(
-            DOWN, buff=0.15, aligned_edge=LEFT)
-        q_grp.move_to(left_card.get_center() + UP * 0.30)
-        q_grp.align_to(left_card.get_left() + RIGHT * 0.20, LEFT)
-
-        # Calculator emoji box at bottom-left card
-        calc_bg = RoundedRectangle(
-            width=1.65, height=0.55, corner_radius=0.10,
-            fill_color=mc(C_NAVY2), fill_opacity=1.0,
-            stroke_color=mc(C_BLUE_L), stroke_width=1.4,
-        )
-        try:
-            calc_icon = Text("\U0001f5a9", font_size=22)
-        except Exception:
-            calc_icon = Text("=", font_size=22,
-                             color=mc(C_GOLD), font="Arial", weight=BOLD)
-        calc_icon.move_to(calc_bg.get_center())
-        calc_grp = VGroup(calc_bg, calc_icon)
-        calc_grp.move_to(left_card.get_bottom() + UP * 0.44)
-
-        # ── Center card — solution steps ──────────────────────────────
-        center_card = make_card(3.8, card_h, border_color=C_GGREEN)
-        center_card.move_to(np.array([0.00, content_cy, 0]))
-        c_hdr = make_card_header("SOLUTION", 3.8, C_GGREEN)
-        c_hdr.move_to(
-            center_card.get_top() + DOWN * (c_hdr.height / 2 + 0.07))
-
-        _, step_mobs = make_step_solution(steps, max_width=3.35)
-        # Re-arrange vertically with spacing
-        sol_grp = VGroup(*step_mobs).arrange(
-            DOWN, aligned_edge=LEFT, buff=0.18)
-        avail_h = card_h - 1.55
-        if sol_grp.height > avail_h:
-            sol_grp.scale_to_fit_height(avail_h)
-        if sol_grp.width > 3.35:
-            sol_grp.scale_to_fit_width(3.35)
-        sol_grp.move_to(center_card.get_center() + DOWN * 0.30)
-        sol_grp.align_to(center_card.get_left() + RIGHT * 0.22, LEFT)
-
-        # Green answer box at bottom-center
-        ans_bg = RoundedRectangle(
-            width=3.30, height=0.48, corner_radius=0.10,
-            fill_color=mc(C_GGREEN), fill_opacity=0.22,
-            stroke_color=mc(C_GGREEN), stroke_width=2.0,
-        )
-        ans_lbl = Text(
-            "ANSWER", font_size=13,
-            color=mc(C_GGREEN), font="Arial", weight=BOLD,
-        ).move_to(ans_bg.get_center())
-        ans_grp = VGroup(ans_bg, ans_lbl)
-        ans_grp.move_to(center_card.get_bottom() + UP * 0.42)
-
-        # ── Right card — conclusion ────────────────────────────────────
-        right_card = make_card(4.5, card_h, border_color=C_BLUE_P)
-        right_card.move_to(np.array([4.80, content_cy, 0]))
-        r_hdr = make_card_header("CONCLUSION", 4.5, C_BLUE_P)
-        r_hdr.move_to(
-            right_card.get_top() + DOWN * (r_hdr.height / 2 + 0.07))
-
-        conc_lines = textwrap.wrap(str(concept_int), 32)[:7]
-        if not conc_lines:
-            conc_lines = ["Apply this concept widely.",
-                          "Practice regularly.",
-                          "You can do this!"]
-        conc_mobs = []
-        for ln in conc_lines:
-            try:
-                t = Text(ln, font_size=15, color=mc(C_LGRAY), font="Arial")
-            except Exception:
-                t = Text(ln[:30], font_size=15, color=mc(C_LGRAY), font="Arial")
-            if t.width > 3.90:
-                t.scale_to_fit_width(3.90)
-            conc_mobs.append(t)
-        conc_grp = VGroup(*conc_mobs).arrange(
-            DOWN, buff=0.18, aligned_edge=LEFT)
-        if conc_grp.height > card_h - 0.82:
-            conc_grp.scale_to_fit_height(card_h - 0.82)
-        conc_grp.move_to(right_card.get_center() + DOWN * 0.22)
-        conc_grp.align_to(right_card.get_left() + RIGHT * 0.22, LEFT)
-
-        # ── Dividers ──────────────────────────────────────────────────
-        div_l = Line(
-            np.array([-1.90, CONTENT_TOP - 0.12, 0]),
-            np.array([-1.90, CONTENT_BOT + 0.12, 0]),
-            stroke_width=1.0, color=mc(C_SECOND),
-        ).set_stroke(opacity=0.35)
-        div_r = Line(
-            np.array([ 1.90, CONTENT_TOP - 0.12, 0]),
-            np.array([ 1.90, CONTENT_BOT + 0.12, 0]),
-            stroke_width=1.0, color=mc(C_SECOND),
-        ).set_stroke(opacity=0.35)
-
-        # ── Animate ───────────────────────────────────────────────────
-        ta = 0.0
-        self.play(
-            FadeIn(left_card), FadeIn(center_card), FadeIn(right_card),
-            Create(div_l), Create(div_r),
-            run_time=0.60,
-        )
-        ta += 0.60
-        self.play(FadeIn(l_hdr), FadeIn(c_hdr), FadeIn(r_hdr), run_time=0.40)
-        ta += 0.40
-
-        # Left: question
-        for qm in q_mobs:
-            self.play(FadeIn(qm, shift=RIGHT * 0.06), run_time=0.30)
-            ta += 0.30
-        self.play(FadeIn(calc_grp, scale=0.85), run_time=0.32)
-        ta += 0.32
-
-        # Center: steps one by one
-        per_step = max(0.40, (dur - ta - 2.80) / max(len(step_mobs), 1))
-        for m in step_mobs:
-            write_t = min(0.60, per_step * 0.70)
-            self.play(Write(m), run_time=write_t)
-            ta += write_t
-            gap = max(0.05, per_step - write_t)
-            self.wait(gap)
-            ta += gap
-
-        # Answer reveal + Flash
-        self.play(FadeIn(ans_grp), run_time=0.38)
-        ta += 0.38
-        try:
-            self.play(
-                Flash(ans_bg, color=mc(C_GGREEN),
-                      line_length=0.20, num_lines=12, flash_radius=0.55),
-                run_time=0.60,
-            )
-            ta += 0.60
-        except Exception:
-            pass
-
-        # Right: conclusion
-        self.play(
-            LaggedStart(*[FadeIn(m, shift=LEFT * 0.06) for m in conc_mobs],
-                        lag_ratio=0.18),
-            run_time=0.68,
-        )
-        ta += 0.68
-
-        self.wait(max(0.5, dur - ta - 0.5))
+        # ── Animate on the narration beat ─────────────────────
+        self.play(FadeIn(pill, shift=DOWN * 0.08), FadeIn(board), run_time=0.6)
+        for (row, is_q), spoken in zip(rows, spoken_lines):
+            t = nar.when_spoken(spoken) if spoken else None
+            wait_until(self, t, lead=0.30)
+            if is_q:
+                self.play(FadeIn(row, shift=RIGHT * 0.12), run_time=0.5)
+            else:
+                self.play(Write(row), run_time=0.6)
         sync_to_audio(self, sd.get("scene_id", 6))
 
 
+def play_countdown(scene_obj, nar, number_words, pos, color=None):
+    """Big pulsing countdown digits, each landing on its spoken word.
+
+    The narration literally says "Five. Four. Three. Two. One." so every
+    digit appears at the exact moment the voice says it.
+    """
+    col = color or C_SEM_KEY
+    digit_of = {"five": "5", "four": "4", "three": "3", "two": "2", "one": "1"}
+    for w in number_words:
+        t = nar.when_spoken(w)
+        wait_until(scene_obj, t, lead=0.15)
+        ring = Circle(radius=0.72, stroke_color=mc(col), stroke_width=4,
+                      fill_color=mc(col), fill_opacity=0.10)
+        ring.move_to(pos)
+        num = TXT(digit_of.get(w.lower(), w), size=64, color=col, bold=True)
+        num.move_to(pos)
+        grp = VGroup(ring, num)
+        grp.set_z_index(90)
+        scene_obj.play(FadeIn(grp, scale=1.35), run_time=0.28)
+        scene_obj.play(FadeOut(grp, scale=0.75), run_time=0.30)
+
+
 # ═════════════════════════════════════════════════════════════
-# SCENE 07 — MISTAKES  (two-panel comparison)
-# ─────────────────────────────────────────────────────────────
-# Red warning banner at top of content area.
-# Left panel  (red border) : "THE WRONG WAY" + wrong steps + ✗
-# Right panel (green border): "THE RIGHT WAY" + right steps + ✓
-# "VS" in gold between panels.
-# Green glow on right panel at the end.
+# SCENE 07 — COMMON MISTAKES
+# The actual mistake sentence(s) on the red side, the actual
+# correction on the green side — pulled from the lesson data and
+# revealed as the voice reaches each part.
 # ═════════════════════════════════════════════════════════════
 
 class Scene07_Mistakes(Scene):
     def construct(self):
         sd  = get_scene_by_step("mistakes")
-        dur = float(sd.get("duration_seconds", 22.0))
+        nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 7))
 
         lesson_title = SCRIPT_DATA.get("title", "")
         setup_bg(self)
-        header = make_header(lesson_title, LESSON_ID)
-        footer = make_footer()
-        self.add(header, footer)
+        self.add(make_header(lesson_title, LESSON_ID), make_footer("mistakes"))
 
-        import numpy as np
-        board     = sd.get("board_examples", {})
-        narration = sd.get("narration", "")
-        cm        = SCRIPT_DATA.get("common_mistake", "")
-
-        # Classify steps into wrong / right
-        raw_steps   = board.get("worked_example", [])
-        wrong_steps = []
-        right_steps = []
-        for s in raw_steps:
-            st = str(s)
-            if any(k in st for k in ["Wrong", "Mistake", "WRONG",
-                                     "✗", "incorrect", "error"]):
-                wrong_steps.append(st)
-            elif any(k in st for k in ["Correct", "RIGHT", "✓",
-                                       "right", "checkmark", "Fix"]):
-                right_steps.append(st)
-            else:
-                if len(wrong_steps) <= len(right_steps):
-                    wrong_steps.append(st)
-                else:
-                    right_steps.append(st)
-
-        if not wrong_steps:
-            cm_s = str(cm)[:50] or "Skipping the key condition"
-            wrong_steps = [
-                r"\text{" + cm_s + r"}",
-                r"\text{Result: incorrect answer}",
-            ]
-        if not right_steps:
-            right_steps = [
-                r"\text{Always check conditions first}",
-                r"\text{Apply the formula step by step}",
-                r"\text{Verify your final answer}",
-            ]
+        cm = sd.get("common_mistake",
+                    SCRIPT_DATA.get("common_mistake", ""))
+        cm_sents = split_sentences(cm)
+        wrong_sents = [s for s in cm_sents
+                       if not re.match(r"(?i)\s*correct", s)] or cm_sents[:1]
+        right_sents = [s for s in cm_sents
+                       if re.match(r"(?i)\s*correct", s)]
+        if not right_sents:
+            right_sents = cm_sents[1:] or ["Apply the rule carefully, step by step."]
 
         content_cy = (CONTENT_TOP + CONTENT_BOT) / 2
-        content_h  = CONTENT_TOP - CONTENT_BOT
 
-        # ── Red warning banner ─────────────────────────────────────────
-        warn_bg = RoundedRectangle(
-            width=11.2, height=0.56, corner_radius=0.10,
-            fill_color=mc(C_RRED), fill_opacity=0.90, stroke_width=0,
-        ).move_to(np.array([0.0, CONTENT_TOP - 0.42, 0]))
-        warn_txt = Text(
-            "⚠️  COMMON MISTAKE  —  DON'T DO THIS!",
-            font_size=18, color=mc(C_WHITE), font="Arial", weight=BOLD,
-        ).move_to(warn_bg.get_center())
-        warn_grp = VGroup(warn_bg, warn_txt)
+        warn = section_pill("!  COMMON MISTAKE — DON'T DO THIS", C_RRED,
+                            size=24)
+        warn.move_to(np.array([0.0, CONTENT_TOP - 0.42, 0]))
 
-        # ── Two comparison panels ──────────────────────────────────────
-        panel_h  = content_h - 1.40
-        panel_cy = content_cy - 0.32
+        panel_h  = 4.35
+        panel_cy = content_cy - 0.48
 
-        left_card = make_card(5.65, panel_h, border_color=C_RRED)
-        left_card.move_to(np.array([-3.25, panel_cy, 0]))
-        l_hdr = make_card_header("✗  THE WRONG WAY", 5.65, C_RRED)
-        l_hdr.move_to(
-            left_card.get_top() + DOWN * (l_hdr.height / 2 + 0.07))
+        left_card = make_card(5.85, panel_h, border_color=C_RRED)
+        left_card.move_to(np.array([-3.45, panel_cy, 0]))
+        l_hdr = make_card_header("✗  THE WRONG WAY", 5.85, C_RRED)
+        l_hdr.move_to(left_card.get_top() + DOWN * (l_hdr.height / 2 + 0.07))
 
-        right_card = make_card(5.65, panel_h, border_color=C_GGREEN)
-        right_card.move_to(np.array([3.25, panel_cy, 0]))
-        r_hdr = make_card_header("✓  THE RIGHT WAY", 5.65, C_GGREEN)
-        r_hdr.move_to(
-            right_card.get_top() + DOWN * (r_hdr.height / 2 + 0.07))
+        right_card = make_card(5.85, panel_h, border_color=C_GGREEN)
+        right_card.move_to(np.array([3.45, panel_cy, 0]))
+        r_hdr = make_card_header("✓  THE RIGHT WAY", 5.85, C_GGREEN)
+        r_hdr.move_to(right_card.get_top() + DOWN * (r_hdr.height / 2 + 0.07))
 
-        # Wrong mobs
-        wrong_mobs = []
-        for txt in wrong_steps[:4]:
-            try:
-                m = MathTex(str(txt), font_size=24, color=mc(C_RRED))
-            except Exception:
-                m = Text(str(txt)[:52], font_size=15,
-                         color=mc(C_RRED), font="Arial")
-            if m.width > 5.05:
-                m.scale_to_fit_width(5.05)
-            wrong_mobs.append(m)
-        wrong_grp = VGroup(*wrong_mobs).arrange(
-            DOWN, aligned_edge=LEFT, buff=0.24)
-        if wrong_grp.height > panel_h - 1.05:
-            wrong_grp.scale_to_fit_height(panel_h - 1.05)
-        wrong_grp.move_to(left_card.get_center() + DOWN * 0.12)
-        wrong_grp.align_to(left_card.get_left() + RIGHT * 0.24, LEFT)
+        wrong_mobs = [TXT(s, size=23, color=C_LGRAY, wrap=40, max_w=5.3)
+                      for s in wrong_sents[:3]]
+        wrong_grp = VGroup(*wrong_mobs).arrange(DOWN, aligned_edge=LEFT, buff=0.30)
+        if wrong_grp.height > panel_h - 1.3:
+            wrong_grp.scale_to_fit_height(panel_h - 1.3)
+        wrong_grp.move_to(left_card.get_center() + DOWN * 0.10)
 
-        # Right mobs
-        right_mobs = []
-        for txt in right_steps[:4]:
-            try:
-                m = MathTex(str(txt), font_size=24, color=mc(C_GGREEN))
-            except Exception:
-                m = Text(str(txt)[:52], font_size=15,
-                         color=mc(C_GGREEN), font="Arial")
-            if m.width > 5.05:
-                m.scale_to_fit_width(5.05)
-            right_mobs.append(m)
-        right_grp = VGroup(*right_mobs).arrange(
-            DOWN, aligned_edge=LEFT, buff=0.24)
-        if right_grp.height > panel_h - 1.05:
-            right_grp.scale_to_fit_height(panel_h - 1.05)
-        right_grp.move_to(right_card.get_center() + DOWN * 0.12)
-        right_grp.align_to(right_card.get_left() + RIGHT * 0.24, LEFT)
+        right_mobs = [TXT(s, size=23, color=C_WHITE, wrap=40, max_w=5.3)
+                      for s in right_sents[:3]]
+        right_grp = VGroup(*right_mobs).arrange(DOWN, aligned_edge=LEFT, buff=0.30)
+        if right_grp.height > panel_h - 1.3:
+            right_grp.scale_to_fit_height(panel_h - 1.3)
+        right_grp.move_to(right_card.get_center() + DOWN * 0.10)
 
-        # "VS" gold label between panels
-        vs_txt = Text(
-            "VS", font_size=30, color=mc(C_GOLD),
-            font="Arial", weight=BOLD,
-        ).move_to(np.array([0.0, panel_cy, 0]))
+        vs_txt = TXT("VS", size=36, color=C_GOLD, bold=True)
+        vs_txt.move_to(np.array([0.0, panel_cy, 0]))
 
-        # ✗ ✓ marks at bottom of each panel
-        cross_mark = Text("✗", font_size=50,
-                          color=mc(C_RRED), font="Arial", weight=BOLD)
-        cross_mark.move_to(left_card.get_bottom() + UP * 0.44)
-        tick_mark  = Text("✓", font_size=50,
-                          color=mc(C_GGREEN), font="Arial", weight=BOLD)
-        tick_mark.move_to(right_card.get_bottom() + UP * 0.44)
+        cross_chip = VGroup(
+            Circle(radius=0.34, fill_color=mc(C_RRED), fill_opacity=1.0,
+                   stroke_width=0),
+            TXT("✗", size=34, color=C_WHITE, bold=True))
+        cross_chip[1].move_to(cross_chip[0].get_center())
+        cross_chip.move_to(left_card.get_bottom() + UP * 0.50)
 
-        # ── Animate ───────────────────────────────────────────────────
-        ta = 0.0
-        self.play(FadeIn(warn_grp, shift=DOWN * 0.06), run_time=0.50)
-        ta += 0.50
-        self.play(FadeIn(left_card), FadeIn(right_card), run_time=0.48)
-        ta += 0.48
-        self.play(FadeIn(l_hdr), FadeIn(r_hdr), run_time=0.38)
-        ta += 0.38
-        self.play(FadeIn(vs_txt, scale=0.80), run_time=0.32)
-        ta += 0.32
+        tick_chip = VGroup(
+            Circle(radius=0.34, fill_color=mc(C_GGREEN), fill_opacity=1.0,
+                   stroke_width=0),
+            TXT("✓", size=34, color=C_WHITE, bold=True))
+        tick_chip[1].move_to(tick_chip[0].get_center())
+        tick_chip.move_to(right_card.get_bottom() + UP * 0.50)
 
-        # Wrong side first
-        for m in wrong_mobs:
-            self.play(Write(m), run_time=0.48)
-            ta += 0.48
-        self.play(FadeIn(cross_mark, scale=0.60), run_time=0.38)
-        ta += 0.38
-        self.wait(0.38)
-        ta += 0.38
+        # ── Animate on the narration beat ─────────────────────
+        self.play(FadeIn(warn, shift=DOWN * 0.06), run_time=0.5)
 
-        # Right side
-        for m in right_mobs:
-            self.play(Write(m), run_time=0.48)
-            ta += 0.48
-        self.play(FadeIn(tick_mark, scale=0.60), run_time=0.38)
-        ta += 0.38
+        # ACTIVE LEARNING: "think about what could go wrong" + 3-2-1
+        think = TXT("What could go wrong here? Think…", size=28,
+                    color=C_SEM_KEY, bold=True, max_w=11.0)
+        think.move_to(np.array([0.0, panel_cy + 0.9, 0]))
+        reveal(self, nar, think, spoken="think about what could possibly",
+               run_time=0.5)
+        play_countdown(self, nar, ["Three", "Two", "One"],
+                       np.array([0.0, panel_cy - 0.4, 0]), C_SEM_KEY)
+        self.play(FadeOut(think), run_time=0.3)
 
-        # Glow on correct panel
+        self.play(FadeIn(left_card), FadeIn(right_card),
+                  FadeIn(l_hdr), FadeIn(r_hdr),
+                  FadeIn(vs_txt, scale=0.8), run_time=0.6)
+
+        for s, m in zip(wrong_sents[:3], wrong_mobs):
+            wait_until(self, nar.when_spoken(s), lead=0.30)
+            self.play(FadeIn(m, shift=RIGHT * 0.08), run_time=0.45)
+        self.play(FadeIn(cross_chip, scale=0.6), run_time=0.35)
+
+        for s, m in zip(right_sents[:3], right_mobs):
+            wait_until(self, nar.when_spoken(s), lead=0.30)
+            self.play(FadeIn(m, shift=LEFT * 0.08), run_time=0.45)
+        self.play(FadeIn(tick_chip, scale=0.6), run_time=0.35)
+
         try:
             r_glow = SurroundingRectangle(
                 right_card, color=mc(C_GGREEN),
-                stroke_width=3.0, buff=0.08, corner_radius=0.18,
-            )
-            self.play(Create(r_glow), run_time=0.48)
-            ta += 0.48
+                stroke_width=3.0, buff=0.08, corner_radius=0.18)
+            self.play(Create(r_glow), run_time=0.5)
         except Exception:
             pass
-
-        self.wait(max(0.5, dur - ta - 0.5))
         sync_to_audio(self, sd.get("scene_id", 7))
 
 
 # ═════════════════════════════════════════════════════════════
 # SCENE 08 — PRACTICE
-# ─────────────────────────────────────────────────────────────
-# Orange "YOUR TURN — PRACTICE!" pill at top.
-# Large question card (9.5 × 1.8).
-# Three hint boxes below: STEP 1, STEP 2, STEP 3.
+# The question appears when it is read out; each solution line
+# lands exactly when the voice reaches it; verdicts as pills.
 # ═════════════════════════════════════════════════════════════
 
 class Scene08_Practice(Scene):
     def construct(self):
         sd  = get_scene_by_step("practice")
-        dur = float(sd.get("duration_seconds", 20.0))
+        nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 8))
 
         lesson_title = SCRIPT_DATA.get("title", "")
         setup_bg(self)
-        header = make_header(lesson_title, LESSON_ID)
-        footer = make_footer()
-        self.add(header, footer)
+        self.add(make_header(lesson_title, LESSON_ID), make_footer("practice"))
 
-        import numpy as np
-        board     = sd.get("board_examples", {})
-        practice  = board.get("practice", [])
-        narration = sd.get("narration", "")
+        plain_lines  = (sd.get("board_plain", {}) or {}).get("practice", [])
+        spoken_lines = (sd.get("board_spoken", {}) or {}).get("practice", [])
+        if not plain_lines:
+            plain_lines  = ["Solve today's problem with the formula."]
+            spoken_lines = [""]
 
-        if not practice:
-            pq = str(sd.get("practice_question",
-                            "Solve the following using today's formula."))
-            practice = [
-                pq,
-                r"\text{Step 1: Read the problem carefully}",
-                r"\text{Step 2: Write down what is given}",
-                r"\text{Step 3: Apply the formula and simplify}",
-            ]
+        # First line(s) up to the one ending in '?' form the question
+        q_count = 1
+        for i, l in enumerate(plain_lines):
+            if l.rstrip().endswith("?"):
+                q_count = i + 1
+                break
+        # include a following enumeration line (e.g. the list of numbers)
+        if (q_count < len(plain_lines)
+                and not _VERDICT_RE.search(plain_lines[q_count])
+                and len(plain_lines[q_count]) < 60
+                and "→" not in plain_lines[q_count]):
+            q_count += 1
+        q_lines, sol_lines = plain_lines[:q_count], plain_lines[q_count:]
+        q_spoken, sol_spoken = spoken_lines[:q_count], spoken_lines[q_count:]
 
-        # ── "YOUR TURN" pill ──────────────────────────────────────────
-        pill_bg = RoundedRectangle(
-            width=5.10, height=0.52, corner_radius=0.26,
-            fill_color=mc(C_ORANGE), fill_opacity=1.0, stroke_width=0,
-        ).move_to(np.array([0.0, CONTENT_TOP - 0.44, 0]))
-        pill_txt = Text(
-            "✏️  YOUR TURN  —  PRACTICE!",
-            font_size=18, color=mc(C_WHITE), font="Arial", weight=BOLD,
-        ).move_to(pill_bg.get_center())
-        pill_grp = VGroup(pill_bg, pill_txt)
+        pill = section_pill("✎  YOUR TURN — PRACTICE!", C_ORANGE, size=24)
+        pill.move_to(np.array([0.0, CONTENT_TOP - 0.42, 0]))
 
-        # ── Question card ──────────────────────────────────────────────
-        q_raw   = str(practice[0]) if practice else "Solve the problem."
-        q_card  = make_card(9.5, 1.80, border_color=C_ORANGE)
-        q_card.move_to(np.array([0.0, 0.82, 0]))
-
-        q_lines = textwrap.wrap(q_raw, 66)[:3]
-        q_mobs  = []
-        for ln in q_lines:
-            try:
-                t = Text(ln, font_size=19, color=mc(C_WHITE), font="Arial")
-            except Exception:
-                t = Text(ln[:64], font_size=19, color=mc(C_WHITE), font="Arial")
-            if t.width > 8.8:
-                t.scale_to_fit_width(8.8)
-            q_mobs.append(t)
-        q_grp = VGroup(*q_mobs).arrange(
-            DOWN, buff=0.18, aligned_edge=LEFT)
+        q_card = make_card(12.6, 1.65, border_color=C_ORANGE)
+        q_card.move_to(np.array([0.0, 1.25, 0]))
+        q_mobs = []
+        for i, l in enumerate(q_lines):
+            m = TXT(l, size=30 if i == 0 else 27,
+                    color=C_WHITE if i == 0 else C_GOLD,
+                    bold=(i == 0), max_w=11.6)
+            q_mobs.append(m)
+        q_grp = VGroup(*q_mobs).arrange(DOWN, buff=0.18)
+        if q_grp.height > 1.3:
+            q_grp.scale_to_fit_height(1.3)
         q_grp.move_to(q_card.get_center())
 
-        # ── Three hint boxes ───────────────────────────────────────────
-        hint_data = [
-            ("STEP 1", "Read carefully",  C_BLUE_P),
-            ("STEP 2", "Write given",     C_GGREEN),
-            ("STEP 3", "Apply formula",   C_ORANGE),
-        ]
-        hint_cards = []
-        for step_lbl, desc, col in hint_data:
-            h_card = make_card(3.55, 1.22, border_color=col)
-            h_hdr  = make_card_header(step_lbl, 3.55, col)
-            h_hdr.move_to(
-                h_card.get_top() + DOWN * (h_hdr.height / 2 + 0.07))
-            try:
-                h_desc = Text(desc, font_size=15,
-                              color=mc(C_LGRAY), font="Arial")
-            except Exception:
-                h_desc = Text("hint", font_size=15,
-                              color=mc(C_LGRAY), font="Arial")
-            if h_desc.width > 3.10:
-                h_desc.scale_to_fit_width(3.10)
-            h_desc.move_to(h_card.get_center() + DOWN * 0.08)
-            hint_cards.append(VGroup(h_card, h_hdr, h_desc))
+        sol_card = make_card(12.6, 3.15, border_color=C_GGREEN)
+        sol_card.move_to(np.array([0.0, -1.55, 0]))
+        sol_hdr = make_card_header("SOLUTION — STEP BY STEP", 12.6, C_GGREEN)
+        sol_hdr.move_to(sol_card.get_top() + DOWN * (sol_hdr.height / 2 + 0.07))
 
-        hints_row = VGroup(*hint_cards).arrange(RIGHT, buff=0.30)
-        hints_row.move_to(np.array([0.0, -1.65, 0]))
+        rows = build_board_rows(sol_lines, max_w=11.6)
+        sol_grp = VGroup(*[r for r, _ in rows])
+        sol_grp.arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+        if sol_grp.height > 2.2:
+            sol_grp.scale_to_fit_height(2.2)
+        if sol_grp.width > 11.6:
+            sol_grp.scale_to_fit_width(11.6)
+        sol_grp.move_to(sol_card.get_center() + DOWN * 0.20)
+        sol_grp.align_to(sol_card.get_left() + RIGHT * 0.45, LEFT)
 
-        # ── Animate ───────────────────────────────────────────────────
-        ta = 0.0
-        self.play(FadeIn(pill_grp, shift=DOWN * 0.08), run_time=0.48)
-        ta += 0.48
-        self.play(FadeIn(q_card),                       run_time=0.38)
-        ta += 0.38
-        for qm in q_mobs:
-            self.play(FadeIn(qm, shift=RIGHT * 0.06),   run_time=0.38)
-            ta += 0.38
-        self.play(
-            LaggedStart(*[FadeIn(hc, scale=0.90) for hc in hint_cards],
-                        lag_ratio=0.24),
-            run_time=0.88,
-        )
-        ta += 0.88
+        # ── Animate on the narration beat ─────────────────────
+        self.play(FadeIn(pill, shift=DOWN * 0.08), run_time=0.5)
+        self.play(FadeIn(q_card), run_time=0.35)
+        for m, spoken in zip(q_mobs, q_spoken):
+            t = nar.when_spoken(spoken) if spoken else None
+            wait_until(self, t, lead=0.30)
+            self.play(FadeIn(m, shift=RIGHT * 0.10), run_time=0.45)
 
-        self.wait(max(0.5, dur - ta - 0.5))
+        # ACTIVE LEARNING: pause invitation + spoken 5-4-3-2-1 countdown
+        pause_pill = section_pill("⏸  PAUSE & TRY IT YOURSELF", C_SEM_THEOREM,
+                                  size=22)
+        pause_pill.move_to(np.array([0.0, -0.35, 0]))
+        reveal(self, nar, pause_pill, spoken="Pause the video now",
+               run_time=0.5)
+        play_countdown(self, nar, ["Five", "Four", "Three", "Two", "One"],
+                       np.array([0.0, -1.7, 0]), C_SEM_KEY)
+        self.play(FadeOut(pause_pill), run_time=0.3)
+
+        wait_until(self, nar.when_spoken("let us solve it together"), lead=0.25)
+        self.play(FadeIn(sol_card), FadeIn(sol_hdr), run_time=0.5)
+        for (row, is_q), spoken in zip(rows, sol_spoken):
+            t = nar.when_spoken(spoken) if spoken else None
+            wait_until(self, t, lead=0.30)
+            self.play(Write(row), run_time=0.55)
         sync_to_audio(self, sd.get("scene_id", 8))
 
 
 # ═════════════════════════════════════════════════════════════
 # SCENE 09 — SUMMARY  (closing slide, no standard header)
-# ─────────────────────────────────────────────────────────────
-# Blue "LESSON COMPLETE!" full-width banner.
-# Lesson title in gold below.
-# Four numbered takeaway cards in 2×2 grid.
-# Red "SUBSCRIBE FOR MORE LESSONS!" CTA + Flash.
-# Standard footer.
+# Takeaways land as the voice recaps each one.
 # ═════════════════════════════════════════════════════════════
 
 class Scene09_Summary(Scene):
     def construct(self):
         sd  = get_scene_by_step("summary")
-        dur = float(sd.get("duration_seconds", 24.0))
+        nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 9))
 
-        lesson_title   = SCRIPT_DATA.get("title",          "Today's Lesson")
-        formula_spoken = SCRIPT_DATA.get("formula_spoken", "")
-        lesson_goal    = SCRIPT_DATA.get("lesson_goal",    "")
+        lesson_title   = SCRIPT_DATA.get("title", "Today's Lesson")
+        formula_plain  = sd.get("formula_plain",
+                                latex_to_plain(SCRIPT_DATA.get("key_formula", "")))
+        lesson_goal    = SCRIPT_DATA.get("lesson_goal", "")
+        subtopic       = SCRIPT_DATA.get("subtopic", "")
 
         setup_bg(self)
-        footer = make_footer()
-        self.add(footer)
+        self.add(make_footer("summary"))
 
-        import numpy as np
-
-        # ── "LESSON COMPLETE!" banner ─────────────────────────────────
         banner_bg = Rectangle(
-            width=FW, height=0.75,
+            width=FW, height=0.85,
             fill_color=mc(C_BLUE_P), fill_opacity=1.0, stroke_width=0,
-        ).move_to(np.array([0.0, 2.82, 0]))
-        banner_txt = Text(
-            "LESSON COMPLETE!", font_size=28,
-            color=mc(C_WHITE), font="Arial", weight=BOLD,
-        ).move_to(banner_bg.get_center())
-        try:
-            check_m = Text("✅", font_size=26)
-        except Exception:
-            check_m = Text("OK", font_size=18, color=mc(C_GGREEN),
-                           font="Arial", weight=BOLD)
-        check_m.next_to(banner_txt, LEFT, buff=0.25)
-        banner_grp = Group(banner_bg, banner_txt, check_m)
+        ).move_to(np.array([0.0, 2.85, 0]))
+        banner_txt = TXT("✓  LESSON COMPLETE!", size=34, color=C_WHITE, bold=True)
+        banner_txt.move_to(banner_bg.get_center())
+        banner_grp = VGroup(banner_bg, banner_txt)
 
-        # ── Lesson title in gold ──────────────────────────────────────
-        try:
-            title_mob = Text(
-                str(lesson_title), font_size=40,
-                color=mc(C_GOLD), font="Arial", weight=BOLD,
-            )
-        except Exception:
-            title_mob = Text("Today's Lesson", font_size=40,
-                             color=mc(C_GOLD), font="Arial", weight=BOLD)
-        if title_mob.width > 12.2:
-            title_mob.scale_to_fit_width(12.2)
-        title_mob.move_to(np.array([0.0, 1.88, 0]))
+        title_mob = TXT(lesson_title, size=46, color=C_GOLD, bold=True,
+                        max_w=12.2)
+        title_mob.move_to(np.array([0.0, 1.85, 0]))
 
-        # ── Four takeaway items ───────────────────────────────────────
-        takeaways = [
-            str(lesson_goal)[:44]    or "Master this concept",
-            str(formula_spoken)[:44] or "Apply the formula correctly",
-            "Always verify conditions before applying",
-            "Practice with varied examples daily",
+        # ── MIND MAP — the whole lesson in one picture ────────
+        # Center node = the topic; branches draw themselves as the
+        # voice recaps each idea (spoken cue → branch appears).
+        center_txt = TXT(lesson_title, size=26, color=C_NAVY1, bold=True,
+                         wrap=18, max_w=2.6)
+        center_bg = Circle(radius=max(1.05, center_txt.width / 2 + 0.28),
+                           fill_color=mc(C_GOLD), fill_opacity=1.0,
+                           stroke_color=mc(C_ORANGE), stroke_width=3.0)
+        center_txt.move_to(center_bg.get_center())
+        center_node = VGroup(center_bg, center_txt)
+        map_c = np.array([0.0, -0.15, 0])
+        center_node.move_to(map_c)
+
+        branch_data = [
+            (subtopic or "Master this concept",              C_SEM_DEF,
+             "We explored",                np.array([-4.6,  1.10, 0])),
+            ("Formula:  " + (formula_plain or "see lesson"), C_SEM_FORMULA,
+             "The one formula",            np.array([ 4.6,  1.10, 0])),
+            ("Watch out for the common trap",                C_SEM_WRONG,
+             "common trap",                np.array([-4.6, -1.55, 0])),
+            (lesson_goal or "Apply it with confidence",      C_SEM_CORRECT,
+             "our goal",                   np.array([ 4.6, -1.55, 0])),
         ]
-        take_colors = [C_BLUE_P, C_GGREEN, C_ORANGE, C_PURPLE]
-        take_cards  = []
-        for i, item in enumerate(takeaways):
-            col = take_colors[i % 4]
-            tc_bg = RoundedRectangle(
-                width=5.45, height=0.88, corner_radius=0.13,
+        branches = []
+        for item, col, cue, pos in branch_data:
+            node_txt = TXT(item, size=19, color=C_WHITE, wrap=30, max_w=3.6)
+            if node_txt.height > 1.05:
+                node_txt.scale_to_fit_height(1.05)
+            node_bg = RoundedRectangle(
+                width=min(4.2, node_txt.width + 0.5),
+                height=node_txt.height + 0.40, corner_radius=0.15,
                 fill_color=mc(C_CBG), fill_opacity=1.0,
-                stroke_color=mc(col), stroke_width=1.8,
-            )
-            num_circ = Circle(
-                radius=0.22,
-                fill_color=mc(col), fill_opacity=1.0, stroke_width=0,
-            )
-            num_txt = Text(
-                str(i + 1), font_size=15,
-                color=mc(C_WHITE), font="Arial", weight=BOLD,
-            )
-            num_txt.move_to(num_circ.get_center())
-            num_grp = VGroup(num_circ, num_txt)
-            num_grp.move_to(tc_bg.get_left() + RIGHT * 0.36)
-            try:
-                item_txt = Text(
-                    str(item), font_size=13,
-                    color=mc(C_WHITE), font="Arial",
-                )
-            except Exception:
-                item_txt = Text("Key point", font_size=13,
-                                color=mc(C_WHITE), font="Arial")
-            if item_txt.width > 4.50:
-                item_txt.scale_to_fit_width(4.50)
-            item_txt.move_to(tc_bg.get_center() + RIGHT * 0.25)
-            take_cards.append(VGroup(tc_bg, num_grp, item_txt))
+                stroke_color=mc(col), stroke_width=2.4,
+            ).move_to(pos)
+            node_txt.move_to(node_bg.get_center())
+            node = VGroup(node_bg, node_txt)
+            edge = Line(map_c, pos, stroke_color=mc(col), stroke_width=3.0,
+                        buff=1.1)
+            edge.set_stroke(opacity=0.8)
+            branches.append((edge, node, cue))
 
-        # 2 × 2 grid
-        row1 = VGroup(take_cards[0], take_cards[1]).arrange(RIGHT, buff=0.28)
-        row2 = VGroup(take_cards[2], take_cards[3]).arrange(RIGHT, buff=0.28)
-        take_grp = VGroup(row1, row2).arrange(DOWN, buff=0.22)
-        take_grp.move_to(np.array([0.0, 0.35, 0]))
-
-        # ── Subscribe CTA ─────────────────────────────────────────────
+        cta_txt = TXT("▶  SUBSCRIBE FOR MORE LESSONS!",
+                      size=26, color=C_WHITE, bold=True)
         cta_bg = RoundedRectangle(
-            width=7.60, height=0.72, corner_radius=0.18,
+            width=cta_txt.width + 0.8, height=0.80, corner_radius=0.20,
             fill_color=mc(C_RRED), fill_opacity=1.0, stroke_width=0,
-        ).move_to(np.array([0.0, -2.58, 0]))
-        cta_txt = Text(
-            "SUBSCRIBE FOR MORE LESSONS!",
-            font_size=22, color=mc(C_WHITE), font="Arial", weight=BOLD,
-        ).move_to(cta_bg.get_center())
-        play_arr = Text(
-            "▶", font_size=20,
-            color=mc(C_WHITE), font="Arial",
-        ).next_to(cta_txt, LEFT, buff=0.24)
-        cta_grp = Group(cta_bg, cta_txt, play_arr)
+        ).move_to(np.array([0.0, -2.45, 0]))
+        cta_txt.move_to(cta_bg.get_center())
+        cta_grp = VGroup(cta_bg, cta_txt)
 
-        # ── Animate ───────────────────────────────────────────────────
-        ta = 0.0
-        self.play(FadeIn(banner_grp, shift=DOWN * 0.08), run_time=0.68)
-        ta += 0.68
-        self.play(Write(title_mob), run_time=0.80)
-        ta += 0.80
-        self.play(
-            LaggedStart(*[FadeIn(tc, scale=0.90) for tc in take_cards],
-                        lag_ratio=0.22),
-            run_time=1.00,
-        )
-        ta += 1.00
-        self.play(FadeIn(cta_grp, scale=0.92), run_time=0.50)
-        ta += 0.50
+        # ── Animate on the narration beat ─────────────────────
+        self.play(FadeIn(banner_grp, shift=DOWN * 0.08), run_time=0.6)
+        self.play(Write(title_mob), run_time=0.8)
+        wait_until(self, nar.when_spoken("At the center of everything"),
+                   lead=0.25)
+        self.play(GrowFromCenter(center_node), run_time=0.7)
+        for edge, node, cue in branches:
+            wait_until(self, nar.when_spoken(cue), lead=0.25)
+            self.play(Create(edge), run_time=0.35)
+            self.play(FadeIn(node, scale=0.85), run_time=0.40)
+        self.play(FadeIn(cta_grp, scale=0.92), run_time=0.5)
         try:
-            self.play(
-                Flash(cta_bg, color=mc(C_GOLD),
-                      line_length=0.25, num_lines=16, flash_radius=0.88),
-                run_time=0.80,
-            )
-            ta += 0.80
+            self.play(Flash(cta_bg, color=mc(C_GOLD),
+                            line_length=0.25, num_lines=16,
+                            flash_radius=0.9), run_time=0.8)
         except Exception:
             pass
-
-        self.wait(max(0.5, dur - ta - 0.5))
         sync_to_audio(self, sd.get("scene_id", 9))
 '''
 
@@ -1934,6 +1849,7 @@ def build_manim_source(script: dict) -> str:
     source = MANIM_SCENE_CODE
 
     # Path placeholders
+    source = source.replace("__REPO_ROOT__",   str(REPO_ROOT))
     source = source.replace("__SCRIPT_PATH__", str(TIMED_SCRIPT))
     source = source.replace("__AUDIO_DIR__",   str(LESSON_AUDIO))
     source = source.replace("__BANNER_PATH__", str(BANNER_PATH))
@@ -1954,7 +1870,7 @@ def build_manim_source(script: dict) -> str:
 # ══════════════════════════════════════════════════════════════
 # MANIM RENDERER
 # Writes the .py file, calls manim CLI per scene,
-# copies each rendered MP4 to Math-9/renders/lesson_001/
+# copies each rendered MP4 to renders/lesson_XXX/
 # ══════════════════════════════════════════════════════════════
 
 SCENE_CLASS_MAP = {
@@ -1983,7 +1899,6 @@ def render_all_scenes(script: dict):
 
     results     = []
     render_root = TEMP_DIR / "media" / "videos" / "math_scenes" / "1080p60"
-    render_root_fallback = TEMP_DIR / "media" / "videos" / "math_scenes"
 
     for scene in script["scenes"]:
         step        = scene["step"]
@@ -1998,9 +1913,14 @@ def render_all_scenes(script: dict):
         print(f"  ▶ Scene {scene_id:02d} [{step:10s}] {label}")
         print(f"    Class : {class_name}")
 
+        # MCME_RENDER_QUALITY: h = 1080p60 (default), k = 4K, l = fast preview
+        quality_flag = {
+            "k": "-qk", "h": "-qh", "l": "-ql",
+        }.get(os.environ.get("MCME_RENDER_QUALITY", "h").lower(), "-qh")
+
         cmd = [
             "manim",
-            "-qh",                          # quality: high 1080p60
+            quality_flag,
             "--media_dir", str(TEMP_DIR / "media"),
             str(source_file),
             class_name,
@@ -2030,6 +1950,20 @@ def render_all_scenes(script: dict):
             shutil.copy(str(expected_mp4), str(dest))
             size_kb = dest.stat().st_size // 1024
             print(f"    ✅ Rendered → {dest.name}  ({size_kb} KB)")
+            # QA: rendered video must cover the narration audio
+            try:
+                probe = subprocess.run(
+                    ["ffprobe", "-v", "error", "-show_entries",
+                     "format=duration", "-of",
+                     "default=noprint_wrappers=1:nokey=1", str(dest)],
+                    capture_output=True, text=True)
+                vid_dur = float(probe.stdout.strip())
+                want = float(scene.get("duration_seconds", 0.0))
+                if want and vid_dur < want - 1.5:
+                    print(f"    ⚠️  QA: video {vid_dur:.1f}s shorter than "
+                          f"audio {want:.1f}s — check sync for this scene.")
+            except Exception:
+                pass
             results.append({
                 "scene_id" : scene_id,
                 "step"     : step,
@@ -2087,3 +2021,10 @@ def print_render_report(results: list):
 
 render_results = render_all_scenes(SCRIPT)
 print_render_report(render_results)
+
+_failed_scenes = [r["step"] for r in render_results if not r["success"]]
+if _failed_scenes:
+    raise SystemExit(
+        f"🛑 Render failed for scenes: {_failed_scenes}. "
+        f"Fix the errors above and re-run (autopilot.py --from-stage 4)."
+    )
