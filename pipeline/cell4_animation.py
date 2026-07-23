@@ -92,6 +92,7 @@ from pathlib import Path
 # ── Repo imports (shared LaTeX → text/speech translation) ─────
 sys.path.insert(0, r"__REPO_ROOT__")
 from pipeline.mathtext import latex_to_plain, normalize_word, split_sentences
+from pipeline.constants import day_color
 
 # ── Data loading ──────────────────────────────────────────────
 SCRIPT_PATH  = Path(r"__SCRIPT_PATH__")
@@ -103,6 +104,14 @@ with open(SCRIPT_PATH, "r", encoding="utf-8") as f:
     SCRIPT_DATA = json.load(f)
 
 LESSON_ID = SCRIPT_DATA["lesson_id"]
+
+# Rotating per-day theme — ONLY the page background and the DAY badge
+# use this; every other color (semantic pedagogy colors, logo, footer,
+# fixed decorative badge rows) stays constant across days.
+_DAY_PALETTE = day_color(LESSON_ID)
+DAY_BG1     = _DAY_PALETTE["bg1"]
+DAY_BG2     = _DAY_PALETTE["bg2"]
+DAY_ACCENT  = _DAY_PALETTE["accent"]
 
 # Brand colors (injected from theme at render time)
 C_BG      = "{C_BG}"
@@ -160,7 +169,7 @@ CHANNEL = "Math Concept Made Easy"
 TAGLINE = "LEARN  •  PRACTICE  •  MASTER"
 FONT    = "DejaVu Sans"   # present on every CI runner, full unicode math
 
-config.background_color = C_NAVY1
+config.background_color = DAY_BG1
 
 def mc(h):
     return ManimColor(h)
@@ -863,12 +872,13 @@ def fractions_in(texts):
 # ═════════════════════════════════════════════════════════════
 
 def setup_bg(scene_obj):
-    """Dark navy background + 4%-opacity grid + tiny floating accent dots."""
-    scene_obj.camera.background_color = mc(C_NAVY1)
+    """Rotating per-day background gradient + 4%-opacity grid + tiny
+    floating accent dots."""
+    scene_obj.camera.background_color = mc(DAY_BG1)
 
     bg = Rectangle(
         width=FW + 1.0, height=FH + 1.0,
-        fill_color=[mc(C_NAVY1), mc(C_NAVY2)],
+        fill_color=[mc(DAY_BG1), mc(DAY_BG2)],
         fill_opacity=1.0,
         stroke_width=0,
     )
@@ -939,7 +949,7 @@ def make_header(lesson_title="", day=1):
 
     day_bg = RoundedRectangle(
         width=1.55, height=0.58, corner_radius=0.12,
-        fill_color=mc(C_PURPLE), fill_opacity=1.0, stroke_width=0,
+        fill_color=mc(DAY_ACCENT), fill_opacity=1.0, stroke_width=0,
     ).move_to(np.array([6.10, hcy, 0.0]))
     day_txt = TXT("DAY " + str(day), size=19, color=C_WHITE, bold=True)
     day_txt.move_to(day_bg.get_center())
@@ -1114,7 +1124,7 @@ class Scene01_Opening(MovingCameraScene):
         # DAY badge (top-right)
         day_bg = RoundedRectangle(
             width=1.85, height=0.72, corner_radius=0.14,
-            fill_color=mc(C_PURPLE), fill_opacity=1.0, stroke_width=0,
+            fill_color=mc(DAY_ACCENT), fill_opacity=1.0, stroke_width=0,
         ).move_to(np.array([5.95, 3.22, 0]))
         day_txt = TXT("DAY " + str(LESSON_ID), size=24, color=C_WHITE, bold=True)
         day_txt.move_to(day_bg.get_center())

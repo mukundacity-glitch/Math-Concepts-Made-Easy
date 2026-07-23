@@ -6,7 +6,7 @@
 #     YT_CLIENT_SECRET_JSON   →  contents of secrets/client_secret.json
 #     YT_TOKEN_JSON           →  contents of secrets/token.json
 #
-#   No variables needed — schedule runs automatically every day.
+#   No variables needed — schedule runs automatically on its own days.
 #   To temporarily pause posting, set variable  AUTOPILOT_PAUSED = true
 #
 #   Render quality defaults to 1080p60. 4K/30fps can be requested either
@@ -16,14 +16,26 @@
 #   pre-flight budget check falls back to 1080p60 on its own if a 4K
 #   render looks likely to exceed the job's time budget, so the daily
 #   upload never fails outright because of it.
+#
+#   POSTING SCHEDULE: Thu/Fri 1PM Eastern, Sun 10AM Eastern (student
+#   after-school / leisure-browsing windows). GitHub Actions cron has
+#   no timezone support, so this is approximated with two seasonal
+#   pairs of UTC cron rules (EDT Mar-Nov, EST Dec-Feb) — accurate
+#   except for a ~1-week margin around the actual DST transition dates,
+#   which shift by a few days each year.
 
 name: Daily Lesson Video
 
 on:
   schedule:
-    # 19:00 UTC = 3 PM EDT (summer) / 2 PM EST (winter)
-    # Gives ~2 h render time before the 5 PM homework-help window.
-    - cron: "0 19 * * *"
+    # EDT months (UTC-4, roughly mid-Mar to early-Nov): Thu/Fri 1PM EDT,
+    # Sun 10AM EDT.
+    - cron: "0 17 * 3-11 4,5"
+    - cron: "0 14 * 3-11 0"
+    # EST months (UTC-5, roughly early-Nov to mid-Mar): Thu/Fri 1PM EST,
+    # Sun 10AM EST.
+    - cron: "0 18 * 1,2,12 4,5"
+    - cron: "0 15 * 1,2,12 0"
   workflow_dispatch:
     inputs:
       day:

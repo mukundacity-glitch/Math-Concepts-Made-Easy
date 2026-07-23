@@ -80,3 +80,26 @@ SCENE_ANIMATION_MAP = {
     "summary"       : "VISUAL_ONLY",
 }
 
+# ══════════════════════════════════════════════════════════════
+# DAY COLOR ROTATION — shared by Cell 4 (video background + DAY
+# badge) and Cell 6 (thumbnail), so a given day looks the same
+# accent color in both its video and its thumbnail. Only the
+# background gradient and the DAY badge rotate — every other
+# color (semantic pedagogy colors, logo, footer) stays fixed.
+# ══════════════════════════════════════════════════════════════
+
+DAY_COLOR_PALETTE = [
+    {"accent": "#FACC15", "bg1": "#081B33", "bg2": "#102C57"},  # gold
+    {"accent": "#22C55E", "bg1": "#081F14", "bg2": "#0F3D28"},  # green
+    {"accent": "#3B82F6", "bg1": "#081B33", "bg2": "#102C57"},  # blue
+    {"accent": "#8B5CF6", "bg1": "#1A0F33", "bg2": "#2E1A57"},  # purple
+    {"accent": "#F59E0B", "bg1": "#331C08", "bg2": "#572E10"},  # orange
+    {"accent": "#EF4444", "bg1": "#330A0A", "bg2": "#571212"},  # red
+    {"accent": "#22D3EE", "bg1": "#08262B", "bg2": "#0F4048"},  # cyan
+]
+
+
+def day_color(day: int) -> dict:
+    """Rotating {accent, bg1, bg2} theme for this lesson day."""
+    return DAY_COLOR_PALETTE[(day - 1) % len(DAY_COLOR_PALETTE)]
+
