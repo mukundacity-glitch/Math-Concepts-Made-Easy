@@ -134,16 +134,36 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     board             = lesson.get('board_examples', {})
     # Dynamically translate the math for this specific day!
     spoken_worked     = clean_math_for_speech(board.get('worked_example', []))
-    spoken_practice   = clean_math_for_speech(board.get('practice', []))
+
+    # Split the practice board into question lines and solution lines so
+    # the question is read BEFORE the pause-countdown and the solution
+    # after it (Cell 4 uses the same split for the on-screen cards).
+    practice_lines = board.get('practice', [])
+    q_take = 1 if practice_lines else 0
+    if (len(practice_lines) > 1
+            and "\\Rightarrow" not in str(practice_lines[1])
+            and "\\checkmark" not in str(practice_lines[1])):
+        q_take = 2
+    spoken_practice_q   = clean_math_for_speech(practice_lines[:q_take])
+    spoken_practice_sol = clean_math_for_speech(practice_lines[q_take:])
 
     # Every scene narrates ITS OWN on-screen content, so Cell 4 can show
     # each visual at the exact moment it is spoken. Never narrate stage
     # directions (visual_hints) — they drive visuals, not the voice.
 
+    # The curiosity question: the first sentence of the real-world hook,
+    # asked as a mystery BEFORE any welcome or branding (5-second hook).
+    hook_sentences = split_sentences(real_world_hook)
+    curiosity = hook_sentences[0] if hook_sentences else (
+        f"What secret rule connects every {topic} problem you will ever see?")
+
     # ════════════════════════════════════════════════════════
-    # SCENE 1: OPENING — welcome, orientation, goal
+    # SCENE 1: OPENING — curiosity first, then orientation
     # ════════════════════════════════════════════════════════
     opening = (
+        f"Here is a little mystery before we start. "
+        f"{curiosity} "
+        f"Hold that thought — because today it becomes mathematics. "
         f"Welcome to Math Concepts Made Easy. "
         f"Today is Day {day}, and our lesson is all about {topic}. "
         f"{recap}"
@@ -212,6 +232,8 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     mistakes = (
         f"Now, a quick warning, because I see students lose marks on this "
         f"every single year. "
+        f"Before I show you, think about what could possibly go wrong here. "
+        f"Three. Two. One. "
         f"{common_mistake} "
         f"Compare the wrong way and the right way on screen, and promise "
         f"yourself you will never fall for this one."
@@ -222,9 +244,11 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     # ════════════════════════════════════════════════════════
     practice = (
         f"Time to try it yourself. Here is your practice question. "
-        f"Pause the video if you want to attempt it first — then we will "
-        f"solve it together. "
-        f"{spoken_practice} "
+        f"{spoken_practice_q} "
+        f"Pause the video now, or take a few seconds with me. "
+        f"Five. Four. Three. Two. One. "
+        f"Okay — let us solve it together. "
+        f"{spoken_practice_sol} "
         f"How did you do? If you slipped anywhere, rewind and watch that "
         f"step again — that is exactly how strong students learn."
     )
@@ -233,9 +257,11 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     # SCENE 9: SUMMARY
     # ════════════════════════════════════════════════════════
     summary = (
-        f"Let us bring today's lesson together. "
-        f"We explored {topic} — {subtopic}. "
+        f"Let us bring today's lesson together in one picture. "
+        f"At the center of everything sits {topic}. "
+        f"We explored {subtopic}. "
         f"The one formula to remember is {formula}. "
+        f"Watch out for the common trap we discussed. "
         f"And remember our goal: {goal}. "
         f"{teaser}. "
         f"New lessons every day on Math Concepts Made Easy. "

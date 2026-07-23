@@ -141,6 +141,20 @@ C_COIN    = "#FDE68A"
 C_APPLE   = "#DC2626"
 C_LEAF    = "#16A34A"
 C_SKIN    = "#F5C99B"
+C_CYAN    = "#22D3EE"
+
+# Semantic color system — every color means one thing, lesson after
+# lesson, so students build the association over time:
+#   definitions → blue, correct → green, examples → orange,
+#   theorems/structure → purple, key ideas → gold, mistakes → red,
+#   formulas → cyan
+C_SEM_DEF     = C_BLUE_P
+C_SEM_CORRECT = C_GGREEN
+C_SEM_EXAMPLE = C_ORANGE
+C_SEM_THEOREM = C_PURPLE
+C_SEM_KEY     = C_GOLD
+C_SEM_WRONG   = C_RRED
+C_SEM_FORMULA = C_CYAN
 
 CHANNEL = "Math Concept Made Easy"
 TAGLINE = "LEARN  •  PRACTICE  •  MASTER"
@@ -521,6 +535,117 @@ def viz_fraction_pie(p, q, r=1.0, label=True):
     return g
 
 
+def viz_mystery_box(symbol=None):
+    """Glowing mystery box with a '?' — the face of every unknown."""
+    box = RoundedRectangle(
+        width=1.8, height=1.5, corner_radius=0.16,
+        fill_color=mc(C_CBG), fill_opacity=1.0,
+        stroke_color=mc(C_SEM_KEY), stroke_width=3.5)
+    glow = RoundedRectangle(
+        width=2.1, height=1.8, corner_radius=0.22,
+        fill_color=mc(C_SEM_KEY), fill_opacity=0.14, stroke_width=0)
+    glow.move_to(box.get_center())
+    q = TXT("?", size=64, color=C_SEM_KEY, bold=True)
+    q.move_to(box.get_center())
+    g = VGroup(glow, box, q)
+    if symbol:
+        lab = TXT(str(symbol), size=30, color=C_CYAN, bold=True)
+        lab.next_to(box, DOWN, buff=0.26)
+        g.add(lab)
+    return g
+
+
+def viz_thermometer(temps=None):
+    """Thermometer with a mercury level and the temperatures mentioned."""
+    tube = RoundedRectangle(width=0.42, height=2.4, corner_radius=0.21,
+                            fill_color=mc(C_CBG), fill_opacity=1.0,
+                            stroke_color=mc(C_LGRAY), stroke_width=2.5)
+    bulb = Circle(radius=0.34, fill_color=mc(C_RRED), fill_opacity=1.0,
+                  stroke_color=mc(C_LGRAY), stroke_width=2.5)
+    bulb.move_to(tube.get_bottom() + DOWN * 0.12)
+    mercury = RoundedRectangle(width=0.20, height=1.35, corner_radius=0.10,
+                               fill_color=mc(C_RRED), fill_opacity=1.0,
+                               stroke_width=0)
+    mercury.move_to(tube.get_bottom() + UP * (1.35 / 2 + 0.08))
+    g = VGroup(tube, mercury, bulb)
+    if temps:
+        labs = VGroup(*[TXT(f"{t}°", size=24, color=C_GOLD, bold=True)
+                        for t in temps[:3]]).arrange(DOWN, buff=0.18)
+        labs.next_to(g, RIGHT, buff=0.35)
+        g = VGroup(g, labs)
+    return g
+
+
+def viz_car(dist=None):
+    """Car on a road with an optional distance label."""
+    road = Line(LEFT * 2.6, RIGHT * 2.6, stroke_color=mc(C_LGRAY),
+                stroke_width=6)
+    dashes = VGroup(*[Line(LEFT * 0.18, RIGHT * 0.18,
+                           stroke_color=mc(C_GOLD), stroke_width=3
+                           ).shift(RIGHT * x + UP * 0.001)
+                      for x in np.arange(-2.2, 2.4, 0.8)])
+    body = RoundedRectangle(width=1.5, height=0.52, corner_radius=0.16,
+                            fill_color=mc(C_BLUE_L), fill_opacity=1.0,
+                            stroke_width=0)
+    cabin = RoundedRectangle(width=0.75, height=0.38, corner_radius=0.12,
+                             fill_color=mc(C_BLUE_D), fill_opacity=1.0,
+                             stroke_width=0)
+    cabin.move_to(body.get_top() + UP * 0.08)
+    w1 = Circle(radius=0.15, fill_color=mc(C_NAVY1), fill_opacity=1.0,
+                stroke_color=mc(C_LGRAY), stroke_width=2.5)
+    w2 = w1.copy()
+    w1.move_to(body.get_bottom() + LEFT * 0.45 + DOWN * 0.05)
+    w2.move_to(body.get_bottom() + RIGHT * 0.45 + DOWN * 0.05)
+    car = VGroup(body, cabin, w1, w2)
+    car.move_to(road.get_left() + RIGHT * 1.0 + UP * 0.55)
+    g = VGroup(road, dashes, car)
+    if dist:
+        lab = TXT(str(dist), size=26, color=C_GOLD, bold=True)
+        lab.next_to(road, DOWN, buff=0.28)
+        g.add(lab)
+    return g
+
+
+def viz_classroom(n=5):
+    """A count of students as rows of people, with the number badge."""
+    n = max(1, min(int(n), 12))
+    rows = VGroup()
+    remaining = n
+    while remaining > 0:
+        rows.add(viz_people(min(remaining, 6)))
+        remaining -= 6
+    rows.arrange(DOWN, buff=0.22)
+    lab = TXT(f"{n} students", size=26, color=C_GOLD, bold=True)
+    lab.next_to(rows, DOWN, buff=0.26)
+    return VGroup(rows, lab)
+
+
+def viz_cake(age=None):
+    """Birthday cake with candles — ages and 'every year' stories."""
+    base = RoundedRectangle(width=2.0, height=0.85, corner_radius=0.14,
+                            fill_color=mc("#B45309"), fill_opacity=1.0,
+                            stroke_width=0)
+    icing = RoundedRectangle(width=2.0, height=0.30, corner_radius=0.12,
+                             fill_color=mc("#FDF2F8"), fill_opacity=1.0,
+                             stroke_width=0)
+    icing.move_to(base.get_top() + DOWN * 0.13)
+    candles = VGroup()
+    for x in (-0.55, 0.0, 0.55):
+        stick = Rectangle(width=0.09, height=0.42,
+                          fill_color=mc(C_CYAN), fill_opacity=1.0,
+                          stroke_width=0)
+        stick.move_to(base.get_top() + UP * 0.21 + RIGHT * x)
+        flame = Dot(radius=0.075, color=mc(C_GOLD))
+        flame.move_to(stick.get_top() + UP * 0.07)
+        candles.add(VGroup(stick, flame))
+    g = VGroup(base, icing, candles)
+    if age:
+        lab = TXT(f"age = {age}", size=26, color=C_GOLD, bold=True)
+        lab.next_to(g, DOWN, buff=0.26)
+        g.add(lab)
+    return g
+
+
 def viz_number_line(values, x_min=None, x_max=None):
     """Number line with the given values plotted and labelled."""
     vals = []
@@ -581,18 +706,37 @@ def story_visual(sentence):
     n_among = int(_AMONG_RE.search(s).group(1)) if _AMONG_RE.search(s) else None
     n_count = int(_COUNT_RE.search(s).group(1)) if _COUNT_RE.search(s) else None
 
+    ints = [int(x) for x in re.findall(r"-?\d+", s)][:3]
+
     try:
         if "pizza" in s or ("slice" in s and (n_into or q)):
             return viz_pizza(n_into or q or 4, n_take if n_take is not None else (p or 3))
         if "chocolate" in s or "candy" in s or "cookie" in s:
             share = f"{p}/{q}" if p is not None else None
             return viz_chocolate(n_count or p or 4, n_among, share)
+        if any(k in s for k in ("temperature", "thermometer", "degrees",
+                                "weather", "celsius")):
+            return viz_thermometer(ints)
+        if any(k in s for k in ("students", "classroom", "class of")):
+            return viz_classroom(n_count or (ints[0] if ints else 5))
+        if any(k in s for k in ("birthday", "years old", "your age",
+                                "age changes")):
+            return viz_cake(ints[0] if ints else None)
+        if any(k in s for k in ("car ", " road", " km", " miles", "travel",
+                                "distance", "speed")):
+            return viz_car(f"{ints[0]} km" if ints else None)
         if any(k in s for k in ("money", "dollar", "rupee", "coin", "price",
-                                "cost", "cent", "pound", "euro")):
-            return viz_money()
+                                "cost", "cent", "pound", "euro", "wallet",
+                                "earn", "spend")):
+            return viz_money(f"${ints[0]}" if ints else None)
         if any(k in s for k in ("apple", "orange", "mango", "fruit", "banana")):
             kind = "orange" if "orange" in s else "apple"
             return viz_fruits(n_count or 3, kind)
+        if any(k in s for k in ("mystery", "secret", "unknown number",
+                                "chooses a number", "choose a number",
+                                "hidden", "guess my number")):
+            m_sym = re.search(r"call (?:it|this) ([a-z])\b", s)
+            return viz_mystery_box(m_sym.group(1) if m_sym else None)
         if "number line" in s and p is not None:
             return viz_number_line([p / q if q else p])
         if ("share" in s or "divid" in s) and n_among:
@@ -791,7 +935,7 @@ def make_formula_box(latex_str, width=5.6, height=2.0, font_size=60):
     box = RoundedRectangle(
         width=width, height=height, corner_radius=0.18,
         fill_color=mc(C_CBG), fill_opacity=1.0,
-        stroke_color=mc(C_PURPLE), stroke_width=2.5,
+        stroke_color=mc(C_SEM_FORMULA), stroke_width=2.5,
     )
     fml = MATH(latex_str, size=font_size, color=C_WHITE, max_w=width - 0.5)
     if fml.height > height - 0.35:
@@ -813,12 +957,14 @@ def section_pill(text, color=None, width=None, size=22):
 
 # ═════════════════════════════════════════════════════════════
 # SCENE 01 — OPENING  (channel intro, no standard header)
-# Every element lands on the beat of the narration:
+# Five-second curiosity hook FIRST: a glowing mystery box and the
+# lesson's real-world question, with a slow documentary zoom.
+# Then the title sequence lands on the beat of the narration:
 # DAY badge on "Day N", the big title on the topic words,
 # the goal bar on "By the end of this lesson".
 # ═════════════════════════════════════════════════════════════
 
-class Scene01_Opening(Scene):
+class Scene01_Opening(MovingCameraScene):
     def construct(self):
         sd  = get_scene_by_step("opening")
         nar = Narration(sd)
@@ -826,6 +972,7 @@ class Scene01_Opening(Scene):
         setup_bg(self)
 
         lesson_title = SCRIPT_DATA.get("title", "Today's Lesson")
+        beats = sd.get("narration_beats") or split_sentences(sd.get("narration", ""))
 
         # Scattered faint math symbols
         syms = ["+", "-", "×", "÷", "=", "π", "Σ", "f(x)", "∞", "α"]
@@ -925,9 +1072,43 @@ class Scene01_Opening(Scene):
         footer = make_footer("opening")
         self.add(footer)
 
-        # ── Animate on the narration beat ─────────────────────
-        self.play(FadeIn(brand_row, shift=DOWN * 0.12),
-                  FadeIn(pill_grp,  shift=DOWN * 0.08), run_time=0.7)
+        # ── LAYER 1: the mystery hook (first ~8 seconds) ──────
+        # The curiosity question is the 2nd narration beat (after
+        # "Here is a little mystery before we start.").
+        curiosity = beats[1] if len(beats) > 1 else ""
+        mystery = viz_mystery_box()
+        mystery.move_to(np.array([0.0, 1.05, 0]))
+        q_txt = TXT(curiosity, size=30, color=C_WHITE, bold=True,
+                    wrap=50, max_w=11.0)
+        q_txt.move_to(np.array([0.0, -0.85, 0]))
+
+        self.play(FadeIn(mystery, scale=0.6), run_time=0.7)
+        try:
+            self.play(self.camera.frame.animate.scale(0.92).move_to(
+                np.array([0.0, 0.35, 0])), run_time=1.4)
+        except Exception:
+            pass
+        wait_until(self, nar.when_spoken(curiosity), lead=0.25)
+        self.play(Write(q_txt), run_time=1.0)
+        try:
+            self.play(Indicate(mystery, scale_factor=1.06,
+                               color=mc(C_SEM_KEY)), run_time=0.8)
+        except Exception:
+            pass
+
+        # ── Transition: mystery dissolves into the title card ──
+        wait_until(self, nar.when_spoken("Hold that thought"), lead=0.20)
+        anims = [FadeOut(mystery, scale=0.8), FadeOut(q_txt, shift=DOWN * 0.3)]
+        try:
+            anims.append(self.camera.frame.animate.scale(1 / 0.92).move_to(ORIGIN))
+        except Exception:
+            pass
+        self.play(*anims, run_time=0.9)
+
+        # ── Title sequence on the narration beat ──────────────
+        reveal(self, nar, brand_row, spoken="Welcome to Math Concepts",
+               run_time=0.6, anim=lambda m: FadeIn(m, shift=DOWN * 0.12))
+        self.play(FadeIn(pill_grp, shift=DOWN * 0.08), run_time=0.5)
 
         reveal(self, nar, day_grp, spoken="Today is Day", run_time=0.45,
                anim=lambda m: FadeIn(m, shift=LEFT * 0.10))
@@ -1194,11 +1375,11 @@ class Scene05_Formula(Scene):
         box = RoundedRectangle(
             width=9.4, height=2.8, corner_radius=0.22,
             fill_color=mc(C_CBG), fill_opacity=1.0,
-            stroke_color=mc(C_PURPLE), stroke_width=3.0,
+            stroke_color=mc(C_SEM_FORMULA), stroke_width=3.0,
         ).move_to(np.array([0.0, 0.45, 0]))
         glow = RoundedRectangle(
             width=9.8, height=3.2, corner_radius=0.26,
-            fill_color=mc(C_PURPLE), fill_opacity=0.10, stroke_width=0,
+            fill_color=mc(C_SEM_FORMULA), fill_opacity=0.10, stroke_width=0,
         ).move_to(box.get_center())
         fml = MATH(formula_latex, size=96, color=C_WHITE, max_w=8.6)
         if fml.height > 2.3:
@@ -1327,6 +1508,28 @@ class Scene06_WorkedExample(Scene):
         sync_to_audio(self, sd.get("scene_id", 6))
 
 
+def play_countdown(scene_obj, nar, number_words, pos, color=None):
+    """Big pulsing countdown digits, each landing on its spoken word.
+
+    The narration literally says "Five. Four. Three. Two. One." so every
+    digit appears at the exact moment the voice says it.
+    """
+    col = color or C_SEM_KEY
+    digit_of = {"five": "5", "four": "4", "three": "3", "two": "2", "one": "1"}
+    for w in number_words:
+        t = nar.when_spoken(w)
+        wait_until(scene_obj, t, lead=0.15)
+        ring = Circle(radius=0.72, stroke_color=mc(col), stroke_width=4,
+                      fill_color=mc(col), fill_opacity=0.10)
+        ring.move_to(pos)
+        num = TXT(digit_of.get(w.lower(), w), size=64, color=col, bold=True)
+        num.move_to(pos)
+        grp = VGroup(ring, num)
+        grp.set_z_index(90)
+        scene_obj.play(FadeIn(grp, scale=1.35), run_time=0.28)
+        scene_obj.play(FadeOut(grp, scale=0.75), run_time=0.30)
+
+
 # ═════════════════════════════════════════════════════════════
 # SCENE 07 — COMMON MISTAKES
 # The actual mistake sentence(s) on the red side, the actual
@@ -1406,6 +1609,17 @@ class Scene07_Mistakes(Scene):
 
         # ── Animate on the narration beat ─────────────────────
         self.play(FadeIn(warn, shift=DOWN * 0.06), run_time=0.5)
+
+        # ACTIVE LEARNING: "think about what could go wrong" + 3-2-1
+        think = TXT("What could go wrong here? Think…", size=28,
+                    color=C_SEM_KEY, bold=True, max_w=11.0)
+        think.move_to(np.array([0.0, panel_cy + 0.9, 0]))
+        reveal(self, nar, think, spoken="think about what could possibly",
+               run_time=0.5)
+        play_countdown(self, nar, ["Three", "Two", "One"],
+                       np.array([0.0, panel_cy - 0.4, 0]), C_SEM_KEY)
+        self.play(FadeOut(think), run_time=0.3)
+
         self.play(FadeIn(left_card), FadeIn(right_card),
                   FadeIn(l_hdr), FadeIn(r_hdr),
                   FadeIn(vs_txt, scale=0.8), run_time=0.6)
@@ -1506,6 +1720,17 @@ class Scene08_Practice(Scene):
             wait_until(self, t, lead=0.30)
             self.play(FadeIn(m, shift=RIGHT * 0.10), run_time=0.45)
 
+        # ACTIVE LEARNING: pause invitation + spoken 5-4-3-2-1 countdown
+        pause_pill = section_pill("⏸  PAUSE & TRY IT YOURSELF", C_SEM_THEOREM,
+                                  size=22)
+        pause_pill.move_to(np.array([0.0, -0.35, 0]))
+        reveal(self, nar, pause_pill, spoken="Pause the video now",
+               run_time=0.5)
+        play_countdown(self, nar, ["Five", "Four", "Three", "Two", "One"],
+                       np.array([0.0, -1.7, 0]), C_SEM_KEY)
+        self.play(FadeOut(pause_pill), run_time=0.3)
+
+        wait_until(self, nar.when_spoken("let us solve it together"), lead=0.25)
         self.play(FadeIn(sol_card), FadeIn(sol_hdr), run_time=0.5)
         for (row, is_q), spoken in zip(rows, sol_spoken):
             t = nar.when_spoken(spoken) if spoken else None
@@ -1546,36 +1771,46 @@ class Scene09_Summary(Scene):
                         max_w=12.2)
         title_mob.move_to(np.array([0.0, 1.85, 0]))
 
-        takeaways = [
-            (subtopic or "Master this concept",            "We explored"),
-            ("Formula:  " + (formula_plain or "see lesson"), "The one formula"),
-            (lesson_goal or "Apply it with confidence",     "our goal"),
-            ("Practice a little every single day",          "New lessons every day"),
-        ]
-        take_colors = [C_BLUE_P, C_GGREEN, C_ORANGE, C_PURPLE]
-        take_cards  = []
-        for i, (item, _cue) in enumerate(takeaways):
-            col = take_colors[i % 4]
-            item_txt = TXT(item, size=19, color=C_WHITE, wrap=40, max_w=4.6)
-            tc_bg = RoundedRectangle(
-                width=5.85, height=max(0.95, item_txt.height + 0.35),
-                corner_radius=0.13,
-                fill_color=mc(C_CBG), fill_opacity=1.0,
-                stroke_color=mc(col), stroke_width=2.0,
-            )
-            num = number_chip(i + 1, col)
-            num.move_to(tc_bg.get_left() + RIGHT * 0.42)
-            item_txt.move_to(tc_bg.get_center() + RIGHT * 0.30)
-            take_cards.append(VGroup(tc_bg, num, item_txt))
+        # ── MIND MAP — the whole lesson in one picture ────────
+        # Center node = the topic; branches draw themselves as the
+        # voice recaps each idea (spoken cue → branch appears).
+        center_txt = TXT(lesson_title, size=26, color=C_NAVY1, bold=True,
+                         wrap=18, max_w=2.6)
+        center_bg = Circle(radius=max(1.05, center_txt.width / 2 + 0.28),
+                           fill_color=mc(C_GOLD), fill_opacity=1.0,
+                           stroke_color=mc(C_ORANGE), stroke_width=3.0)
+        center_txt.move_to(center_bg.get_center())
+        center_node = VGroup(center_bg, center_txt)
+        map_c = np.array([0.0, -0.15, 0])
+        center_node.move_to(map_c)
 
-        row1 = VGroup(take_cards[0], take_cards[1]).arrange(
-            RIGHT, buff=0.30, aligned_edge=UP)
-        row2 = VGroup(take_cards[2], take_cards[3]).arrange(
-            RIGHT, buff=0.30, aligned_edge=UP)
-        take_grp = VGroup(row1, row2).arrange(DOWN, buff=0.26)
-        if take_grp.height > 3.1:
-            take_grp.scale_to_fit_height(3.1)
-        take_grp.move_to(np.array([0.0, 0.10, 0]))
+        branch_data = [
+            (subtopic or "Master this concept",              C_SEM_DEF,
+             "We explored",                np.array([-4.6,  1.10, 0])),
+            ("Formula:  " + (formula_plain or "see lesson"), C_SEM_FORMULA,
+             "The one formula",            np.array([ 4.6,  1.10, 0])),
+            ("Watch out for the common trap",                C_SEM_WRONG,
+             "common trap",                np.array([-4.6, -1.55, 0])),
+            (lesson_goal or "Apply it with confidence",      C_SEM_CORRECT,
+             "our goal",                   np.array([ 4.6, -1.55, 0])),
+        ]
+        branches = []
+        for item, col, cue, pos in branch_data:
+            node_txt = TXT(item, size=19, color=C_WHITE, wrap=30, max_w=3.6)
+            if node_txt.height > 1.05:
+                node_txt.scale_to_fit_height(1.05)
+            node_bg = RoundedRectangle(
+                width=min(4.2, node_txt.width + 0.5),
+                height=node_txt.height + 0.40, corner_radius=0.15,
+                fill_color=mc(C_CBG), fill_opacity=1.0,
+                stroke_color=mc(col), stroke_width=2.4,
+            ).move_to(pos)
+            node_txt.move_to(node_bg.get_center())
+            node = VGroup(node_bg, node_txt)
+            edge = Line(map_c, pos, stroke_color=mc(col), stroke_width=3.0,
+                        buff=1.1)
+            edge.set_stroke(opacity=0.8)
+            branches.append((edge, node, cue))
 
         cta_txt = TXT("▶  SUBSCRIBE FOR MORE LESSONS!",
                       size=26, color=C_WHITE, bold=True)
@@ -1589,9 +1824,13 @@ class Scene09_Summary(Scene):
         # ── Animate on the narration beat ─────────────────────
         self.play(FadeIn(banner_grp, shift=DOWN * 0.08), run_time=0.6)
         self.play(Write(title_mob), run_time=0.8)
-        for (item, cue), card in zip(takeaways, take_cards):
+        wait_until(self, nar.when_spoken("At the center of everything"),
+                   lead=0.25)
+        self.play(GrowFromCenter(center_node), run_time=0.7)
+        for edge, node, cue in branches:
             wait_until(self, nar.when_spoken(cue), lead=0.25)
-            self.play(FadeIn(card, scale=0.90), run_time=0.45)
+            self.play(Create(edge), run_time=0.35)
+            self.play(FadeIn(node, scale=0.85), run_time=0.40)
         self.play(FadeIn(cta_grp, scale=0.92), run_time=0.5)
         try:
             self.play(Flash(cta_bg, color=mc(C_GOLD),
@@ -1674,9 +1913,14 @@ def render_all_scenes(script: dict):
         print(f"  ▶ Scene {scene_id:02d} [{step:10s}] {label}")
         print(f"    Class : {class_name}")
 
+        # MCME_RENDER_QUALITY: h = 1080p60 (default), k = 4K, l = fast preview
+        quality_flag = {
+            "k": "-qk", "h": "-qh", "l": "-ql",
+        }.get(os.environ.get("MCME_RENDER_QUALITY", "h").lower(), "-qh")
+
         cmd = [
             "manim",
-            "-qh",                          # quality: high 1080p60
+            quality_flag,
             "--media_dir", str(TEMP_DIR / "media"),
             str(source_file),
             class_name,
@@ -1706,6 +1950,20 @@ def render_all_scenes(script: dict):
             shutil.copy(str(expected_mp4), str(dest))
             size_kb = dest.stat().st_size // 1024
             print(f"    ✅ Rendered → {dest.name}  ({size_kb} KB)")
+            # QA: rendered video must cover the narration audio
+            try:
+                probe = subprocess.run(
+                    ["ffprobe", "-v", "error", "-show_entries",
+                     "format=duration", "-of",
+                     "default=noprint_wrappers=1:nokey=1", str(dest)],
+                    capture_output=True, text=True)
+                vid_dur = float(probe.stdout.strip())
+                want = float(scene.get("duration_seconds", 0.0))
+                if want and vid_dur < want - 1.5:
+                    print(f"    ⚠️  QA: video {vid_dur:.1f}s shorter than "
+                          f"audio {want:.1f}s — check sync for this scene.")
+            except Exception:
+                pass
             results.append({
                 "scene_id" : scene_id,
                 "step"     : step,
