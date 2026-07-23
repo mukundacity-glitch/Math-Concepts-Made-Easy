@@ -17,7 +17,7 @@
 #     of the narration — no lesson-specific hard-coding.
 # ==========================================
 
-import sys, json, subprocess, shutil, os
+import sys, json, subprocess, shutil, os, time
 from pathlib import Path
 
 
@@ -92,6 +92,7 @@ from pathlib import Path
 # ── Repo imports (shared LaTeX → text/speech translation) ─────
 sys.path.insert(0, r"__REPO_ROOT__")
 from pipeline.mathtext import latex_to_plain, normalize_word, split_sentences
+from pipeline.constants import day_color
 
 # ── Data loading ──────────────────────────────────────────────
 SCRIPT_PATH  = Path(r"__SCRIPT_PATH__")
@@ -103,6 +104,14 @@ with open(SCRIPT_PATH, "r", encoding="utf-8") as f:
     SCRIPT_DATA = json.load(f)
 
 LESSON_ID = SCRIPT_DATA["lesson_id"]
+
+# Rotating per-day theme — ONLY the page background and the DAY badge
+# use this; every other color (semantic pedagogy colors, logo, footer,
+# fixed decorative badge rows) stays constant across days.
+_DAY_PALETTE = day_color(LESSON_ID)
+DAY_BG1     = _DAY_PALETTE["bg1"]
+DAY_BG2     = _DAY_PALETTE["bg2"]
+DAY_ACCENT  = _DAY_PALETTE["accent"]
 
 # Brand colors (injected from theme at render time)
 C_BG      = "{C_BG}"
@@ -160,7 +169,7 @@ CHANNEL = "Math Concept Made Easy"
 TAGLINE = "LEARN  •  PRACTICE  •  MASTER"
 FONT    = "DejaVu Sans"   # present on every CI runner, full unicode math
 
-config.background_color = C_NAVY1
+config.background_color = DAY_BG1
 
 def mc(h):
     return ManimColor(h)
@@ -294,6 +303,22 @@ def reveal(scene_obj, nar, mobj, spoken=None, run_time=0.55, anim=None, lead=0.3
         wait_until(scene_obj, nar.when_spoken(spoken), lead=lead)
     a = (anim or FadeIn)(mobj)
     scene_obj.play(a, run_time=run_time)
+
+
+def reveal_visual(scene_obj, nar, beat, formula_latex=None, key_terms=None,
+                   max_w=5.0, max_h=3.5, lead=0.30, run_time=0.6):
+    """wait-until-spoken -> story_visual dispatcher -> scale-to-fit -> reveal,
+    in one call. `story_visual` is resolved at call time (defined later in
+    this module) and never returns None. Returns the mobject so the caller
+    can arrange it further."""
+    wait_until(scene_obj, nar.when_spoken(beat), lead=lead)
+    vis = story_visual(beat, formula_latex=formula_latex, key_terms=key_terms)
+    if vis.width > max_w:
+        vis.scale_to_fit_width(max_w)
+    if vis.height > max_h:
+        vis.scale_to_fit_height(max_h)
+    scene_obj.play(FadeIn(vis, scale=0.85), run_time=run_time)
+    return vis
 
 
 # ═════════════════════════════════════════════════════════════
@@ -696,8 +721,74 @@ _COUNT_RE     = re.compile(r"(\d+)\s+(pizzas?|chocolates?|apples?|oranges?|mango
 _AMONG_RE     = re.compile(r"(?:among|between)\s+(\d+)")
 
 
-def story_visual(sentence):
-    """Return a drawn illustration matching this narration sentence, or None."""
+_STOPWORDS = {
+    "the", "a", "an", "is", "are", "was", "were", "be", "been", "being", "to",
+    "of", "in", "on", "for", "and", "or", "but", "that", "this", "these",
+    "those", "it", "its", "as", "at", "by", "with", "from", "we", "you",
+    "your", "our", "today", "let", "us", "now", "here", "so", "then", "than",
+    "which", "what", "how", "do", "does", "did", "not", "no", "yes", "can",
+    "could", "will", "would", "should", "may", "might", "every", "each",
+    "any", "some", "all", "one", "two", "three", "four", "five", "already",
+    "still", "just", "only", "also", "very", "really", "simply", "directly",
+    "exactly", "always", "never", "there", "their", "them", "if", "because",
+}
+
+
+def key_phrase(sentence, max_words=3):
+    """Strip stopwords, keep the most contentful 1-3 words — used as the
+    last-resort visual when no concrete noun or formula cue is found."""
+    words = re.findall(r"[A-Za-z][A-Za-z']*", str(sentence))
+    keep = [w for w in words if w.lower() not in _STOPWORDS and len(w) > 2]
+    if not keep:
+        keep = words[:max_words] or ["idea"]
+    return " ".join(keep[:max_words])
+
+
+def viz_formula_focus(formula_latex, accent=None):
+    """Point at the lesson's real formula instead of writing prose about it."""
+    col = accent or C_SEM_FORMULA
+    fml = MATH(formula_latex, size=54, color=C_WHITE, max_w=4.7)
+    if fml.height > 1.2:
+        fml.scale_to_fit_height(1.2)
+    box = RoundedRectangle(
+        width=max(3.2, fml.width + 0.7), height=1.6, corner_radius=0.16,
+        fill_color=mc(C_CBG), fill_opacity=1.0,
+        stroke_color=mc(col), stroke_width=3.0)
+    fml.move_to(box.get_center())
+    return VGroup(box, fml)
+
+
+def viz_key_phrase(sentence, color=None, key_terms=None):
+    """Generic bold callout chip — the true last-resort visual tier.
+    Guarantees a sentence never renders as a raw prose paragraph."""
+    col = color or C_SEM_KEY
+    phrase = None
+    for term in (key_terms or []):
+        if term and str(term).lower() in str(sentence).lower():
+            phrase = str(term)
+            break
+    if not phrase:
+        phrase = key_phrase(sentence)
+    txt = TXT(phrase.upper(), size=26, color=C_WHITE, bold=True, max_w=4.6)
+    bg = RoundedRectangle(
+        width=txt.width + 0.6, height=txt.height + 0.5, corner_radius=0.18,
+        fill_color=mc(col), fill_opacity=0.20,
+        stroke_color=mc(col), stroke_width=2.4)
+    txt.move_to(bg.get_center())
+    return VGroup(bg, txt)
+
+
+def story_visual(sentence, formula_latex=None, key_terms=None, allow_generic=True,
+                 color=None):
+    """Return a drawn illustration matching this narration sentence.
+
+    Tier 0: concrete-noun illustrations (pizza, chocolate, money, ...).
+    Tier 1: formula/structure highlight, for abstract sentences when the
+            lesson's formula is known.
+    Tier 2: generic key-phrase callout — never returns None (unless
+            `allow_generic=False`, used when a caller wants to search
+            several sentences for a Tier 0/1 match before giving up).
+    """
     s = str(sentence).lower()
     frac = _FRAC_WORD_RE.search(s)
     p, q = (int(frac.group(1)), int(frac.group(2))) if frac else (None, None)
@@ -746,9 +837,23 @@ def story_visual(sentence):
             return viz_fraction_pie(p, q)
         if p is not None and q:
             return viz_fraction_pie(min(p, 16), max(q, 1))
+
+        # Tier 1: point at the real formula for abstract/structural
+        # sentences with no concrete noun match.
+        if formula_latex and any(k in s for k in (
+                "formula", "equation", "in symbols", "notation")):
+            return viz_formula_focus(formula_latex, accent=color)
+    except Exception:
+        pass
+
+    if not allow_generic:
+        return None
+
+    # Tier 2: generic key-phrase callout — the true last resort, never None.
+    try:
+        return viz_key_phrase(sentence, color=color, key_terms=key_terms)
     except Exception:
         return None
-    return None
 
 
 def fractions_in(texts):
@@ -767,12 +872,13 @@ def fractions_in(texts):
 # ═════════════════════════════════════════════════════════════
 
 def setup_bg(scene_obj):
-    """Dark navy background + 4%-opacity grid + tiny floating accent dots."""
-    scene_obj.camera.background_color = mc(C_NAVY1)
+    """Rotating per-day background gradient + 4%-opacity grid + tiny
+    floating accent dots."""
+    scene_obj.camera.background_color = mc(DAY_BG1)
 
     bg = Rectangle(
         width=FW + 1.0, height=FH + 1.0,
-        fill_color=[mc(C_NAVY1), mc(C_NAVY2)],
+        fill_color=[mc(DAY_BG1), mc(DAY_BG2)],
         fill_opacity=1.0,
         stroke_width=0,
     )
@@ -843,7 +949,7 @@ def make_header(lesson_title="", day=1):
 
     day_bg = RoundedRectangle(
         width=1.55, height=0.58, corner_radius=0.12,
-        fill_color=mc(C_PURPLE), fill_opacity=1.0, stroke_width=0,
+        fill_color=mc(DAY_ACCENT), fill_opacity=1.0, stroke_width=0,
     ).move_to(np.array([6.10, hcy, 0.0]))
     day_txt = TXT("DAY " + str(day), size=19, color=C_WHITE, bold=True)
     day_txt.move_to(day_bg.get_center())
@@ -1018,7 +1124,7 @@ class Scene01_Opening(MovingCameraScene):
         # DAY badge (top-right)
         day_bg = RoundedRectangle(
             width=1.85, height=0.72, corner_radius=0.14,
-            fill_color=mc(C_PURPLE), fill_opacity=1.0, stroke_width=0,
+            fill_color=mc(DAY_ACCENT), fill_opacity=1.0, stroke_width=0,
         ).move_to(np.array([5.95, 3.22, 0]))
         day_txt = TXT("DAY " + str(LESSON_ID), size=24, color=C_WHITE, bold=True)
         day_txt.move_to(day_bg.get_center())
@@ -1149,30 +1255,14 @@ class Scene02_Hook(Scene):
         pill = section_pill("SEEN IN REAL LIFE", C_ORANGE, size=24)
         pill.move_to(np.array([0.0, CONTENT_TOP - 0.42, 0]))
 
-        stage_c  = np.array([0.0, 0.45, 0])       # where illustrations live
-        cap_y    = -2.30                           # caption band
+        # Illustrations live here — no on-screen caption text: the
+        # narration is carried by the burned-in subtitle track (Cell 9),
+        # so this board stays purely visual.
+        stage_c  = np.array([0.0, -0.55, 0])
 
         self.play(FadeIn(pill, shift=DOWN * 0.10), run_time=0.5)
 
         visuals_on_stage = []
-        caption = None
-
-        def set_caption(text):
-            nonlocal caption
-            new_cap = TXT(text, size=25, color=C_WHITE, wrap=64, max_w=11.8)
-            new_cap.move_to(np.array([0.0, cap_y, 0]))
-            underline = Rectangle(width=min(new_cap.width + 0.4, 12.0),
-                                  height=0.03,
-                                  fill_color=mc(C_GOLD), fill_opacity=0.6,
-                                  stroke_width=0)
-            underline.next_to(new_cap, DOWN, buff=0.16)
-            grp = VGroup(new_cap, underline)
-            if caption is None:
-                self.play(FadeIn(grp, shift=UP * 0.10), run_time=0.45)
-            else:
-                self.play(FadeOut(caption, run_time=0.25),
-                          FadeIn(grp, shift=UP * 0.10, run_time=0.45))
-            caption = grp
 
         for beat in beats:
             t = nar.when_spoken(beat)
@@ -1198,7 +1288,6 @@ class Scene02_Hook(Scene):
                 vis.scale(targets[-1].width / max(vis.width, 1e-6))
                 anims.append(FadeIn(vis, scale=0.7))
                 self.play(*anims, run_time=0.7)
-            set_caption(beat)
 
         sync_to_audio(self, sd.get("scene_id", 2))
 
@@ -1222,8 +1311,11 @@ class Scene03_Concept(Scene):
 
         beats = sd.get("narration_beats") or split_sentences(sd.get("narration", ""))
         content_cy = (CONTENT_TOP + CONTENT_BOT) / 2
+        topic     = SCRIPT_DATA.get("title", lesson_title)
+        subtopic  = SCRIPT_DATA.get("subtopic", "")
+        formula   = sd.get("key_formula", SCRIPT_DATA.get("key_formula", ""))
 
-        # ── Left: THE KEY IDEA card ───────────────────────────
+        # ── Left: THE KEY IDEA card — a diagram per beat, not prose ───
         left_card = make_card(7.0, 5.4, border_color=C_GGREEN)
         left_card.move_to(np.array([-3.30, content_cy, 0]))
         l_hdr = make_card_header("THE KEY IDEA", 7.0, C_GGREEN)
@@ -1231,13 +1323,16 @@ class Scene03_Concept(Scene):
 
         idea_mobs = []
         for b in beats:
-            m = TXT(b, size=24, color=C_WHITE, wrap=44, max_w=6.3)
+            m = story_visual(b, formula_latex=formula, key_terms=[topic, subtopic])
+            if m.width > 6.3:
+                m.scale_to_fit_width(6.3)
+            if m.height > 1.5:
+                m.scale_to_fit_height(1.5)
             idea_mobs.append(m)
-        idea_grp = VGroup(*idea_mobs).arrange(DOWN, aligned_edge=LEFT, buff=0.34)
+        idea_grp = VGroup(*idea_mobs).arrange(DOWN, buff=0.30)
         if idea_grp.height > 4.3:
             idea_grp.scale_to_fit_height(4.3)
         idea_grp.move_to(left_card.get_center() + DOWN * 0.24)
-        idea_grp.align_to(left_card.get_left() + RIGHT * 0.30, LEFT)
 
         # ── Right: automatic visual ───────────────────────────
         right_card = make_card(5.6, 5.4, border_color=C_BLUE_P)
@@ -1255,7 +1350,9 @@ class Scene03_Concept(Scene):
             vis = viz_number_line(vals)
         if vis is None:
             for b in beats:
-                vis = story_visual(b)
+                vis = story_visual(b, formula_latex=formula,
+                                   key_terms=[topic, subtopic],
+                                   allow_generic=False)
                 if vis is not None:
                     break
         if vis is None:
@@ -1275,7 +1372,7 @@ class Scene03_Concept(Scene):
         for b, m in zip(beats, idea_mobs):
             t = nar.when_spoken(b)
             wait_until(self, t, lead=0.30)
-            self.play(FadeIn(m, shift=RIGHT * 0.10), run_time=0.45)
+            self.play(FadeIn(m, scale=0.85), run_time=0.45)
             if not shown_vis:
                 self.play(FadeIn(vis, scale=0.85), run_time=0.6)
                 shown_vis = True
@@ -1310,8 +1407,13 @@ class Scene04_Definition(Scene):
                                    11.6, C_BLUE_P)
         def_hdr.move_to(def_card.get_top() + DOWN * (def_hdr.height / 2 + 0.07))
 
-        sub_txt = TXT(subtopic, size=30, color=C_WHITE, bold=True,
-                      wrap=52, max_w=10.6)
+        # No formula_latex here — this scene already shows the compiled
+        # formula in `fml` right below; avoid a duplicate formula box.
+        sub_txt = story_visual(subtopic, key_terms=[topic])
+        if sub_txt.width > 9.5:
+            sub_txt.scale_to_fit_width(9.5)
+        if sub_txt.height > 1.4:
+            sub_txt.scale_to_fit_height(1.4)
         sub_txt.move_to(def_card.get_center() + UP * 0.55)
 
         fml = make_formula_box(formula, 6.2, 1.5, font_size=56)
@@ -1320,19 +1422,29 @@ class Scene04_Definition(Scene):
         prereq = SCRIPT_DATA.get("prerequisite", "Basic arithmetic")
         goal   = SCRIPT_DATA.get("lesson_goal",  "Understand this concept")
 
-        pre_card = make_card(5.6, 1.30, border_color=C_ORANGE)
+        # Size both bottom cards to fit whichever text is taller, and
+        # position each text safely below its header via next_to (fixed
+        # buffer, header height never assumed) so long goal/prereq text
+        # never overlaps its own header.
+        HDR_H = 0.56  # matches make_card_header's fixed header height
+        pre_txt  = TXT(prereq, size=18, color=C_LGRAY, wrap=44, max_w=5.1)
+        goal_txt = TXT(goal,   size=18, color=C_LGRAY, wrap=44, max_w=5.1)
+        bottom_card_h = max(1.30, pre_txt.height + HDR_H + 0.55,
+                           goal_txt.height + HDR_H + 0.55)
+
+        pre_card = make_card(5.6, bottom_card_h, border_color=C_ORANGE)
         pre_card.move_to(np.array([-3.05, -2.25, 0]))
         pre_hdr = make_card_header("YOU ALREADY KNOW", 5.6, C_ORANGE)
         pre_hdr.move_to(pre_card.get_top() + DOWN * (pre_hdr.height / 2 + 0.06))
-        pre_txt = TXT(prereq, size=18, color=C_LGRAY, wrap=44, max_w=5.1)
-        pre_txt.move_to(pre_card.get_center() + DOWN * 0.16)
+        pre_txt.next_to(pre_hdr, DOWN, buff=0.20)
+        pre_txt.move_to(np.array([pre_card.get_center()[0], pre_txt.get_center()[1], 0]))
 
-        goal_card = make_card(5.6, 1.30, border_color=C_GGREEN)
+        goal_card = make_card(5.6, bottom_card_h, border_color=C_GGREEN)
         goal_card.move_to(np.array([3.05, -2.25, 0]))
         goal_hdr = make_card_header("TODAY'S GOAL", 5.6, C_GGREEN)
         goal_hdr.move_to(goal_card.get_top() + DOWN * (goal_hdr.height / 2 + 0.06))
-        goal_txt = TXT(goal, size=18, color=C_LGRAY, wrap=44, max_w=5.1)
-        goal_txt.move_to(goal_card.get_center() + DOWN * 0.16)
+        goal_txt.next_to(goal_hdr, DOWN, buff=0.20)
+        goal_txt.move_to(np.array([goal_card.get_center()[0], goal_txt.get_center()[1], 0]))
 
         # ── Animate on the narration beat ─────────────────────
         self.play(FadeIn(def_card), FadeIn(def_hdr), run_time=0.55)
@@ -1530,6 +1642,25 @@ def play_countdown(scene_obj, nar, number_words, pos, color=None):
         scene_obj.play(FadeOut(grp, scale=0.75), run_time=0.30)
 
 
+def mistake_diagram():
+    """Small wrong→right arrow diagram (scene-local to Scene07_Mistakes),
+    replacing a plain 'VS' label between the two comparison panels."""
+    cross = VGroup(
+        Circle(radius=0.30, fill_color=mc(C_RRED), fill_opacity=1.0,
+               stroke_width=0),
+        TXT("✗", size=28, color=C_WHITE, bold=True))
+    cross[1].move_to(cross[0].get_center())
+    tick = VGroup(
+        Circle(radius=0.30, fill_color=mc(C_GGREEN), fill_opacity=1.0,
+               stroke_width=0),
+        TXT("✓", size=28, color=C_WHITE, bold=True))
+    tick[1].move_to(tick[0].get_center())
+    stack = VGroup(cross, tick).arrange(DOWN, buff=0.95)
+    arrow = Arrow(stack[0].get_bottom(), stack[1].get_top(), buff=0.08,
+                 color=mc(C_GOLD), stroke_width=5)
+    return VGroup(stack[0], arrow, stack[1])
+
+
 # ═════════════════════════════════════════════════════════════
 # SCENE 07 — COMMON MISTAKES
 # The actual mistake sentence(s) on the red side, the actual
@@ -1576,21 +1707,32 @@ class Scene07_Mistakes(Scene):
         r_hdr = make_card_header("✓  THE RIGHT WAY", 5.85, C_GGREEN)
         r_hdr.move_to(right_card.get_top() + DOWN * (r_hdr.height / 2 + 0.07))
 
-        wrong_mobs = [TXT(s, size=23, color=C_LGRAY, wrap=40, max_w=5.3)
-                      for s in wrong_sents[:3]]
-        wrong_grp = VGroup(*wrong_mobs).arrange(DOWN, aligned_edge=LEFT, buff=0.30)
+        topic = SCRIPT_DATA.get("title", lesson_title)
+        wrong_mobs = [story_visual(s, key_terms=[topic]) for s in wrong_sents[:3]]
+        for m in wrong_mobs:
+            if m.width > 5.0:
+                m.scale_to_fit_width(5.0)
+            if m.height > 1.3:
+                m.scale_to_fit_height(1.3)
+        wrong_grp = VGroup(*wrong_mobs).arrange(DOWN, buff=0.32)
         if wrong_grp.height > panel_h - 1.3:
             wrong_grp.scale_to_fit_height(panel_h - 1.3)
         wrong_grp.move_to(left_card.get_center() + DOWN * 0.10)
 
-        right_mobs = [TXT(s, size=23, color=C_WHITE, wrap=40, max_w=5.3)
-                      for s in right_sents[:3]]
-        right_grp = VGroup(*right_mobs).arrange(DOWN, aligned_edge=LEFT, buff=0.30)
+        right_mobs = [story_visual(s, key_terms=[topic]) for s in right_sents[:3]]
+        for m in right_mobs:
+            if m.width > 5.0:
+                m.scale_to_fit_width(5.0)
+            if m.height > 1.3:
+                m.scale_to_fit_height(1.3)
+        right_grp = VGroup(*right_mobs).arrange(DOWN, buff=0.32)
         if right_grp.height > panel_h - 1.3:
             right_grp.scale_to_fit_height(panel_h - 1.3)
         right_grp.move_to(right_card.get_center() + DOWN * 0.10)
 
-        vs_txt = TXT("VS", size=36, color=C_GOLD, bold=True)
+        vs_txt = mistake_diagram()
+        if vs_txt.height > 2.0:
+            vs_txt.scale_to_fit_height(2.0)
         vs_txt.move_to(np.array([0.0, panel_cy, 0]))
 
         cross_chip = VGroup(
@@ -1794,19 +1936,19 @@ class Scene09_Summary(Scene):
             (lesson_goal or "Apply it with confidence",      C_SEM_CORRECT,
              "our goal",                   np.array([ 4.6, -1.55, 0])),
         ]
+        formula_for_map = SCRIPT_DATA.get("key_formula", "")
         branches = []
         for item, col, cue, pos in branch_data:
-            node_txt = TXT(item, size=19, color=C_WHITE, wrap=30, max_w=3.6)
-            if node_txt.height > 1.05:
-                node_txt.scale_to_fit_height(1.05)
-            node_bg = RoundedRectangle(
-                width=min(4.2, node_txt.width + 0.5),
-                height=node_txt.height + 0.40, corner_radius=0.15,
-                fill_color=mc(C_CBG), fill_opacity=1.0,
-                stroke_color=mc(col), stroke_width=2.4,
-            ).move_to(pos)
-            node_txt.move_to(node_bg.get_center())
-            node = VGroup(node_bg, node_txt)
+            # Only the formula branch gets formula_latex, so Tier 1 (formula
+            # highlight) fires there and nowhere else — each branch stays
+            # visually distinct instead of every node showing the formula.
+            use_formula = formula_for_map if item.startswith("Formula:") else None
+            node = story_visual(item, formula_latex=use_formula, color=col)
+            if node.width > 4.2:
+                node.scale_to_fit_width(4.2)
+            if node.height > 1.45:
+                node.scale_to_fit_height(1.45)
+            node.move_to(pos)
             edge = Line(map_c, pos, stroke_color=mc(col), stroke_width=3.0,
                         buff=1.1)
             edge.set_stroke(opacity=0.8)
@@ -1885,6 +2027,101 @@ SCENE_CLASS_MAP = {
     "summary"       : "Scene09_Summary",
 }
 
+# ══════════════════════════════════════════════════════════════
+# RENDER QUALITY — MCME_RENDER_QUALITY env var
+#   l    = 854x480  15fps  (fast preview)
+#   h    = 1920x1080 60fps (default — matches the scheduled daily run)
+#   k    = 3840x2160 60fps (manim's built-in 4K preset)
+#   4k30 = 3840x2160 30fps (explicit override, NOT the -qk preset)
+#
+# Quality is decided ONCE per run, before any scene renders, and held
+# constant for all 9 scenes — cell5_assembly's crossfade chain requires
+# every scene clip in one lesson to share the same resolution/fps, so
+# quality must never change mid-run.
+# ══════════════════════════════════════════════════════════════
+
+RENDER_TIMINGS_PATH = REPO_ROOT / "state" / "render_timings.json"
+
+# Mirrors .github/workflows/daily-video.yml's `timeout-minutes: 120`.
+# Reserved covers checkout/apt-get/pip-install/upload/commit steps that
+# aren't part of this render loop; the safety factor leaves headroom
+# for variance instead of budgeting to the exact edge.
+CI_BUDGET_SECONDS    = 120 * 60
+CI_RESERVED_SECONDS  = 25 * 60
+BUDGET_SAFETY_FACTOR = 0.70
+
+
+def _load_render_timings() -> dict:
+    if RENDER_TIMINGS_PATH.exists():
+        try:
+            return json.loads(RENDER_TIMINGS_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
+
+
+def _save_render_timing(quality: str, step: str, seconds: float):
+    data = _load_render_timings()
+    data.setdefault(quality, {})[step] = round(seconds, 2)
+    RENDER_TIMINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    RENDER_TIMINGS_PATH.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _quality_cmd(quality: str, source_file, class_name: str) -> list:
+    if quality == "4k30":
+        return ["manim", "-r", "3840,2160", "--fps", "30",
+                "--media_dir", str(TEMP_DIR / "media"),
+                str(source_file), class_name]
+    flag = {"k": "-qk", "h": "-qh", "l": "-ql"}.get(quality, "-qh")
+    return ["manim", flag, "--media_dir", str(TEMP_DIR / "media"),
+            str(source_file), class_name]
+
+
+def _preflight_quality(requested: str, scenes: list, source_file) -> str:
+    """Decide render quality once, before any scene renders. Only 4k30
+    needs a budget check — l/h/k are always safe to use immediately."""
+    if requested != "4k30":
+        return requested
+
+    timings     = _load_render_timings()
+    per_scene   = timings.get("4k30", {})
+    num_scenes  = len(scenes)
+
+    if per_scene:
+        avg = sum(per_scene.values()) / len(per_scene)
+        est_render = avg * num_scenes
+    else:
+        print("  🧪 No historical 4K timing data — running a one-time "
+              "bootstrap probe on scene 1 to estimate render time...")
+        probe_step  = scenes[0]["step"]
+        probe_class = SCENE_CLASS_MAP.get(probe_step, "Scene01_Opening")
+        t0 = time.monotonic()
+        subprocess.run(_quality_cmd("4k30", source_file, probe_class),
+                      capture_output=True, text=True, cwd=str(TEMP_DIR))
+        probe_time = time.monotonic() - t0
+        _save_render_timing("4k30", probe_step, probe_time)
+        est_render = probe_time * num_scenes
+        print(f"     Bootstrap probe: {probe_time:.1f}s for one scene.")
+
+    # cell9's caption burn-in is a second full re-encode pass on top of
+    # cell5's crossfade re-encode — budget for both, not render time alone.
+    est_total = est_render * 1.6
+    remaining_budget = (CI_BUDGET_SECONDS - CI_RESERVED_SECONDS) * BUDGET_SAFETY_FACTOR
+
+    print(f"  📊 4K budget check: est. {est_total/60:.1f} min needed "
+          f"(render + assembly + captions), {remaining_budget/60:.1f} min "
+          f"safely available.")
+
+    if est_total > remaining_budget:
+        print("  ⚠️  Projected 4K time exceeds the safe CI budget — "
+              "falling back to 1080p60 for this entire run so the daily "
+              "video still ships on schedule.")
+        return "h"
+
+    print("  ✅ 4K render fits the budget — proceeding at 3840×2160 @30fps.")
+    return "4k30"
+
+
 def render_all_scenes(script: dict):
     source_code = build_manim_source(script)
     source_file = TEMP_DIR / "math_scenes.py"
@@ -1896,6 +2133,10 @@ def render_all_scenes(script: dict):
     print(f"{'═'*65}")
     print(f"  RENDERING {len(script['scenes'])} SCENES")
     print(f"{'═'*65}\n")
+
+    requested_quality = os.environ.get("MCME_RENDER_QUALITY", "h").lower()
+    quality = _preflight_quality(requested_quality, script["scenes"], source_file)
+    print(f"  Render quality : {quality}\n")
 
     results     = []
     render_root = TEMP_DIR / "media" / "videos" / "math_scenes" / "1080p60"
@@ -1913,30 +2154,22 @@ def render_all_scenes(script: dict):
         print(f"  ▶ Scene {scene_id:02d} [{step:10s}] {label}")
         print(f"    Class : {class_name}")
 
-        # MCME_RENDER_QUALITY: h = 1080p60 (default), k = 4K, l = fast preview
-        quality_flag = {
-            "k": "-qk", "h": "-qh", "l": "-ql",
-        }.get(os.environ.get("MCME_RENDER_QUALITY", "h").lower(), "-qh")
+        cmd = _quality_cmd(quality, source_file, class_name)
 
-        cmd = [
-            "manim",
-            quality_flag,
-            "--media_dir", str(TEMP_DIR / "media"),
-            str(source_file),
-            class_name,
-        ]
-
+        t0 = time.monotonic()
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             cwd=str(TEMP_DIR)
         )
+        elapsed = time.monotonic() - t0
 
         # ── Locate rendered file ──────────────────────────────
         expected_mp4 = render_root / f"{class_name}.mp4"
 
-        # Manim sometimes puts it one level up — search broadly
+        # Manim sometimes puts it one level up, or under a different
+        # resolution folder name (e.g. "2160p30") — search broadly
         if not expected_mp4.exists():
             found = sorted(
                 TEMP_DIR.rglob(f"{class_name}.mp4"),
@@ -1949,7 +2182,8 @@ def render_all_scenes(script: dict):
             dest = LESSON_RENDER / f"scene_{scene_id:02d}_{step}.mp4"
             shutil.copy(str(expected_mp4), str(dest))
             size_kb = dest.stat().st_size // 1024
-            print(f"    ✅ Rendered → {dest.name}  ({size_kb} KB)")
+            print(f"    ✅ Rendered → {dest.name}  ({size_kb} KB, {elapsed:.1f}s)")
+            _save_render_timing(quality, step, elapsed)
             # QA: rendered video must cover the narration audio
             try:
                 probe = subprocess.run(

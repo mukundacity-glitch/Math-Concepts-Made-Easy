@@ -326,7 +326,6 @@ def build_script(config) -> dict:
         "heading"              : lesson["heading"],
         "subheading"           : lesson["subheading"],
         "intro_teaser"         : lesson["intro_teaser"],
-        "outro_message"        : lesson["outro_message"],
 
         # ── Asset paths ───────────────────────────────────────
         "banner_path"          : str(config.BANNER_PATH),

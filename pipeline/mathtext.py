@@ -21,8 +21,19 @@ import re
 _FRAC_RE = re.compile(r"\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}")
 _TEXT_RE = re.compile(r"\\text(?:bf|it|rm)?\s*\{([^{}]*)\}")
 _SQRT_RE = re.compile(r"\\sqrt\s*\{([^{}]*)\}")
+_MATHBB_RE = re.compile(r"\\mathbb\s*\{([A-Za-z])\}")
 _SPACING_RE = re.compile(r"\\[,;:!]|\\quad|\\qquad|\\ ")
 _LEFTRIGHT_RE = re.compile(r"\\left|\\right")
+
+# Blackboard-bold number-set letters (\mathbb{Q} etc.) — screen unicode
+# and spoken phrase, since these are common in irrational/set-theory
+# proofs and are not simple one-token symbols like the _SYMBOLS list.
+_MATHBB_UNICODE = {"Q": "ℚ", "R": "ℝ", "Z": "ℤ", "N": "ℕ", "C": "ℂ"}
+_MATHBB_SPOKEN = {
+    "Q": "the rational numbers", "R": "the real numbers",
+    "Z": "the integers", "N": "the natural numbers",
+    "C": "the complex numbers",
+}
 
 # LaTeX command → (screen unicode, spoken English)
 _SYMBOLS = [
@@ -73,6 +84,7 @@ _SYMBOLS = [
     (r"\tan", "tan", " tangent "),
     (r"\log", "log", " log "),
     (r"\ln", "ln", " natural log "),
+    (r"\notin", "∉", " is not in "),
     (r"\in", "∈", " belongs to "),
     (r"\subset", "⊂", " is a subset of "),
     (r"\cup", "∪", " union "),
@@ -120,6 +132,7 @@ def latex_to_plain(latex) -> str:
         new = _TEXT_RE.sub(r"\1", text)
         new = _FRAC_RE.sub(r"\1/\2", new)
         new = _SQRT_RE.sub(r"√(\1)", new)
+        new = _MATHBB_RE.sub(lambda m: _MATHBB_UNICODE.get(m.group(1), m.group(1)), new)
         if new == text:
             break
         text = new
@@ -153,6 +166,7 @@ def latex_to_speech(latex) -> str:
         new = _TEXT_RE.sub(r"\1", text)
         new = _FRAC_RE.sub(lambda m: f" {_speak_num(m.group(1))} over {_speak_num(m.group(2))} ", new)
         new = _SQRT_RE.sub(r" the square root of \1 ", new)
+        new = _MATHBB_RE.sub(lambda m: f" {_MATHBB_SPOKEN.get(m.group(1), m.group(1))} ", new)
         if new == text:
             break
         text = new

@@ -5,7 +5,7 @@
 # Renders at 4K then downscales to 1920×1080
 # ==========================================
 
-import sys, json, random, urllib.request
+import sys, json, random, re, urllib.request
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
@@ -13,6 +13,8 @@ import sys as _sys
 from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 from pipeline.paths import load_cell1_config, safe_filename
+from pipeline.constants import day_color
+from pipeline.mathtext import latex_to_plain
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 
@@ -89,6 +91,20 @@ LGRAY  = (229, 231, 235)   # #E5E7EB
 BLACK  = (0,   0,   0)
 FOOTER = (5,   13,  26)    # #050D1A
 
+# Rotating per-day theme (same source as Cell 4's video background and
+# DAY badge, so a given day matches across the video and its thumbnail).
+# Only the background gradient, DAY badge, title accent line, and hero
+# symbol use this — logo, footer, and feature badges stay fixed.
+def hex_rgb(h):
+    h = h.lstrip('#')
+    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
+
+_PALETTE   = day_color(lesson_id)
+DAY_BG1    = hex_rgb(_PALETTE["bg1"])
+DAY_BG2    = hex_rgb(_PALETTE["bg2"])
+DAY_ACCENT = hex_rgb(_PALETTE["accent"])
+
 
 def load_font(path, size):
     try:
@@ -97,11 +113,6 @@ def load_font(path, size):
     except Exception:
         pass
     return ImageFont.load_default()
-
-
-def hex_rgb(h):
-    h = h.lstrip('#')
-    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
 
 
 def make_gradient(w, h, c1, c2):
@@ -161,28 +172,43 @@ def center_text_x(draw, text, font, canvas_w):
     return (canvas_w - w) // 2
 
 
-def wrap_text(text, font, max_w, draw, max_lines=3):
+def wrap_text(text, font, max_w, draw):
+    """Greedy word-wrap — every returned line is guaranteed to fit
+    within max_w. If the result needs more lines than the caller wants,
+    build_thumbnail() shrinks the font and retries rather than letting
+    a line overflow the canvas."""
     words = text.split()
     lines, cur = [], []
     for word in words:
-        cur.append(word)
-        if draw.textlength(" ".join(cur), font=font) > max_w:
-            cur.pop()
-            if cur:
-                lines.append(" ".join(cur))
+        trial = cur + [word]
+        if draw.textlength(" ".join(trial), font=font) <= max_w or not cur:
+            cur = trial
+        else:
+            lines.append(" ".join(cur))
             cur = [word]
-        if len(lines) >= max_lines - 1:
-            rest = words[words.index(word):]
-            lines.append(" ".join(cur[:-1] + rest) if cur[:-1] else " ".join(rest))
-            cur = []
-            break
     if cur:
         lines.append(" ".join(cur))
-    return lines[:max_lines]
+    return lines
 
 
 def draw_rounded_rect(draw, x1, y1, x2, y2, radius, fill=None, outline=None, outline_w=4):
     draw.rounded_rectangle([x1, y1, x2, y2], radius=radius, fill=fill, outline=outline, width=outline_w)
+
+
+def hero_symbol(script: dict, lesson_id: int) -> str:
+    """A short, thumbnail-worthy symbol for this lesson (e.g. '√2'),
+    extracted from the key formula. Falls back to the day number so
+    every lesson — not just ones with a clean root/fraction — gets a
+    hero badge."""
+    plain = latex_to_plain(script.get("key_formula", ""))
+    m = re.search(r"√\(([^)]{1,4})\)", plain)
+    if m:
+        return "√" + m.group(1)
+    tokens = [t for t in re.split(r"[\s,]+", plain) if t]
+    short = [t for t in tokens if 1 <= len(t) <= 5 and re.search(r"[0-9A-Za-zπ√]", t)]
+    if short:
+        return short[0]
+    return f"D{lesson_id}"
 
 
 def build_thumbnail():
@@ -193,8 +219,8 @@ def build_thumbnail():
     W, H = 3840, 2160
     MG   = 120      # margin
 
-    # ── 1. Gradient background ────────────────────────────────
-    bg = make_gradient(W, H, NAVY1, NAVY2)
+    # ── 1. Gradient background (rotates per day) ──────────────
+    bg = make_gradient(W, H, DAY_BG1, DAY_BG2)
 
     # Use RGBA for transparency support
     bg_rgba = bg.convert("RGBA")
@@ -254,7 +280,9 @@ def build_thumbnail():
     # ── 6. LEARN • PRACTICE • MASTER pill (top center) ───────
     pill_text = "LEARN  •  PRACTICE  •  MASTER"
     pill_w = int(draw.textlength(pill_text, font=f_small)) + 100
-    pill_x = (W - pill_w) // 2 + 300
+    logo_right = 340 + max(int(draw.textlength(ch1, font=f_small)),
+                          int(draw.textlength(ch2, font=f_small)))
+    pill_x = max((W - pill_w) // 2 + 300, logo_right + 60)
     pill_y = 50
     pill_h = 140
     draw_rounded_rect(draw, pill_x, pill_y,
@@ -264,43 +292,87 @@ def build_thumbnail():
     draw.text((pill_x + (pill_w - pt_w)//2, pill_y + 22),
               pill_text, font=f_small, fill=(8, 27, 51))
 
-    # ── 7. DAY badge (top right, purple) ─────────────────────
+    # ── 7. DAY badge (top right, rotates per day) ─────────────
     badge_w, badge_h = 520, 190
     bx = W - badge_w - 80
     by = 60
     draw_rounded_rect(draw, bx, by, bx+badge_w, by+badge_h,
-                      radius=30, fill=PURPLE)
+                      radius=30, fill=DAY_ACCENT)
     dt_w = int(draw.textlength(DAY_TEXT, font=f_badge))
     draw.text((bx + (badge_w - dt_w)//2, by + 25),
               DAY_TEXT, font=f_badge, fill=WHITE)
 
-    # ── 8. Main hook text (center) ───────────────────────────
-    max_tw = W - MG*2 - 200
-    lines = wrap_text(THUMB_ANGLE, f_huge, max_tw, draw, max_lines=3)
+    # ── 7b. Hero symbol badge — glow pedestal, rotates per day ─
+    # Kept small and tucked under the DAY badge, with the title's max
+    # width reserving this corner (below), so long titles never collide.
+    hero = hero_symbol(SCRIPT, lesson_id)
+    hero_r = 150
+    hero_cx = bx + badge_w // 2
+    hero_cy = by + badge_h + 40 + hero_r
 
-    line_h = 420
+    glow_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow_layer)
+    gd.ellipse([hero_cx-hero_r-60, hero_cy-hero_r-60,
+                hero_cx+hero_r+60, hero_cy+hero_r+60],
+               fill=(*DAY_ACCENT, 70))
+    glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(40))
+    bg_rgba = Image.alpha_composite(bg.convert("RGBA"), glow_layer)
+    bg = bg_rgba.convert("RGB")
+    draw = ImageDraw.Draw(bg)
+
+    draw.ellipse([hero_cx-hero_r, hero_cy-hero_r,
+                  hero_cx+hero_r, hero_cy+hero_r], fill=NAVY2)
+    draw.ellipse([hero_cx-hero_r, hero_cy-hero_r,
+                  hero_cx+hero_r, hero_cy+hero_r],
+                 outline=DAY_ACCENT, width=8)
+    hero_accent_stroke = tuple(max(0, c - 80) for c in DAY_ACCENT)
+    hw = int(draw.textlength(hero, font=f_medium))
+    stroke_text(draw, hero_cx - hw//2, hero_cy - 90, hero, f_medium, WHITE,
+               stroke_w=8, stroke_col=hero_accent_stroke)
+
+    # ── 8. Main hook text (center, auto-shrinks to fit 3 lines) ──
+    # Extra margin reserved so the title never reaches into the hero
+    # badge's top-right corner regardless of wrapping.
+    max_tw = W - MG*2 - 700
+    title_size = 380
+    for candidate in (380, 340, 300, 260, 220, 190):
+        f_try = load_font(FONT_BLACK, candidate)
+        trial = wrap_text(THUMB_ANGLE, f_try, max_tw, draw)
+        if len(trial) <= 3:
+            title_size = candidate
+            break
+    f_huge = load_font(FONT_BLACK, title_size)
+    lines = wrap_text(THUMB_ANGLE, f_huge, max_tw, draw)[:3]
+
+    line_h = int(title_size * 1.12)
     n = len(lines)
     total_text_h = n * line_h
     text_start_y = (H - total_text_h) // 2 - 50
 
+    accent_stroke = tuple(max(0, c - 80) for c in DAY_ACCENT)
     for i, line in enumerate(lines):
-        fill = GOLD if i == 0 else WHITE
-        stroke = (80, 50, 0) if i == 0 else (0, 0, 0)
+        if n == 1:
+            fill, stroke = DAY_ACCENT, accent_stroke
+        elif i == 0 or i == n - 1:
+            fill, stroke = WHITE, (0, 0, 0)
+        else:
+            fill, stroke = DAY_ACCENT, accent_stroke
         tw = int(draw.textlength(line, font=f_huge))
         tx = max(MG, (W - tw) // 2)
         stroke_text(draw, tx, text_start_y + i * line_h, line,
                     f_huge, fill, stroke_w=16, stroke_col=stroke)
 
-    # Blue brushstroke behind bottom title line (simulate Image 1 style)
+    # Accent-colored brushstroke behind bottom title line (rotates per day)
     if len(lines) >= 2:
         last_y = text_start_y + (len(lines)-1) * line_h
         last_w = int(draw.textlength(lines[-1], font=f_huge))
         brush_x = max(MG - 40, (W - last_w)//2 - 40)
+        brush_col = tuple(int(c * 0.55) for c in DAY_ACCENT)
         draw_rounded_rect(draw,
                           brush_x, last_y - 20,
                           brush_x + last_w + 80, last_y + 380,
                           radius=20,
-                          fill=(29, 78, 216),
+                          fill=brush_col,
                           outline=None)
         # Redraw last line on top
         tw = int(draw.textlength(lines[-1], font=f_huge))
@@ -350,18 +422,27 @@ def build_thumbnail():
     draw.ellipse([yt_x-yt_r, yt_y-yt_r, yt_x+yt_r, yt_y+yt_r],
                  fill=(220, 0, 0))
     draw.text((yt_x - 30, yt_y - 42), "▶", font=f_tiny, fill=WHITE)
+
+    # Footer text uses a smaller dedicated font and is placed left to
+    # right, each block starting only after the previous one's right
+    # edge, so long strings can never overlap regardless of length.
+    f_footer = load_font(FONT_BOLD, 68)
+
     nv_text = "NEW VIDEOS EVERY DAY"
-    draw.text((yt_x + yt_r + 30, yt_y - 45), nv_text, font=f_tiny, fill=WHITE)
+    nv_x = yt_x + yt_r + 30
+    draw.text((nv_x, fy_mid - 34), nv_text, font=f_footer, fill=WHITE)
+    nv_right = nv_x + int(draw.textlength(nv_text, font=f_footer))
 
-    # Subscribe
     sub_text = "🔔  SUBSCRIBE & TURN ON NOTIFICATIONS"
-    st_w = int(draw.textlength(sub_text, font=f_tiny))
-    draw.text(((W - st_w)//2, fy_mid - 45), sub_text, font=f_tiny, fill=GOLD)
+    st_w = int(draw.textlength(sub_text, font=f_footer))
+    sub_x = max(nv_right + 80, (W - st_w)//2)
+    draw.text((sub_x, fy_mid - 34), sub_text, font=f_footer, fill=GOLD)
+    sub_right = sub_x + st_w
 
-    # Social
     social = "@MathConceptMadeEasy"
-    sw = int(draw.textlength(social, font=f_tiny))
-    draw.text((W - sw - 150, fy_mid - 45), social, font=f_tiny, fill=LGRAY)
+    sw = int(draw.textlength(social, font=f_footer))
+    social_x = max(sub_right + 80, W - sw - 150)
+    draw.text((social_x, fy_mid - 34), social, font=f_footer, fill=LGRAY)
 
     # ── 11. Downscale 4K → 1920×1080 ────────────────────────
     print("  🔬 Downsampling 4K → 1920×1080 (LANCZOS)...")
