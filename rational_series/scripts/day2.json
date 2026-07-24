@@ -1,0 +1,161 @@
+{
+  "day": 2,
+  "title": "Irrational Numbers",
+  "subtitle": "The number that broke the fractions",
+  "topic": "Number Systems",
+  "voice": "en-GB-RyanNeural",
+  "thumbnail": {
+    "headline": "WHY √2 IS NOT",
+    "headline_2": "A FRACTION",
+    "kicker": "PROOF INSIDE",
+    "motif": "square"
+  },
+  "meta": {
+    "seo_title": "Irrational Numbers Explained — Proof That √2 Is Not a Fraction",
+    "playlist": "Foundation — Number Systems",
+    "prerequisite": "Day 1 — Rational Numbers"
+  },
+  "blocks": [
+    {
+      "concept": "intro",
+      "narration": "Welcome back to Math Concepts Made Easy. This is Day 2, and today one single square is going to break every fraction you have ever written."
+    },
+    {
+      "concept": "recap",
+      "narration": "Let's quickly recap Day 1. We learned that a rational number is any number you can write as p over q. We saw that whole numbers are rational too, because seven is just seven over one. And we made one rule absolutely non-negotiable: q can never be zero.",
+      "heading": "Day 1 — what we established",
+      "items": [
+        "A rational number is p over q",
+        "Whole numbers are rational: 7 = 7/1",
+        "q can never be zero"
+      ]
+    },
+    {
+      "concept": "statement",
+      "narration": "So here is the question that ended a two thousand year old belief. Is every number on the line a fraction?",
+      "headline": "Is every number a fraction?",
+      "kicker": "the question that broke a school of thought",
+      "note": "The Greeks were certain the answer was yes."
+    },
+    {
+      "concept": "draw_square",
+      "narration": "Let's find out together. Draw a square measuring one foot by one foot. Nothing exotic — just a perfectly ordinary square, one foot along the bottom, one foot up the side.",
+      "side_label": "1 ft",
+      "size": 3.6,
+      "focus": true
+    },
+    {
+      "concept": "draw_diagonal",
+      "narration": "Now draw the diagonal, corner to corner. Look at what just appeared: the diagonal cuts your square into two identical right angled triangles.",
+      "keep_stage": true,
+      "label": "d"
+    },
+    {
+      "concept": "pythagoras",
+      "narration": "And we already know how to measure that line. Pythagoras tells us the diagonal squared equals one squared plus one squared, which is two. So the diagonal is exactly the square root of two feet long.",
+      "keep_stage": true,
+      "lines": [
+        "d^2 = 1^2 + 1^2",
+        "d^2 = 2",
+        "d = \\sqrt{2}"
+      ],
+      "result": "\\sqrt{2}"
+    },
+    {
+      "concept": "number_line",
+      "narration": "Here is the strange part. That length is real, you can hold it in your hands, and it sits right here on the number line between one and two. But no fraction lands on it. Not one over one, not three over two, not one point four one four. Zoom in as far as you like, the fractions keep missing.",
+      "range": [0, 3, 1],
+      "band": [1, 2],
+      "points": [
+        { "value": 1.0, "label": "1", "color": "ink" },
+        { "value": 1.5, "label": "\\frac{3}{2}", "color": "secondary", "above": false },
+        { "value": 1.4142, "label": "\\sqrt{2}", "color": "accent" }
+      ],
+      "zoom": 1.4142
+    },
+    {
+      "concept": "equation",
+      "narration": "Let's prove it properly. Suppose the square root of two were rational. Then we could write it as p over q, already reduced to its lowest terms, with no common factor left to cancel.",
+      "title": "Assume the opposite",
+      "lines": [
+        "\\text{Assume } \\sqrt{2} = \\frac{p}{q}",
+        "\\text{with } \\frac{p}{q} \\text{ fully reduced}"
+      ],
+      "box": 1,
+      "box_color": "accent"
+    },
+    {
+      "concept": "equation",
+      "narration": "Square both sides. Two equals p squared over q squared, so p squared equals two q squared. That means p squared is even, and if p squared is even then p itself must be even.",
+      "lines": [
+        "2 = \\frac{p^2}{q^2}",
+        "p^2 = 2q^2",
+        "\\Rightarrow p^2 \\text{ is even} \\Rightarrow p \\text{ is even}"
+      ],
+      "box": 2,
+      "box_color": "highlight"
+    },
+    {
+      "concept": "equation",
+      "narration": "So write p as two k. Substitute it back: four k squared equals two q squared, which gives q squared equals two k squared. And by exactly the same reasoning, q is even as well.",
+      "lines": [
+        "p = 2k",
+        "(2k)^2 = 2q^2 \\Rightarrow 4k^2 = 2q^2",
+        "q^2 = 2k^2 \\Rightarrow q \\text{ is even}"
+      ],
+      "box": 2,
+      "box_color": "highlight"
+    },
+    {
+      "concept": "contradiction",
+      "narration": "And there it is. We assumed the fraction was fully reduced, yet we have just shown that p and q are both even, so they still share a factor of two. Both statements cannot be true. The assumption was wrong.",
+      "facts": [
+        "\\frac{p}{q} \\text{ is fully reduced}",
+        "p \\text{ and } q \\text{ are both even}"
+      ],
+      "verdict": "CONTRADICTION"
+    },
+    {
+      "concept": "definition",
+      "narration": "So the square root of two cannot be written as a fraction at all. Numbers like this one are called irrational numbers: numbers that are not the ratio of any two whole numbers.",
+      "headline": "Irrational numbers",
+      "kicker": "definition",
+      "math": "\\sqrt{2} \\notin \\mathbb{Q}",
+      "note": "Not the ratio of any two whole numbers."
+    },
+    {
+      "concept": "mistake",
+      "narration": "Here is the mistake almost everyone makes. Students think irrational simply means a very long decimal. It does not. A long decimal is still rational if it eventually stops or repeats. Irrational means it never stops and never repeats.",
+      "wrong": "\\text{long decimal} \\Rightarrow \\text{irrational}",
+      "right": "\\text{never stops, never repeats}",
+      "wrong_note": "0.333... is rational — it repeats",
+      "right_note": "√2 = 1.41421356... forever, no pattern"
+    },
+    {
+      "concept": "classify",
+      "narration": "Your turn. Classify these four: nought point three recurring, pi, the square root of nine, and the square root of five.",
+      "buckets": ["Rational", "Irrational"],
+      "items": [
+        { "value": "0.\\overline{3}", "bucket": 0 },
+        { "value": "\\pi", "bucket": 1 },
+        { "value": "\\sqrt{9}", "bucket": 0 },
+        { "value": "\\sqrt{5}", "bucket": 1 }
+      ]
+    },
+    {
+      "concept": "practice",
+      "narration": "One to take away with you. Is the square root of sixteen rational or irrational? Pause here and decide before I tell you.",
+      "question": "Is √16 rational or irrational?",
+      "hint": "Work out the root before you judge it.",
+      "answer": "\\sqrt{16} = 4 = \\frac{4}{1}"
+    },
+    {
+      "concept": "outro",
+      "narration": "So one ordinary square hid a number that no fraction can reach. Tomorrow, in Day 3, we go after the decimals themselves and find out exactly which fractions stop and which ones repeat forever. See you then.",
+      "takeaway": "√2 is real, but no fraction reaches it",
+      "kicker": "today's takeaway",
+      "next_up": "Decimal Expansions",
+      "cta": "Subscribe — one lesson every day."
+    }
+  ]
+}

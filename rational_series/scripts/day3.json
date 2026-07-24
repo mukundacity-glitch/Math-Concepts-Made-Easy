@@ -1,0 +1,86 @@
+{
+  "day": 3,
+  "title": "Decimal Expansions",
+  "subtitle": "Which fractions stop, and which repeat forever",
+  "topic": "Number Systems",
+  "thumbnail": {
+    "headline": "WHICH FRACTIONS",
+    "headline_2": "STOP?",
+    "kicker": "LOOK AT THE DENOMINATOR",
+    "motif": "line"
+  },
+  "meta": {
+    "seo_title": "Terminating vs Recurring Decimals — Predict It Without Dividing",
+    "playlist": "Foundation — Number Systems",
+    "prerequisite": "Day 2 — Irrational Numbers"
+  },
+  "blocks": [
+    {
+      "concept": "intro",
+      "narration": "Welcome back to Math Concepts Made Easy. This is Day 3, and by the end of it you will know whether a fraction terminates without dividing at all."
+    },
+    {
+      "concept": "recap",
+      "narration": "Let's quickly recap Day 2. We proved that the square root of two is not a fraction, we met irrational numbers, and we learned that a decimal is only rational if it stops or repeats.",
+      "heading": "Day 2 — what we proved",
+      "items": [
+        "√2 cannot be written as p over q",
+        "Irrational = never stops, never repeats",
+        "Proof by contradiction works"
+      ]
+    },
+    {
+      "concept": "compare",
+      "narration": "Compare these two. One half is nought point five and it stops dead. One third is nought point three three three and it never stops at all. Same kind of fraction, completely different behaviour.",
+      "left": "Terminating",
+      "right": "Recurring",
+      "left_items": ["\\frac{1}{2} = 0.5", "\\frac{3}{8} = 0.375", "\\frac{7}{20} = 0.35"],
+      "right_items": ["\\frac{1}{3} = 0.\\overline{3}", "\\frac{2}{7} = 0.\\overline{285714}", "\\frac{5}{6} = 0.8\\overline{3}"]
+    },
+    {
+      "concept": "definition",
+      "narration": "The whole answer is hiding in the denominator. Reduce the fraction first, then factorise the bottom. If the only prime factors are twos and fives, the decimal terminates. Any other prime, and it recurs forever.",
+      "headline": "Look only at the denominator",
+      "kicker": "the rule",
+      "math": "q = 2^m \\times 5^n \\Rightarrow \\text{terminates}",
+      "note": "Reduce the fraction first — always."
+    },
+    {
+      "concept": "equation",
+      "narration": "Here is why. Our number system is built on powers of ten, and ten is two times five. If the denominator is made only of twos and fives, you can always scale it up into a power of ten, and a power of ten is what a terminating decimal is.",
+      "title": "Why twos and fives",
+      "lines": [
+        "10 = 2 \\times 5",
+        "\\frac{3}{8} = \\frac{3}{2^3} = \\frac{3 \\times 5^3}{10^3}",
+        "= \\frac{375}{1000} = 0.375"
+      ],
+      "box": 2,
+      "box_color": "success"
+    },
+    {
+      "concept": "classify",
+      "narration": "Try it. Sort these by their denominators alone: seven over forty, five over twelve, nine over twenty five, and one over six.",
+      "buckets": ["Terminates", "Recurs"],
+      "items": [
+        { "value": "\\frac{7}{40}", "bucket": 0 },
+        { "value": "\\frac{5}{12}", "bucket": 1 },
+        { "value": "\\frac{9}{25}", "bucket": 0 },
+        { "value": "\\frac{1}{6}", "bucket": 1 }
+      ]
+    },
+    {
+      "concept": "practice",
+      "narration": "Last one. Does thirteen over sixty four terminate? Pause and check the denominator before I say a word.",
+      "question": "Does 13/64 terminate?",
+      "hint": "Factorise 64.",
+      "answer": "64 = 2^6 \\Rightarrow \\text{yes, it terminates}"
+    },
+    {
+      "concept": "outro",
+      "narration": "So you never have to divide again to know how a fraction behaves. Tomorrow, in Day 4, we turn a recurring decimal back into a fraction using one clever trick with algebra. See you then.",
+      "takeaway": "The denominator decides everything",
+      "next_up": "Recurring Decimals to Fractions",
+      "cta": "Subscribe — one lesson every day."
+    }
+  ]
+}

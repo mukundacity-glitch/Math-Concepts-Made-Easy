@@ -1,0 +1,89 @@
+name: Rational Numbers series — daily video
+
+# Renders the next unrendered day of the Rational Numbers series.
+# Off by default: set the repository variable RATIONAL_SERIES_ENABLED = true
+# (Settings → Secrets and variables → Actions → Variables).
+#
+# Add Day 4 by committing rational_series/scripts/day4.json — the next run
+# picks it up automatically. No workflow edits, ever.
+
+on:
+  schedule:
+    - cron: "45 12 * * *" # 12:45 UTC daily
+  workflow_dispatch:
+    inputs:
+      day:
+        description: "Day number to render (blank = next unrendered day)"
+        required: false
+        type: string
+      quality:
+        description: "l = 480p15, m = 720p30, h = 1080p60"
+        required: false
+        default: "h"
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rational-series
+  cancel-in-progress: false
+
+jobs:
+  render:
+    if: vars.RATIONAL_SERIES_ENABLED == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: System dependencies (Manim + LaTeX + ffmpeg)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            ffmpeg libcairo2-dev libpango1.0-dev pkg-config \
+            texlive-latex-base texlive-latex-extra texlive-fonts-recommended \
+            dvisvgm cm-super fonts-lato
+
+      - name: Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Engine tests
+        run: python -m unittest discover tests -v
+
+      - name: Render the day
+        id: render
+        run: |
+          if [ -n "${{ inputs.day }}" ]; then
+            python render_day.py --day "${{ inputs.day }}" --quality "${{ inputs.quality || 'h' }}"
+          else
+            python render_day.py --next --quality h
+          fi
+
+      - name: Upload video, thumbnail and captions
+        uses: actions/upload-artifact@v4
+        with:
+          name: rational-series-day
+          path: |
+            output/rational_series/**/*.mp4
+            output/rational_series/**/*.png
+            output/rational_series/**/*.srt
+            output/rational_series/**/*_cues.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Commit the progress marker
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state/rational_series.json
+          git diff --staged --quiet || git commit -m "rational-series: advance day counter"
+          git push

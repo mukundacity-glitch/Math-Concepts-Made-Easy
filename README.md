@@ -1,5 +1,31 @@
 # Math Concepts Made Easy — Automated AI Math Teacher
 
+Two production systems live here:
+
+| System | What it makes | Entry point |
+|---|---|---|
+| **`rational_series/`** | The **Rational Numbers series** (Day 2 → ∞): procedurally themed, animation-first Manim videos where a new day is *only* a new script file | `python render_day.py --day 2` |
+| `pipeline/` + `autopilot.py` | The original curriculum-wide lesson factory (Grades 9–12, university) | `python autopilot.py` |
+
+## Rational Numbers series (start here)
+
+```bash
+python render_day.py --day 2        # 1080p60 video + captions + thumbnail
+python render_day.py --day 3
+python render_day.py --next         # next day that has a script but no video
+python render_day.py --list         # what exists, what's pending
+```
+
+Adding **Day 4** = drop `rational_series/scripts/day4.json` in place and run
+`python render_day.py --day 4`. Palette, intro sequence, motifs, pacing and
+thumbnail are all derived from the day number — no engine file changes, and
+no two days look alike. Full documentation:
+[`rational_series/README.md`](rational_series/README.md).
+
+---
+
+## Curriculum lesson factory (original system)
+
 Fully automated lesson factory for the **Math Concepts Made Easy** YouTube
 channel. One command turns a curriculum entry into a complete, classroom-style
 math video: narrated with a natural teacher voice, animated with Manim
@@ -105,13 +131,20 @@ warning until these steps are done.
 ## Repo layout
 
 ```
-autopilot.py          one-command daily producer + day tracking
+render_day.py         Rational series CLI (--day / --next / --all / --list)
+generate_day.py       Rational series pipeline: audio → video → captions → thumbnail
+rational_series/      the series engine (colour, script, visuals, beats, intro, scene)
+rational_series/scripts/  one JSON or Markdown file per day — the only content you write
+tests/                engine tests (run without Manim installed)
+
+autopilot.py          one-command daily producer + day tracking (original system)
 curriculum/           lesson content (JSON, one file per grade/track)
 pipeline/             the 8 production stages + shared paths/constants
 uploader/             YouTube posting + one-time authorize helper
 state/progress.json   which day runs next, what's done, what's uploaded
+state/rational_series.json  which series days have been rendered
 legacy/               original Colab notebook export (frozen reference)
-.github/workflows/    daily automation (opt-in)
+.github/workflows/    daily automation (opt-in, one workflow per system)
 ```
 
 ## Roadmap

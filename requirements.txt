@@ -1,5 +1,6 @@
 # Video production pipeline
-manim>=0.18
+# manim 0.19+ is required by rational_series (MathTex font_size, ManimColor)
+manim>=0.19
 edge-tts>=6.1
 gTTS>=2.5
 nest_asyncio>=1.6
