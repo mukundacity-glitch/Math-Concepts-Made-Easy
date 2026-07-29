@@ -86,13 +86,30 @@ def credentials_available() -> bool:
 
 
 def get_service():
+    from google.auth.exceptions import RefreshError
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
 
     creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
     if creds.expired and creds.refresh_token:
-        creds.refresh(Request())
+        try:
+            creds.refresh(Request())
+        except RefreshError as e:
+            raise SystemExit(
+                "🛑 YouTube token refresh failed — the stored refresh token "
+                "was rejected (expired or revoked).\n"
+                "   This almost always means the Google Cloud OAuth consent "
+                "screen is still in 'Testing' status: Google auto-expires "
+                "refresh tokens after 7 days for apps in that mode.\n"
+                "   Fix: Google Cloud Console → APIs & Services → OAuth "
+                "consent screen → publish the app to 'In production' (no "
+                "Google verification needed for a personal/unlisted channel "
+                "tool), then re-run `python -m uploader.authorize` once and "
+                "update the YT_TOKEN_JSON repository secret with the new "
+                "secrets/token.json.\n"
+                f"   Original error: {e}"
+            ) from e
         TOKEN_PATH.write_text(creds.to_json(), encoding="utf-8")
     return build("youtube", "v3", credentials=creds)
 

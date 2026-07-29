@@ -101,8 +101,29 @@ warning until these steps are done.
 6. For daily auto-posting from GitHub Actions, paste the contents of the
    two files into repository **secrets** `YT_CLIENT_SECRET_JSON` and
    `YT_TOKEN_JSON`, and add the variable `YT_PRIVACY = public`.
+7. **Publish the OAuth consent screen to "In production"** (same page as
+   step 2 — no Google verification required for a personal channel tool).
+   Apps left in "Testing" status have their refresh token auto-expire
+   after **7 days**, which silently breaks daily uploads once a week until
+   someone re-authorizes by hand. Production status removes that expiry.
 
 `secrets/` is git-ignored — credentials never enter the repository.
+
+## Troubleshooting
+
+**Upload step fails with `invalid_grant: Token has been expired or
+revoked.`** — the refresh token was rejected. This is almost always the
+7-day Testing-mode expiry from step 7 above (fix it there, permanently);
+occasionally it's a token you revoked yourself in your Google Account's
+[connected apps](https://myaccount.google.com/permissions) page. Either
+way: re-run `python -m uploader.authorize` and update the `YT_TOKEN_JSON`
+secret. `daily-video.yml` uploads the render step and the upload step
+separately — a token failure only fails the upload step (with a
+`::warning::` explaining exactly this), so the render, thumbnail, Shorts
+and the day counter all still complete normally and the video isn't lost.
+Once the token is fixed, run **Actions → "Publish Lesson to YouTube"**
+with that day number to post it straight from the saved render artifact
+— no need to wait for or trigger a re-render.
 
 ## Repo layout
 

@@ -59,21 +59,71 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      - name: Render and upload lesson to YouTube
+      # Resolved up front (rather than left to autopilot.py's own default)
+      # so every later step — the artifact name, the upload, the recovery
+      # workflow — all agree on exactly which day this run is for.
+      - name: Determine lesson day
+        id: day
+        env:
+          DAY_OVERRIDE: ${{ github.event.inputs.day }}
+        run: |
+          python - <<'EOF' >> "$GITHUB_OUTPUT"
+          import json, os
+          override = os.environ.get("DAY_OVERRIDE", "").strip()
+          if override:
+              day = int(override)
+          else:
+              state = json.load(open("state/progress.json"))
+              day = int(state.get("next_day", 1))
+          print(f"day={day}")
+          EOF
+
+      # Rendering is the expensive, must-not-fail-silently part. Kept as
+      # its own step (no continue-on-error) so a render bug still fails
+      # the job loudly, distinct from an upload/credentials problem below.
+      - name: Produce Day ${{ steps.day.outputs.day }}
+        run: python autopilot.py --day ${{ steps.day.outputs.day }}
+
+      # Uploading depends on external YouTube OAuth credentials that can
+      # expire or be revoked outside our control. continue-on-error keeps
+      # a credentials hiccup from burying a perfectly good render under a
+      # red "everything failed" job — the warning step below calls it out
+      # explicitly instead, and the video is safely in the artifact either way.
+      - name: Upload Day ${{ steps.day.outputs.day }} to YouTube
+        id: upload
+        continue-on-error: true
         env:
           YT_CLIENT_SECRET_JSON: ${{ secrets.YT_CLIENT_SECRET_JSON }}
           YT_TOKEN_JSON: ${{ secrets.YT_TOKEN_JSON }}
           YT_PRIVACY: ${{ github.event.inputs.privacy || vars.YT_PRIVACY || 'public' }}
+        run: python -m uploader.youtube_upload --day ${{ steps.day.outputs.day }}
+
+      - name: Mark day as uploaded in progress state
+        if: steps.upload.outcome == 'success'
         run: |
-          DAY_ARG=""
-          [ -n "${{ github.event.inputs.day }}" ] && DAY_ARG="--day ${{ github.event.inputs.day }}"
-          python autopilot.py --upload $DAY_ARG
+          python - <<'EOF'
+          import json
+          from pathlib import Path
+          p = Path("state/progress.json")
+          state = json.loads(p.read_text())
+          day = ${{ steps.day.outputs.day }}
+          if day not in state.setdefault("uploaded", []):
+              state["uploaded"].append(day)
+          p.write_text(json.dumps(state, indent=2) + "\n")
+          EOF
+
+      - name: Warn if upload failed
+        if: steps.upload.outcome == 'failure'
+        run: |
+          echo "::warning::Day ${{ steps.day.outputs.day }} rendered successfully but the YouTube upload failed — see the 'Upload Day ${{ steps.day.outputs.day }} to YouTube' step above for the exact error."
+          echo "::warning::The finished video + Shorts are attached to this run as the 'lesson-output-day${{ steps.day.outputs.day }}' artifact. Once credentials are fixed, run the 'Publish Lesson to YouTube' workflow for day ${{ steps.day.outputs.day }} to post it — no re-render needed."
+          echo "::warning::If the error mentions 'invalid_grant' / 'Token has been expired or revoked', your Google OAuth consent screen is likely still in Testing status (refresh tokens auto-expire after 7 days there) — publish it to Production, then re-run \`python -m uploader.authorize\` and update the YT_TOKEN_JSON secret."
 
       - name: Save video as downloadable artifact (7-day backup)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lesson-output-day${{ github.event.inputs.day || 'auto' }}
+          name: lesson-output-day${{ steps.day.outputs.day }}
           retention-days: 7
           path: |
             output/final_videos/*.mp4

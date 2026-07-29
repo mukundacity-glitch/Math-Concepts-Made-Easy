@@ -47,11 +47,18 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
+      # Name must match what daily-video.yml actually uploads
+      # (lesson-output-day<N>) — "lesson-output" never matched anything.
+      # Path must be the "output" root, not "output/final_videos": the
+      # artifact's internal layout is final_videos/... + thumbnails/...
+      # (that's how daily-video.yml built it), so extracting straight
+      # into final_videos/ would nest everything one level too deep and
+      # the upload step below would still find nothing.
       - name: Download lesson artifact from daily-video run
         uses: dawidd6/action-download-artifact@v3
         with:
-          name: lesson-output
-          path: output/final_videos
+          name: lesson-output-day${{ github.event.inputs.day }}
+          path: output
           workflow: daily-video.yml
           search_artifacts: true
         continue-on-error: true
