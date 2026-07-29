@@ -61,6 +61,16 @@ def main():
     state = read_state()
     day = args.day if args.day is not None else int(state.get("next_day", 1))
 
+    # ── Launch date guard ───────────────────────────────────────
+    # Blocks any production/upload before the official Day 1 date.
+    # Runs before any stage, before progress.json is touched.
+    from pipeline.paths import START_DATE
+    today = datetime.date.today()
+    if today < START_DATE:
+        print(f"⏸️  Publishing paused. Launch date is {START_DATE:%d/%m/%Y}. "
+              f"Current date is before official Day 1.")
+        return 0
+
     if day > TOTAL_DAYS:
         print(f"🎓 Curriculum complete — all {TOTAL_DAYS} lessons produced. "
               f"Add more lessons to curriculum/*.json to continue.")
