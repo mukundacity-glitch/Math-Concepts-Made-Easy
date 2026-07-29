@@ -119,7 +119,8 @@ def main():
     print(f"\n{'═' * 65}")
     print(f"  🎉 DAY {day} COMPLETE — {lesson['topic']}")
     print(f"  🎬 Video     : final_videos/Day_{day:03d}_{safe}.mp4")
-    print(f"  📱 Short     : final_videos/Day_{day:03d}_{safe}_SHORTS.mp4")
+    for short_key in ("HOOK", "FORMULA", "MISTAKE"):
+        print(f"  📱 Short     : final_videos/Day_{day:03d}_{safe}_SHORT_{short_key}.mp4")
     print(f"  🖼  Thumbnail : thumbnails/Day_{day:03d}_{safe}_Thumb.jpg")
     print(f"  📝 Subtitles : final_videos/Day_{day:03d}_{safe}.srt / .vtt")
     print(f"{'═' * 65}")
