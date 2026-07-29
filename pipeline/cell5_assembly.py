@@ -240,6 +240,17 @@ def assemble_video(script):
         skipped = len(script["scenes"]) - len(muxed_files)
         print(f"  ⚠️  {skipped} scene(s) missing — assembling with {len(muxed_files)}/{len(script['scenes'])} available scenes.\n")
 
+    # 1b. Append the fixed outro (Like/Comment/Subscribe), if it rendered.
+    # Its audio is embedded directly in the Manim scene (via add_sound()),
+    # not muxed separately like scenes 1-9, so it's appended as-is.
+    # Missing outro is non-fatal — the lesson still publishes without it.
+    outro_path = LESSON_RENDER / "scene_10_outro.mp4"
+    if outro_path.exists():
+        muxed_files.append(outro_path)
+        print(f"  ✅ Outro appended → {outro_path.name}\n")
+    else:
+        print(f"  ⚠️  No outro render found — publishing without end-card.\n")
+
     # 2. Concatenation Phase with crossfades
     print(f"  🎬 Rendering Final Output with Crossfades...")
     concat_success = add_crossfades(sorted(muxed_files), FINAL_VIDEO_PATH)
@@ -284,4 +295,3 @@ if success:
     print(f"\n  ▶ Run Cell 6 for thumbnail. Run Cell 7 to upload.\n")
 else:
     print(f"\n🛑 Assembly failed. Check FFmpeg logs above.")
-
