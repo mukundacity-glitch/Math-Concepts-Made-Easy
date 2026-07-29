@@ -90,9 +90,6 @@ GOLD   = (250, 204, 21)    # brand gold — always used for the wordmark/day num
 CREAM  = (245, 238, 219)   # sticker paper color
 
 # ── Per-lesson accent palette (deterministic by lesson_id) ──
-# Rotates the *accent* hue (badge fill, glow, brushstroke) per lesson
-# while GOLD + NAVY stay fixed, so every thumbnail is visibly
-# different but the channel identity never drifts.
 _ACCENT_PALETTES = [
     {"name": "purple", "accent": (124,  58, 237), "glow": (168,  85, 247)},
     {"name": "blue",   "accent": ( 37,  99, 235), "glow": ( 59, 130, 246)},
@@ -107,11 +104,6 @@ GLOW   = _palette["glow"]
 _star_seed    = 1000 + lesson_id
 _scatter_seed = 2000 + lesson_id
 
-# ── Topic-matched math motif (deterministic keyword match) ──
-# Mirrors the story_visual() dispatch pattern used by the animation
-# engine (pipeline/cell4_animation.py) — same idea, applied to the
-# faint background scatter so the decoration actually relates to
-# today's lesson instead of being a fixed generic list.
 _MOTIF_SETS = {
     "fraction":    ["2/3 + 1/6 = 5/6", "a/b = a÷c / b÷c", "p/q, q≠0", "3/4", "-2/3 = 4/-5"],
     "algebra":     ["ax + b = 0", "x = (-b±√Δ)/2a", "f(x) = ax²+bx+c", "y = mx + c"],
@@ -150,8 +142,6 @@ MOTIF_ITEMS = _pick_motif_set()
 
 
 def draw_feature_icon(draw, kind, cx, cy, r):
-    """Small drawn icon — reliable on every system, unlike emoji glyphs
-    which many fonts (including Montserrat) don't include at all."""
     if kind == "target":
         draw.ellipse([cx-r, cy-r, cx+r, cy+r], outline=GOLD, width=6)
         draw.ellipse([cx-r*0.55, cy-r*0.55, cx+r*0.55, cy+r*0.55], outline=GOLD, width=5)
@@ -203,7 +193,6 @@ def add_stars(draw, w, h, n=140, seed=_star_seed):
 
 
 def draw_math_scatter(draw, w, h, seed=_scatter_seed):
-    """Faint scattered math notation, matched to today's lesson topic."""
     rng = random.Random(seed)
     small_f = load_font(FONT_BOLD, 46)
     for item in MOTIF_ITEMS:
@@ -246,8 +235,6 @@ def draw_rounded_rect(draw, x1, y1, x2, y2, radius, fill=None, outline=None, out
 
 
 def draw_torn_ribbon(draw, x1, y1, x2, y2, fill, jag=14, seed=1):
-    """A rectangle with a jagged (torn-cloth) right edge, matching the
-    reference image's DAY badge and headline strip treatment."""
     rng = random.Random(seed)
     pts = [(x1, y1)]
     steps = 10
@@ -260,10 +247,6 @@ def draw_torn_ribbon(draw, x1, y1, x2, y2, fill, jag=14, seed=1):
 
 
 def draw_logo_badge(bg, cx, cy, r):
-    """Circular logo badge. Uses the real logo file if the channel has
-    uploaded one to assets/logo.png; otherwise draws a placeholder
-    monogram badge in the same position/size so the layout is correct
-    and the real logo can drop in later with zero code changes."""
     if LOGO_PATH.exists():
         try:
             logo_img = Image.open(LOGO_PATH).convert("RGBA")
@@ -275,7 +258,6 @@ def draw_logo_badge(bg, cx, cy, r):
         except Exception as e:
             print(f"      ⚠️  Could not load logo at {LOGO_PATH}: {e} — using placeholder badge.")
 
-    # ── Placeholder monogram badge (replace by adding assets/logo.png) ──
     draw = ImageDraw.Draw(bg)
     draw.ellipse([cx-r, cy-r, cx+r, cy+r], outline=GOLD, width=14, fill=(12, 6, 22))
     f_m = load_font(FONT_BLACK, int(r * 1.1))
@@ -295,13 +277,11 @@ def build_thumbnail():
     W, H = 3840, 2160
     MG   = 130
 
-    # ── 1. Gradient background ────────────────────────────────
     bg = make_gradient(W, H, NAVY1, NAVY2)
     bg_rgba = bg.convert("RGBA")
     overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     od = ImageDraw.Draw(overlay)
 
-    # Radial-ish accent glow behind the logo position (right side)
     glow_cx, glow_cy = int(W*0.74), int(H*0.5)
     for rr in range(1000, 0, -25):
         a = int(55 * (rr / 1000))
@@ -311,14 +291,12 @@ def build_thumbnail():
     bg = bg_rgba.convert("RGB")
     draw = ImageDraw.Draw(bg)
 
-    # ── 2. Stars + topic-matched math scatter ──────────────────
     add_stars(draw, W, H)
     scatter_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw_math_scatter(ImageDraw.Draw(scatter_layer), W, H)
     bg = Image.alpha_composite(bg.convert("RGBA"), scatter_layer).convert("RGB")
     draw = ImageDraw.Draw(bg)
 
-    # ── 3. Fonts ─────────────────────────────────────────────
     f_huge    = load_font(FONT_BLACK, 300)
     f_topic   = load_font(FONT_BLACK, 250)
     f_sub     = load_font(FONT_BOLD,  70)
@@ -330,7 +308,6 @@ def build_thumbnail():
     f_sticker = load_font(FONT_BLACK, 46)
     f_sticker2= load_font(FONT_BOLD,  34)
 
-    # ── 4. DAY badge — top-left, torn purple ribbon (matches ref) ──
     draw_torn_ribbon(draw, MG-20, 60, MG+520, 220, fill=ACCENT,
                      jag=18, seed=lesson_id)
     day_label = "DAY"
@@ -339,7 +316,6 @@ def build_thumbnail():
     day_num = str(lesson_id)
     draw.text((MG+40+dl_w, 88), day_num, font=f_day, fill=GOLD)
 
-    # ── 5. GRADE ribbon — top-right vertical tag ────────────────
     if GRADE_TEXT:
         grade_w, grade_h = 260, 300
         gx, gy = W - grade_w - 60, 20
@@ -354,12 +330,10 @@ def build_thumbnail():
         gnw = int(draw.textlength(GRADE_TEXT, font=f_grade_n))
         draw.text((gx + (grade_w-gnw)//2, gy+120), GRADE_TEXT, font=f_grade_n, fill=GOLD)
 
-    # ── 6. Logo badge — right side, prominent (matches ref) ─────
     logo_r = 430
     draw_logo_badge(bg, glow_cx, glow_cy, logo_r)
-    draw = ImageDraw.Draw(bg)  # bg was pasted into directly; refresh handle
+    draw = ImageDraw.Draw(bg)
 
-    # ── 7. Headline — large, bold, left-aligned (matches ref) ───
     max_tw = int(W * 0.48)
     lines = wrap_text(THUMB_ANGLE, f_topic, max_tw, draw, max_lines=2)
     ty = 300
@@ -369,7 +343,6 @@ def build_thumbnail():
                    stroke_col=(0, 0, 0))
         ty += 270
 
-    # Subtitle strip ("COMPLETE CONCEPT & EXAMPLES" style)
     sub_text = SCRIPT.get("thumbnail_subtitle", "COMPLETE CONCEPT & EXAMPLES").upper()
     sub_y = ty + 20
     sub_w = int(draw.textlength(sub_text, font=f_sub)) + 80
@@ -377,11 +350,6 @@ def build_thumbnail():
                       radius=8, fill=ACCENT)
     draw.text((MG+20, sub_y+18), sub_text, font=f_sub, fill=WHITE)
 
-    # ── 8. Feature strip — bordered box, 2-4 small feature cards ──
-    # Icons are drawn shapes, not emoji glyphs: Montserrat has no emoji
-    # coverage, so relying on emoji text silently renders nothing on
-    # most systems. A checkmark/target/pencil drawn with primitives
-    # always renders, on every machine, every time.
     features = SCRIPT.get("thumbnail_features") or [
         ("target", "VISUAL", "LEARNING"),
         ("pencil", "STEP-BY-STEP", "EXPLANATION"),
@@ -405,7 +373,6 @@ def build_thumbnail():
             draw.line([(sep_x, feat_y+20), (sep_x, feat_y+feat_h-20)],
                       fill=GOLD, width=3)
 
-    # ── 9. "NEW SERIES · DAILY VIDEOS" torn-paper sticker ────────
     sticker_w, sticker_h = 560, 190
     sx, sy = W - sticker_w - 70, H - sticker_h - 260
     rng = random.Random(lesson_id + 500)
@@ -425,7 +392,6 @@ def build_thumbnail():
                  (daily_x+28, daily_y+21)], fill=(20, 10, 34))
     draw.text((daily_x+42, daily_y), "DAILY VIDEOS", font=f_sticker2, fill=(20, 10, 34))
 
-    # ── 10. Bottom tagline banner ────────────────────────────────
     banner_h = 130
     by0 = H - banner_h
     draw.rectangle([0, by0, W, H], fill=(6, 2, 14))
@@ -438,7 +404,6 @@ def build_thumbnail():
     draw.text((tx0, by0 + 35), tagline_a, font=f_sub, fill=WHITE)
     draw.text((tx0 + ta_w, by0 + 35), tagline_b, font=f_sub, fill=GOLD)
 
-    # ── 11. Downscale 4K → 1920×1080 ────────────────────────────
     print("  🔬 Downsampling 4K → 1920×1080 (LANCZOS)...")
     final = bg.resize((1920, 1080), Image.LANCZOS)
     final.save(THUMBNAIL_PATH, format="JPEG", quality=96)
