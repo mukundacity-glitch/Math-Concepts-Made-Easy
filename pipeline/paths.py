@@ -65,6 +65,23 @@ def write_state(state: dict):
         f.write("\n")
 
 
+from datetime import date, timedelta
+
+# Publishing calendar anchor — Day 1 maps to this date. Every future
+# day's date is derived from this, never hardcoded individually.
+# 27/07/2026 is the reset/setup day only; Day 1 publishes 28/07/2026.
+START_DATE = date(2026, 7, 28)
+
+
+def get_publish_date(day_number: int) -> date:
+    """Day N -> calendar date, derived from START_DATE.
+
+    Day 1 -> START_DATE, Day 2 -> START_DATE + 1 day, and so on.
+    No individual future date is ever hardcoded.
+    """
+    return START_DATE + timedelta(days=day_number - 1)
+
+
 def get_day_number() -> int:
     env = os.environ.get("LESSON_DAY")
     if env:
