@@ -1,6 +1,8 @@
 {
-  "next_day": 1,
-  "completed": [],
+  "next_day": 2,
+  "completed": [
+    1
+  ],
   "uploaded": [],
-  "last_run": null
+  "last_run": "2026-07-31T04:17:30"
 }
