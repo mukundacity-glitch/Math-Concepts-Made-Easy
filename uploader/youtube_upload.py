@@ -91,7 +91,21 @@ def get_service():
     from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
 
-    creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
+    try:
+        creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
+    except json.JSONDecodeError as e:
+        raise SystemExit(
+            "🛑 YouTube token file is not valid JSON — the YT_TOKEN_JSON "
+            "repository secret is malformed (most likely it has extra "
+            "content pasted after the closing '}', e.g. two copies of "
+            "secrets/token.json concatenated together, or extra "
+            "whitespace/text appended).\n"
+            "   Fix: open secrets/token.json locally (created by "
+            "`python -m uploader.authorize`), copy its *exact* contents, "
+            "and replace the YT_TOKEN_JSON repository secret with that — "
+            "nothing more, nothing less.\n"
+            f"   Original error: {e}"
+        ) from e
     if creds.expired and creds.refresh_token:
         try:
             creds.refresh(Request())

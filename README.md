@@ -125,6 +125,15 @@ Once the token is fixed, run **Actions → "Publish Lesson to YouTube"**
 with that day number to post it straight from the saved render artifact
 — no need to wait for or trigger a re-render.
 
+**Upload step fails with `json.decoder.JSONDecodeError: Extra data`** —
+the `YT_TOKEN_JSON` secret isn't valid JSON, almost always because extra
+content got pasted in after the closing `}` (e.g. `secrets/token.json`
+was copied twice into the secret, or a trailing newline plus other text
+was included). Open your local `secrets/token.json` fresh, select and
+copy its exact contents, and replace the `YT_TOKEN_JSON` secret with
+that — nothing more. Same recovery path as above: fix the secret, then
+run **Actions → "Publish Lesson to YouTube"** for the affected day.
+
 ## Repo layout
 
 ```
