@@ -15,6 +15,22 @@
 #   * Real-world sentences (pizza, chocolate, money, fruit …) get a
 #     matching drawn illustration, generated dynamically from the words
 #     of the narration — no lesson-specific hard-coding.
+#   * Never a bare "?" as a stand-in visual. The opening "little mystery"
+#     hook (Scene01) and any narration matching mystery/secret/unknown
+#     picks from MYSTERY_VARIANTS (treasure chest, magnifying glass,
+#     puzzle, lightbulb, brain+gears, door, detective board …) keyed off
+#     LESSON_ID, so the same animation never repeats on back-to-back
+#     days. Add new variants to that list rather than reusing one.
+#   * The background (grid + floating dots) is tinted per day via
+#     DAY_ACCENT/DAY_ACCENTS in setup_bg — every video gets a distinct
+#     ambient theme without touching the fixed semantic foreground
+#     palette (C_SEM_* — blue=definition, gold=key idea, etc. must stay
+#     constant so students build that association over lessons).
+#   * Geometric shapes named in narration (square, rectangle, triangle,
+#     circle) are drawn live via viz_square/viz_rectangle/viz_triangle/
+#     viz_circle_shape with every known side labeled with its real unit,
+#     and Scene02_Hook uses Create() (stroke-by-stroke) instead of
+#     FadeIn for any visual tagged `_geom_draw = True`.
 # ==========================================
 
 import sys, json, subprocess, shutil, os
@@ -159,6 +175,29 @@ C_SEM_FORMULA = C_CYAN
 CHANNEL = "Math Concept Made Easy"
 TAGLINE = "LEARN  •  PRACTICE  •  MASTER"
 FONT    = "DejaVu Sans"   # present on every CI runner, full unicode math
+
+# Per-day background theme — the semantic palette above (blue=definition,
+# gold=key idea, etc.) is deliberately FIXED for foreground/text elements
+# so students build the color↔meaning association lesson after lesson.
+# The ambient background (grid, floating dots, gradient tint) is not part
+# of that system, so it rotates by day instead, otherwise every video
+# renders a byte-identical backdrop (same seed, same hue, forever).
+DAY_ACCENTS = [C_BLUE_L, C_CYAN, C_PURPLE, C_ORANGE, C_GGREEN, "#EC4899", "#6366F1", C_GOLD]
+DAY_ACCENT  = DAY_ACCENTS[(LESSON_ID - 1) % len(DAY_ACCENTS)]
+
+
+def _blend_hex(h1, h2, t):
+    """Blend hex color h1 → h2 by fraction t (0 = h1, 1 = h2)."""
+    h1, h2 = h1.lstrip("#"), h2.lstrip("#")
+    r1, g1, b1 = int(h1[0:2], 16), int(h1[2:4], 16), int(h1[4:6], 16)
+    r2, g2, b2 = int(h2[0:2], 16), int(h2[2:4], 16), int(h2[4:6], 16)
+    r = round(r1 + (r2 - r1) * t)
+    g = round(g1 + (g2 - g1) * t)
+    b = round(b1 + (b2 - b1) * t)
+    return f"#{r:02X}{g:02X}{b:02X}"
+
+
+C_NAVY2_TINT = _blend_hex(C_NAVY2, DAY_ACCENT, 0.22)
 
 config.background_color = C_NAVY1
 
@@ -536,7 +575,8 @@ def viz_fraction_pie(p, q, r=1.0, label=True):
 
 
 def viz_mystery_box(symbol=None):
-    """Glowing mystery box with a '?' — the face of every unknown."""
+    """Glowing mystery box with a '?' — one of several 'unknown' visuals
+    (see MYSTERY_VARIANTS below); kept as the classic option."""
     box = RoundedRectangle(
         width=1.8, height=1.5, corner_radius=0.16,
         fill_color=mc(C_CBG), fill_opacity=1.0,
@@ -553,6 +593,200 @@ def viz_mystery_box(symbol=None):
         lab.next_to(box, DOWN, buff=0.26)
         g.add(lab)
     return g
+
+
+def viz_mystery_treasure(symbol=None):
+    """A locked treasure chest — an unknown worth digging for."""
+    lid = RoundedRectangle(width=2.0, height=0.55, corner_radius=0.18,
+                           fill_color=mc("#92400E"), fill_opacity=1.0,
+                           stroke_color=mc(C_GOLD), stroke_width=3)
+    lid.move_to(np.array([0.0, 0.42, 0]))
+    body = RoundedRectangle(width=2.0, height=0.95, corner_radius=0.10,
+                            fill_color=mc("#7C4A12"), fill_opacity=1.0,
+                            stroke_color=mc(C_GOLD), stroke_width=3)
+    body.move_to(np.array([0.0, -0.28, 0]))
+    band = Rectangle(width=0.20, height=1.5, fill_color=mc(C_GOLD),
+                     fill_opacity=1.0, stroke_width=0)
+    band.move_to(np.array([0.0, 0.05, 0]))
+    lock = RoundedRectangle(width=0.44, height=0.36, corner_radius=0.06,
+                            fill_color=mc(C_GOLD), fill_opacity=1.0, stroke_width=0)
+    lock.move_to(np.array([0.0, 0.08, 0]))
+    q = TXT("?", size=24, color=C_NAVY1, bold=True)
+    q.move_to(lock.get_center())
+    glow = RoundedRectangle(width=2.5, height=2.0, corner_radius=0.30,
+                            fill_color=mc(C_GOLD), fill_opacity=0.12, stroke_width=0)
+    glow.move_to(np.array([0.0, 0.05, 0]))
+    g = VGroup(glow, body, band, lid, lock, q)
+    if symbol:
+        lab = TXT(str(symbol), size=28, color=C_CYAN, bold=True)
+        lab.next_to(g, DOWN, buff=0.28)
+        g.add(lab)
+    return g
+
+
+def viz_mystery_magnifier(symbol=None):
+    """A magnifying glass zooming in on the unknown."""
+    lens = Circle(radius=0.62, fill_color=mc(C_CBG), fill_opacity=0.85,
+                  stroke_color=mc(C_CYAN), stroke_width=6)
+    lens.move_to(np.array([-0.15, 0.25, 0]))
+    handle = Line(lens.get_center() + np.array([0.46, -0.46, 0]),
+                  lens.get_center() + np.array([1.05, -1.05, 0]),
+                  stroke_color=mc(C_CYAN), stroke_width=10)
+    glow = Circle(radius=0.80, fill_color=mc(C_CYAN), fill_opacity=0.10,
+                 stroke_width=0)
+    glow.move_to(lens.get_center())
+    q = TXT("?", size=46, color=C_SEM_KEY, bold=True)
+    q.move_to(lens.get_center())
+    g = VGroup(glow, lens, q, handle)
+    if symbol:
+        lab = TXT(str(symbol), size=28, color=C_CYAN, bold=True)
+        lab.next_to(g, DOWN, buff=0.30)
+        g.add(lab)
+    return g
+
+
+def viz_mystery_puzzle(symbol=None):
+    """Four puzzle pieces gathering around the unsolved question."""
+    colors = [C_BLUE_L, C_ORANGE, C_GGREEN, C_PURPLE]
+    offsets = [(-0.55, 0.42), (0.55, 0.42), (-0.55, -0.42), (0.55, -0.42)]
+    pieces = VGroup()
+    for (dx, dy), col in zip(offsets, colors):
+        p = RoundedRectangle(width=0.85, height=0.85, corner_radius=0.14,
+                             fill_color=mc(col), fill_opacity=0.85,
+                             stroke_color=mc(C_WHITE), stroke_width=2)
+        p.move_to(np.array([dx, dy, 0]))
+        p.rotate(math.radians(6 if dx * dy > 0 else -6))
+        pieces.add(p)
+    q = TXT("?", size=44, color=C_NAVY1, bold=True)
+    q.move_to(ORIGIN)
+    g = VGroup(pieces, q)
+    if symbol:
+        lab = TXT(str(symbol), size=28, color=C_CYAN, bold=True)
+        lab.next_to(g, DOWN, buff=0.32)
+        g.add(lab)
+    return g
+
+
+def viz_mystery_lightbulb(symbol=None):
+    """A lightbulb moment — the unknown about to click into place."""
+    bulb = Circle(radius=0.58, fill_color=mc(C_GOLD), fill_opacity=0.22,
+                  stroke_color=mc(C_GOLD), stroke_width=4)
+    bulb.move_to(np.array([0.0, 0.35, 0]))
+    base = RoundedRectangle(width=0.42, height=0.30, corner_radius=0.05,
+                            fill_color=mc(C_LGRAY), fill_opacity=1.0, stroke_width=0)
+    base.move_to(bulb.get_bottom() + DOWN * 0.12)
+    rays = VGroup()
+    for ang in range(0, 360, 45):
+        rad = math.radians(ang)
+        direction = np.array([math.cos(rad), math.sin(rad), 0])
+        ln = Line(bulb.get_center() + 0.72 * direction,
+                  bulb.get_center() + 0.95 * direction,
+                  stroke_color=mc(C_GOLD), stroke_width=3)
+        rays.add(ln)
+    q = TXT("?", size=34, color=C_GOLD, bold=True)
+    q.move_to(bulb.get_center())
+    g = VGroup(rays, bulb, base, q)
+    if symbol:
+        lab = TXT(str(symbol), size=28, color=C_CYAN, bold=True)
+        lab.next_to(g, DOWN, buff=0.30)
+        g.add(lab)
+    return g
+
+
+def viz_mystery_brain(symbol=None):
+    """A thinking brain, gears turning on the unsolved question."""
+    lobes = [(-0.32, 0.20), (0.32, 0.20), (0.0, 0.42),
+             (-0.20, -0.10), (0.20, -0.10)]
+    blob = VGroup(*[
+        Circle(radius=0.42, fill_color=mc(C_PURPLE), fill_opacity=0.85,
+              stroke_width=0).move_to(np.array([dx, dy, 0]))
+        for dx, dy in lobes
+    ])
+    outline = Circle(radius=0.78, fill_opacity=0.0,
+                     stroke_color=mc(C_PURPLE), stroke_width=3)
+    gears = VGroup()
+    for dx, dy, r in [(0.55, 0.55, 0.20), (0.82, 0.28, 0.13)]:
+        gear = Star(n=8, outer_radius=r, inner_radius=r * 0.65,
+                   fill_color=mc(C_CYAN), fill_opacity=1.0, stroke_width=0)
+        gear.move_to(np.array([dx, dy, 0]))
+        gears.add(gear)
+    q = TXT("?", size=30, color=C_WHITE, bold=True)
+    q.move_to(ORIGIN)
+    g = VGroup(blob, outline, q, gears)
+    if symbol:
+        lab = TXT(str(symbol), size=28, color=C_CYAN, bold=True)
+        lab.next_to(g, DOWN, buff=0.34)
+        g.add(lab)
+    return g
+
+
+def viz_mystery_door(symbol=None):
+    """A door not yet opened."""
+    door = RoundedRectangle(width=1.15, height=1.9, corner_radius=0.10,
+                            fill_color=mc("#1E293B"), fill_opacity=1.0,
+                            stroke_color=mc(C_GOLD), stroke_width=3.5)
+    panel = RoundedRectangle(width=0.85, height=0.75, corner_radius=0.08,
+                             fill_color=mc(C_CBG), fill_opacity=1.0,
+                             stroke_color=mc(C_GOLD), stroke_width=1.5)
+    panel.move_to(door.get_center() + UP * 0.42)
+    knob = Dot(point=door.get_center() + np.array([0.38, -0.15, 0]),
+              radius=0.08, color=mc(C_GOLD))
+    keyhole = TXT("?", size=30, color=C_SEM_KEY, bold=True)
+    keyhole.move_to(door.get_center() + DOWN * 0.35)
+    glow = RoundedRectangle(width=1.5, height=2.3, corner_radius=0.20,
+                            fill_color=mc(C_GOLD), fill_opacity=0.12, stroke_width=0)
+    glow.move_to(door.get_center())
+    g = VGroup(glow, door, panel, knob, keyhole)
+    if symbol:
+        lab = TXT(str(symbol), size=28, color=C_CYAN, bold=True)
+        lab.next_to(g, DOWN, buff=0.30)
+        g.add(lab)
+    return g
+
+
+def viz_mystery_detective(symbol=None):
+    """A detective board, clues strung together toward the unknown."""
+    board = RoundedRectangle(width=2.2, height=1.6, corner_radius=0.10,
+                             fill_color=mc("#5B3610"), fill_opacity=1.0,
+                             stroke_color=mc(C_GOLD), stroke_width=2.5)
+    positions = [(-0.75, 0.45), (0.70, 0.35), (-0.55, -0.45), (0.60, -0.40)]
+    center_pos = np.array([0.0, 0.0, 0])
+    pins = [Dot(point=np.array([x, y, 0]), radius=0.06, color=mc(C_RRED))
+            for x, y in positions]
+    center_pin = Dot(point=center_pos, radius=0.06, color=mc(C_RRED))
+    strings = VGroup(*[Line(p.get_center(), center_pin.get_center(),
+                            stroke_color=mc(C_RRED), stroke_width=1.5)
+                       for p in pins])
+    q = TXT("?", size=26, color=C_GOLD, bold=True)
+    q.move_to(center_pos + UP * 0.28)
+    g = VGroup(board, strings, VGroup(*pins), center_pin, q)
+    if symbol:
+        lab = TXT(str(symbol), size=28, color=C_CYAN, bold=True)
+        lab.next_to(g, DOWN, buff=0.30)
+        g.add(lab)
+    return g
+
+
+# Every video's curiosity/mystery moment picks from this list by day,
+# so the "little mystery before we start" hook is never the same
+# animation twice in a row (see GLOBAL QUALITY RULES in the module
+# docstring above: never reuse the same mystery animation).
+MYSTERY_VARIANTS = [
+    viz_mystery_box,
+    viz_mystery_treasure,
+    viz_mystery_magnifier,
+    viz_mystery_puzzle,
+    viz_mystery_lightbulb,
+    viz_mystery_brain,
+    viz_mystery_door,
+    viz_mystery_detective,
+]
+
+
+def viz_mystery_reveal(symbol=None):
+    """This video's mystery/hook visual, chosen by lesson day."""
+    fn = MYSTERY_VARIANTS[(LESSON_ID - 1) % len(MYSTERY_VARIANTS)]
+    return fn(symbol)
 
 
 def viz_thermometer(temps=None):
@@ -687,6 +921,99 @@ def viz_number_line(values, x_min=None, x_max=None):
     return g
 
 
+# ── Geometric shapes — drawn live with labeled sides whenever the
+# narration names one (e.g. "draw a square 1 meter by 1 meter"). Each
+# returned VGroup is tagged `_geom_draw = True` so the calling scene can
+# Create() it stroke-by-stroke instead of just fading it in.
+# ═════════════════════════════════════════════════════════════
+
+def _labeled_side(p1, p2, label, color=None):
+    """A line segment with its length labelled just outside the midpoint."""
+    ln = Line(p1, p2, stroke_color=mc(color or C_GOLD), stroke_width=5)
+    mid = (np.array(p1) + np.array(p2)) / 2
+    normal = np.array([-(p2[1] - p1[1]), p2[0] - p1[0], 0.0])
+    n_len = np.linalg.norm(normal)
+    normal = normal / n_len if n_len > 1e-6 else np.array([0.0, -1.0, 0.0])
+    lab = TXT(str(label), size=22, color=C_WHITE, bold=True)
+    lab.move_to(mid + normal * 0.32)
+    return VGroup(ln, lab)
+
+
+def viz_square(side=1, unit="m"):
+    """A square, drawn live with every side labeled."""
+    side = max(0.5, min(float(side), 6.0))
+    s = min(1.6, 0.7 + side * 0.15)
+    hs = s / 2
+    corners = [np.array([-hs, -hs, 0]), np.array([hs, -hs, 0]),
+               np.array([hs, hs, 0]), np.array([-hs, hs, 0])]
+    lbl = f"{side:g} {unit}"
+    sides = VGroup(*[_labeled_side(corners[i], corners[(i + 1) % 4], lbl)
+                     for i in range(4)])
+    fill = Square(side_length=s, fill_color=mc(C_SEM_DEF),
+                 fill_opacity=0.10, stroke_width=0)
+    g = VGroup(fill, sides)
+    g._geom_draw = True
+    return g
+
+
+def viz_rectangle(w=2, h=1, unit="m"):
+    """A rectangle, drawn live with every side labeled."""
+    w = max(0.5, min(float(w), 8.0))
+    h = max(0.5, min(float(h), 8.0))
+    sw = min(3.4, 0.7 + w * 0.35)
+    sh = min(2.4, 0.7 + h * 0.35)
+    hw, hh = sw / 2, sh / 2
+    corners = [np.array([-hw, -hh, 0]), np.array([hw, -hh, 0]),
+               np.array([hw, hh, 0]), np.array([-hw, hh, 0])]
+    labels = [f"{w:g} {unit}", f"{h:g} {unit}", f"{w:g} {unit}", f"{h:g} {unit}"]
+    sides = VGroup(*[_labeled_side(corners[i], corners[(i + 1) % 4], labels[i])
+                     for i in range(4)])
+    fill = Rectangle(width=sw, height=sh, fill_color=mc(C_SEM_DEF),
+                     fill_opacity=0.10, stroke_width=0)
+    g = VGroup(fill, sides)
+    g._geom_draw = True
+    return g
+
+
+def viz_triangle(base=2, height=1.5, unit="m"):
+    """A triangle, drawn live: base labeled with its length, height shown
+    as a dashed altitude — never a bare '?' for a side we don't know."""
+    base = max(0.5, min(float(base), 8.0))
+    height = max(0.5, min(float(height), 8.0))
+    sb = min(3.2, 0.7 + base * 0.30)
+    sh = min(2.6, 0.7 + height * 0.30)
+    p1 = np.array([-sb / 2, -sh / 2, 0])
+    p2 = np.array([sb / 2, -sh / 2, 0])
+    p3 = np.array([0.0, sh / 2, 0])
+    base_side = _labeled_side(p1, p2, f"{base:g} {unit}")
+    left_side = Line(p1, p3, stroke_color=mc(C_GOLD), stroke_width=5)
+    right_side = Line(p2, p3, stroke_color=mc(C_GOLD), stroke_width=5)
+    altitude = DashedLine(np.array([0.0, -sh / 2, 0]), p3,
+                          stroke_color=mc(C_CYAN), stroke_width=3)
+    alt_lab = TXT(f"h = {height:g} {unit}", size=20, color=C_CYAN, bold=True)
+    alt_lab.next_to(altitude, RIGHT, buff=0.12)
+    fill = Polygon(p1, p2, p3, fill_color=mc(C_SEM_DEF), fill_opacity=0.10,
+                  stroke_width=0)
+    g = VGroup(fill, base_side, left_side, right_side, altitude, alt_lab)
+    g._geom_draw = True
+    return g
+
+
+def viz_circle_shape(r=1, unit="m"):
+    """A circle, drawn live with its radius labeled."""
+    r = max(0.5, min(float(r), 6.0))
+    sr = min(1.5, 0.5 + r * 0.25)
+    circ = Circle(radius=sr, fill_color=mc(C_SEM_DEF), fill_opacity=0.10,
+                 stroke_color=mc(C_GOLD), stroke_width=5)
+    radius_line = Line(ORIGIN, np.array([sr, 0.0, 0.0]),
+                       stroke_color=mc(C_GOLD), stroke_width=5)
+    lab = TXT(f"r = {r:g} {unit}", size=22, color=C_WHITE, bold=True)
+    lab.next_to(radius_line, DOWN, buff=0.12)
+    g = VGroup(circ, radius_line, lab)
+    g._geom_draw = True
+    return g
+
+
 # ── Dispatcher: sentence → matching illustration ──────────────
 
 _FRAC_WORD_RE = re.compile(r"(\d+)\s*(?:over|/)\s*(\d+)")
@@ -694,6 +1021,12 @@ _INTO_RE      = re.compile(r"into\s+(\d+)")
 _TAKE_RE      = re.compile(r"(?:eat|ate|take|took|use|used|shade|remove|colou?r)\s+(\d+)")
 _COUNT_RE     = re.compile(r"(\d+)\s+(pizzas?|chocolates?|apples?|oranges?|mangoes|fruits?|coins?|dollars?|rupees?|cookies?|slices?|pieces?|people|friends?|students?)")
 _AMONG_RE     = re.compile(r"(?:among|between)\s+(\d+)")
+_UNIT_RE      = re.compile(r"\b(centimeters?|cm|kilometers?|km|meters?|m|feet|ft|units?)\b")
+
+
+def _first_unit(s):
+    m = _UNIT_RE.search(s)
+    return m.group(1) if m else "units"
 
 
 def story_visual(sentence):
@@ -736,7 +1069,19 @@ def story_visual(sentence):
                                 "chooses a number", "choose a number",
                                 "hidden", "guess my number")):
             m_sym = re.search(r"call (?:it|this) ([a-z])\b", s)
-            return viz_mystery_box(m_sym.group(1) if m_sym else None)
+            return viz_mystery_reveal(m_sym.group(1) if m_sym else None)
+        if "square" in s and ("side" in s or "meter" in s or "metre" in s or
+                              "cm" in s or "centimet" in s or "unit" in s or
+                              ints):
+            return viz_square(ints[0] if ints else 1, _first_unit(s))
+        if "rectangle" in s and len(ints) >= 2:
+            return viz_rectangle(ints[0], ints[1], _first_unit(s))
+        if "triangle" in s:
+            b = ints[0] if ints else 2
+            h = ints[1] if len(ints) > 1 else max(1, round(b * 0.75))
+            return viz_triangle(b, h, _first_unit(s))
+        if "circle" in s and ("radius" in s or "diameter" in s or ints):
+            return viz_circle_shape(ints[0] if ints else 1, _first_unit(s))
         if "number line" in s and p is not None:
             return viz_number_line([p / q if q else p])
         if ("share" in s or "divid" in s) and n_among:
@@ -767,12 +1112,14 @@ def fractions_in(texts):
 # ═════════════════════════════════════════════════════════════
 
 def setup_bg(scene_obj):
-    """Dark navy background + 4%-opacity grid + tiny floating accent dots."""
+    """Dark navy background + faint grid + floating accent dots, tinted
+    and re-seeded per DAY_ACCENT/LESSON_ID so consecutive videos don't
+    share an identical backdrop (foreground/text colors are untouched)."""
     scene_obj.camera.background_color = mc(C_NAVY1)
 
     bg = Rectangle(
         width=FW + 1.0, height=FH + 1.0,
-        fill_color=[mc(C_NAVY1), mc(C_NAVY2)],
+        fill_color=[mc(C_NAVY1), mc(C_NAVY2_TINT)],
         fill_opacity=1.0,
         stroke_width=0,
     )
@@ -782,24 +1129,24 @@ def setup_bg(scene_obj):
     grid = VGroup()
     for x in np.arange(-7.0, 7.5, 1.5):
         ln = Line(np.array([x, -4.2, 0]), np.array([x, 4.2, 0]),
-                  stroke_width=0.5, color=mc(C_BLUE_L))
+                  stroke_width=0.5, color=mc(DAY_ACCENT))
         ln.set_stroke(opacity=0.04)
         grid.add(ln)
     for y in np.arange(-4.0, 4.5, 1.0):
         ln = Line(np.array([-7.3, y, 0]), np.array([7.3, y, 0]),
-                  stroke_width=0.5, color=mc(C_BLUE_L))
+                  stroke_width=0.5, color=mc(DAY_ACCENT))
         ln.set_stroke(opacity=0.04)
         grid.add(ln)
     grid.set_z_index(-190)
     scene_obj.add(grid)
 
-    rng = random.Random(99)
+    rng = random.Random(1000 + LESSON_ID)
     for _ in range(20):
         x   = rng.uniform(-6.9, 6.9)
         y   = rng.uniform(-3.9, 3.9)
         dot = Dot(point=np.array([x, y, 0]),
                   radius=rng.uniform(0.018, 0.055),
-                  color=mc(C_BLUE_L),
+                  color=mc(DAY_ACCENT),
                   fill_opacity=rng.uniform(0.05, 0.16))
         dot.set_z_index(-180)
         scene_obj.add(dot)
@@ -1076,7 +1423,7 @@ class Scene01_Opening(MovingCameraScene):
         # The curiosity question is the 2nd narration beat (after
         # "Here is a little mystery before we start.").
         curiosity = beats[1] if len(beats) > 1 else ""
-        mystery = viz_mystery_box()
+        mystery = viz_mystery_reveal()
         mystery.move_to(np.array([0.0, 1.05, 0]))
         q_txt = TXT(curiosity, size=30, color=C_WHITE, bold=True,
                     wrap=50, max_w=11.0)
@@ -1196,7 +1543,12 @@ class Scene02_Hook(Scene):
                     anims.append(v.animate.become(tgt))
                 vis.move_to(targets[-1].get_center())
                 vis.scale(targets[-1].width / max(vis.width, 1e-6))
-                anims.append(FadeIn(vis, scale=0.7))
+                # Shapes named in the narration (square, triangle …) get
+                # drawn stroke-by-stroke instead of just fading in.
+                if getattr(vis, "_geom_draw", False):
+                    anims.append(Create(vis))
+                else:
+                    anims.append(FadeIn(vis, scale=0.7))
                 self.play(*anims, run_time=0.7)
             set_caption(beat)
 
