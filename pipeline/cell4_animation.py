@@ -27,10 +27,27 @@
 #     palette (C_SEM_* — blue=definition, gold=key idea, etc. must stay
 #     constant so students build that association over lessons).
 #   * Geometric shapes named in narration (square, rectangle, triangle,
-#     circle) are drawn live via viz_square/viz_rectangle/viz_triangle/
-#     viz_circle_shape with every known side labeled with its real unit,
-#     and Scene02_Hook uses Create() (stroke-by-stroke) instead of
-#     FadeIn for any visual tagged `_geom_draw = True`.
+#     circle, angle, graph, area, perimeter) are drawn live via the
+#     viz_square/viz_rectangle/viz_triangle/viz_circle_shape/viz_graph/
+#     viz_angle/viz_area/viz_perimeter builders, each side/measure
+#     labeled with its real unit, and Scene02_Hook uses Create()
+#     (stroke-by-stroke) instead of FadeIn for anything tagged
+#     `_geom_draw = True`.
+#   * story_visual(sentence) matches the beat's own words first. When a
+#     beat names nothing drawable, visual_for_beat(beat, hint_sentences)
+#     falls back to the lesson's own author-written `visual_hints` field
+#     (curriculum/*.json — stage directions like "Hook: show a pizza
+#     divided into 4… Number line: plot these points… Box the rule in
+#     red.") via a stemmed bag-of-words match — see hint_sentences_for()
+#     and _best_hint_sentence(). This is curriculum-driven visual
+#     selection, not natural-language understanding: it can only pick
+#     among the illustrations story_visual() already knows how to draw,
+#     and a beat with no lexical overlap to anything still falls through
+#     to no visual. Scene02_Hook and Scene03_Concept use this path;
+#     extend other scenes' beat loops the same way if they grow one.
+#   * Crossfade *type* between scenes (pipeline/cell5_assembly.py,
+#     XFADE_STYLES) also rotates by day, so consecutive videos don't all
+#     cut the same way either.
 # ==========================================
 
 import sys, json, subprocess, shutil, os
@@ -1014,6 +1031,87 @@ def viz_circle_shape(r=1, unit="m"):
     return g
 
 
+def viz_graph():
+    """A coordinate-plane graph — animated axes with a plotted curve."""
+    x_axis = Arrow(LEFT * 1.6, RIGHT * 1.6, buff=0, stroke_width=3,
+                   color=mc(C_LGRAY))
+    y_axis = Arrow(DOWN * 1.3, UP * 1.3, buff=0, stroke_width=3,
+                   color=mc(C_LGRAY))
+    x_lab = TXT("x", size=20, color=C_LGRAY)
+    x_lab.next_to(x_axis, RIGHT, buff=0.08)
+    y_lab = TXT("y", size=20, color=C_LGRAY)
+    y_lab.next_to(y_axis, UP, buff=0.08)
+    pts = [np.array([x, 0.5 * x, 0]) for x in np.linspace(-1.4, 1.4, 12)]
+    curve = VMobject(stroke_color=mc(C_CYAN), stroke_width=4)
+    curve.set_points_smoothly(pts)
+    dots = VGroup(*[Dot(p, radius=0.045, color=mc(C_GOLD)) for p in pts[::3]])
+    g = VGroup(x_axis, y_axis, x_lab, y_lab, curve, dots)
+    g._geom_draw = True
+    return g
+
+
+def viz_angle(deg=60):
+    """An angle, drawn live between two rays with its measure labeled."""
+    deg = max(10.0, min(float(deg), 170.0))
+    rad = math.radians(deg)
+    ray1 = Line(ORIGIN, RIGHT * 1.4, stroke_color=mc(C_GOLD), stroke_width=5)
+    ray2 = Line(ORIGIN, np.array([1.4 * math.cos(rad), 1.4 * math.sin(rad), 0]),
+               stroke_color=mc(C_GOLD), stroke_width=5)
+    arc = Arc(radius=0.45, start_angle=0, angle=rad, color=mc(C_CYAN),
+             stroke_width=3)
+    lab = TXT(f"{int(round(deg))}°", size=24, color=C_CYAN, bold=True)
+    mid = rad / 2
+    lab.move_to(0.75 * np.array([math.cos(mid), math.sin(mid), 0]))
+    g = VGroup(ray1, ray2, arc, lab)
+    g._geom_draw = True
+    return g
+
+
+def viz_area(w=2, h=1, unit="m"):
+    """A rectangle with its interior filled in, to show area."""
+    w = max(0.5, min(float(w), 6.0))
+    h = max(0.5, min(float(h), 6.0))
+    sw = min(2.6, 0.7 + w * 0.30)
+    sh = min(2.0, 0.7 + h * 0.30)
+    rect = Rectangle(width=sw, height=sh, stroke_color=mc(C_GOLD),
+                     stroke_width=4, fill_color=mc(C_SEM_DEF),
+                     fill_opacity=0.55)
+    lab = TXT(f"Area = {w:g} × {h:g} {unit}²", size=20, color=C_WHITE,
+              bold=True)
+    lab.next_to(rect, DOWN, buff=0.22)
+    g = VGroup(rect, lab)
+    g._geom_draw = True
+    return g
+
+
+def viz_perimeter(w=2, h=1, unit="m"):
+    """A rectangle with only its boundary highlighted, to show perimeter."""
+    w = max(0.5, min(float(w), 6.0))
+    h = max(0.5, min(float(h), 6.0))
+    sw = min(2.6, 0.7 + w * 0.30)
+    sh = min(2.0, 0.7 + h * 0.30)
+    rect = Rectangle(width=sw, height=sh, stroke_color=mc(C_GOLD),
+                     stroke_width=7, fill_opacity=0.0)
+    total = 2 * (w + h)
+    lab = TXT(f"Perimeter = {total:g} {unit}", size=20, color=C_GOLD,
+              bold=True)
+    lab.next_to(rect, DOWN, buff=0.22)
+    g = VGroup(rect, lab)
+    g._geom_draw = True
+    return g
+
+
+def viz_callout(text, color=None):
+    """A highlighted callout box around a short rule/warning phrase —
+    used instead of narrating a rule with no matching visual."""
+    col = color or C_RRED
+    txt = TXT(str(text), size=26, color=C_WHITE, bold=True, wrap=30,
+              max_w=4.6)
+    box = SurroundingRectangle(txt, color=mc(col), stroke_width=4,
+                               buff=0.28, corner_radius=0.14)
+    return VGroup(box, txt)
+
+
 # ── Dispatcher: sentence → matching illustration ──────────────
 
 _FRAC_WORD_RE = re.compile(r"(\d+)\s*(?:over|/)\s*(\d+)")
@@ -1070,6 +1168,19 @@ def story_visual(sentence):
                                 "hidden", "guess my number")):
             m_sym = re.search(r"call (?:it|this) ([a-z])\b", s)
             return viz_mystery_reveal(m_sym.group(1) if m_sym else None)
+        if "area" in s:
+            w = ints[0] if ints else 2
+            h = ints[1] if len(ints) > 1 else w
+            return viz_area(w, h, _first_unit(s))
+        if "perimeter" in s:
+            w = ints[0] if ints else 2
+            h = ints[1] if len(ints) > 1 else w
+            return viz_perimeter(w, h, _first_unit(s))
+        if any(k in s for k in ("graph", "coordinate plane", "plot the",
+                                "x-axis", "y-axis")):
+            return viz_graph()
+        if "angle" in s:
+            return viz_angle(ints[0] if ints else 60)
         if "square" in s and ("side" in s or "meter" in s or "metre" in s or
                               "cm" in s or "centimet" in s or "unit" in s or
                               ints):
@@ -1094,6 +1205,67 @@ def story_visual(sentence):
     except Exception:
         return None
     return None
+
+
+# ── visual_hints bridge ─────────────────────────────────────────
+# Every lesson in curriculum/*.json already carries a human-written
+# `visual_hints` field — e.g. "Hook: show a pizza divided into 4,
+# highlight 3. Number line: plot these points. Box the 'q ≠ 0' rule
+# in red." — describing exactly what to draw, in order. Cell 1/2
+# already thread it into the timed script as SCRIPT_DATA["visual_hints"],
+# but until now nothing in Cell 4 ever read it back out: every visual
+# was guessed from the narration surface words alone. visual_for_beat()
+# uses it as a fallback so the curriculum author's own intent — not just
+# a keyword guess — decides what appears on screen.
+
+_STOPWORDS = frozenset("""
+the a an is are was were be been being to of in on at for with and or but
+this that these those it its he she they we you your our their his her
+show shows showing draw drawing drawn then now here there so as by from
+""".split())
+
+
+def hint_sentences_for(script_data):
+    """Split this lesson's author-written visual_hints into sentences."""
+    text = str(script_data.get("visual_hints", ""))
+    return [x.strip() for x in re.split(r"(?<=[.!?])\s+", text) if x.strip()]
+
+
+def _stem(word):
+    """Crude plural/suffix trim so 'numbers' matches 'number' — good
+    enough for a bag-of-words overlap score, not a real stemmer."""
+    for suf in ("ing", "es", "ed", "s"):
+        if len(word) > len(suf) + 3 and word.endswith(suf):
+            return word[: -len(suf)]
+    return word
+
+
+def _best_hint_sentence(beat, hint_sentences):
+    """The visual_hints sentence sharing the most significant words with
+    this narration beat (simple stemmed bag-of-words overlap)."""
+    beat_words = {_stem(w) for w in re.findall(r"[a-z]+", str(beat).lower())
+                  if w not in _STOPWORDS}
+    if not beat_words:
+        return None
+    best, best_score = None, 0
+    for hs in hint_sentences:
+        hs_words = {_stem(w) for w in re.findall(r"[a-z]+", hs.lower())
+                    if w not in _STOPWORDS}
+        score = len(beat_words & hs_words)
+        if score > best_score:
+            best, best_score = hs, score
+    return best
+
+
+def visual_for_beat(beat, hint_sentences):
+    """The illustration for one narration beat: the beat's own words
+    first; if those name nothing drawable, fall back to whichever
+    visual_hints sentence overlaps it most."""
+    vis = story_visual(beat)
+    if vis is not None:
+        return vis
+    hint = _best_hint_sentence(beat, hint_sentences)
+    return story_visual(hint) if hint else None
 
 
 def fractions_in(texts):
@@ -1492,6 +1664,7 @@ class Scene02_Hook(Scene):
         self.add(make_header(lesson_title, LESSON_ID), make_footer("hook"))
 
         beats = sd.get("narration_beats") or split_sentences(sd.get("narration", ""))
+        hint_sentences = hint_sentences_for(SCRIPT_DATA)
 
         pill = section_pill("SEEN IN REAL LIFE", C_ORANGE, size=24)
         pill.move_to(np.array([0.0, CONTENT_TOP - 0.42, 0]))
@@ -1524,7 +1697,7 @@ class Scene02_Hook(Scene):
         for beat in beats:
             t = nar.when_spoken(beat)
             wait_until(self, t, lead=0.35)
-            vis = story_visual(beat)
+            vis = visual_for_beat(beat, hint_sentences)
             if vis is not None:
                 if vis.height > 3.1:
                     vis.scale_to_fit_height(3.1)
@@ -1602,12 +1775,13 @@ class Scene03_Concept(Scene):
                        board_plain.get("practice", []))
         vals = fractions_in(all_lines)
 
+        hint_sentences = hint_sentences_for(SCRIPT_DATA)
         vis = None
         if vals:
             vis = viz_number_line(vals)
         if vis is None:
             for b in beats:
-                vis = story_visual(b)
+                vis = visual_for_beat(b, hint_sentences)
                 if vis is not None:
                     break
         if vis is None:
