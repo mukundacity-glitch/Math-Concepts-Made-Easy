@@ -25,13 +25,16 @@ pipeline/cell4_animation.py Manim renders each scene (board-write style)
 pipeline/cell5_assembly.py mux + 0.3s crossfades → final MP4
 pipeline/cell8_subtitles.py SRT + VTT captions from the word timings
 pipeline/cell6_thumbnail.py cinematic 4K-supersampled thumbnail
-pipeline/cell7_shorts.py   3 vertical Shorts per day (exact 1080x1920,
-                           letterboxed — never cropped): HOOK, FORMULA, MISTAKE
+pipeline/cell7_shorts.py   2 standalone promo Shorts per day (1080x1920,
+                           45-60s): TEASE + CHALLENGE — no narration, built
+                           from curriculum text + procedurally-synthesized
+                           beat-locked music (pipeline/shorts_music.py),
+                           never cut from the long video's own footage
         │
         ▼
-uploader/youtube_upload.py posts video + all 3 Shorts, sets thumbnail,
+uploader/youtube_upload.py posts video + both Shorts, sets thumbnail,
                            captions, playlist — Shorts auto-scheduled at
-                           12:00 / 18:00 / 22:00 UTC via YouTube publishAt
+                           12:00 / 16:00 UTC via YouTube publishAt
 ```
 
 Every scene follows the fixed 9-step teaching structure (opening → hook →

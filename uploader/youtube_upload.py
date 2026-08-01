@@ -38,21 +38,18 @@ SCOPES = [
 
 CHANNEL_TAGLINE = "New math lessons every day on Math Concepts Made Easy."
 
-# 3 Shorts a day, each a different type, spread across the day so the
-# channel posts multiple times without dumping everything at once.
-# Times are UTC-of-day on the actual upload date. Order: morning teaser
-# → pre-video formula reveal (the main lesson video goes out around
-# 19:00 UTC) → evening CTA.
+# 2 standalone promo Shorts a day (produced by pipeline/cell7_shorts.py
+# — no narration, procedurally-scored, never cut from the long video),
+# both posted the same day to build anticipation before the main lesson
+# goes out (~19:00 UTC — see .github/workflows/daily-video.yml).
 SHORTS_SCHEDULE_UTC = {
-    "HOOK":    time(12, 0),
-    "FORMULA": time(18, 0),
-    "MISTAKE": time(22, 0),
+    "TEASE":     time(12, 0),
+    "CHALLENGE": time(16, 0),
 }
 
 SHORT_TYPE_META = {
-    "HOOK":    {"tag": "#DidYouKnow", "blurb": "Bet you didn't know this about"},
-    "FORMULA": {"tag": "#MathHack",   "blurb": "The one formula you need for"},
-    "MISTAKE": {"tag": "#MathMistake","blurb": "Stop making this mistake in"},
+    "TEASE":     {"tag": "#DidYouKnow",  "blurb": "Bet you didn't know this about"},
+    "CHALLENGE": {"tag": "#MathMistake", "blurb": "Would you make this mistake in"},
 }
 
 
@@ -60,7 +57,7 @@ def compute_publish_at(short_key: str) -> Optional[str]:
     """ISO 8601 UTC publishAt for a Short's scheduled slot *today* (the
     calendar day this upload actually runs on), or None if that slot has
     already passed today (upload immediately instead). Anchored to the
-    real run date rather than the lesson's nominal day number so the 3
+    real run date rather than the lesson's nominal day number so the 2
     Shorts always land spread across whichever day they're posted."""
     slot_time = SHORTS_SCHEDULE_UTC[short_key]
     now = datetime.now(timezone.utc)
