@@ -15,6 +15,22 @@
 #   * Real-world sentences (pizza, chocolate, money, fruit …) get a
 #     matching drawn illustration, generated dynamically from the words
 #     of the narration — no lesson-specific hard-coding.
+#
+# Pacing contract (enforced by the Director, see PACING in constants.py):
+#   * The screen is NEVER still while the voice is talking. Every gap
+#     longer than max_static_seconds is filled with an ambient beat —
+#     slow camera drift, a highlight on the line being discussed, a
+#     progress tick — instead of a dead wait().
+#   * Mathematics is CONSTRUCTED, not displayed: formulas are split into
+#     their natural parts and written stroke by stroke, decimals appear
+#     one digit at a time, powers expand into the multiplication they
+#     stand for. A finished formula never lands in one frame.
+#   * The camera always breathes. Even a static board gets a slow
+#     documentary drift, and the active line gets a spotlight.
+#   * What gets built is chosen from the lesson's own data by
+#     pipeline.pacing — a fraction on the board earns a long division, a
+#     power earns an expansion, a composite number earns a factor tree.
+#     No scene knows which lesson is playing.
 # ==========================================
 
 import sys, json, subprocess, shutil, os
@@ -27,6 +43,7 @@ from pathlib import Path as _Path
 REPO_ROOT = _Path(__file__).resolve().parents[1]
 _sys.path.insert(0, str(REPO_ROOT))
 from pipeline.paths import load_cell1_config
+from pipeline.constants import PACING
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 # ══════════════════════════════════════════════════════════════
@@ -92,6 +109,13 @@ from pathlib import Path
 # ── Repo imports (shared LaTeX → text/speech translation) ─────
 sys.path.insert(0, r"__REPO_ROOT__")
 from pipeline.mathtext import latex_to_plain, normalize_word, split_sentences
+from pipeline.pacing import (
+    split_latex_parts, long_division, prime_factorization, factor_tree,
+    expand_power, choose_construction, lesson_vocabulary, emphasis_words,
+)
+
+# Pacing budget — injected from pipeline/constants.py at build time.
+PACING = __PACING__
 
 # ── Data loading ──────────────────────────────────────────────
 SCRIPT_PATH  = Path(r"__SCRIPT_PATH__")
@@ -200,15 +224,43 @@ def scene_time(scene_obj):
     except Exception:
         return 0.0
 
-def sync_to_audio(scene_obj, scene_id):
-    target = 20.0
+def scene_duration(scene_id):
     for s in SCRIPT_DATA["scenes"]:
         if s.get("scene_id") == scene_id:
-            target = float(s.get("duration_seconds", 20.0))
-            break
-    remaining = target - scene_time(scene_obj) - 0.1
-    if remaining > 0.05:
-        scene_obj.wait(remaining)
+            return float(s.get("duration_seconds", 20.0))
+    return 20.0
+
+
+def scene_position(scene_id):
+    """(index, total) of this scene in the lesson — drives the progress bar."""
+    scenes = SCRIPT_DATA.get("scenes", [])
+    for i, s in enumerate(scenes):
+        if s.get("scene_id") == scene_id:
+            return i, max(len(scenes), 1)
+    return 0, max(len(scenes), 1)
+
+
+def board_lines(step=None, raw=False):
+    """Every board line in the lesson, or just one scene's.
+
+    `raw=True` returns the LaTeX the curriculum was written in; the
+    default returns the on-screen text. Both are needed — see
+    pick_construction() for why.
+    """
+    field = "board_examples" if raw else "board_plain"
+    lines = []
+    for s in SCRIPT_DATA.get("scenes", []):
+        if step and s.get("step") != step:
+            continue
+        board = s.get(field, {}) or {}
+        for key in ("worked_example", "practice"):
+            lines.extend(board.get(key, []) or [])
+    seen, unique = set(), []
+    for line in lines:
+        if line not in seen:
+            seen.add(line)
+            unique.append(line)
+    return unique
 
 
 # ═════════════════════════════════════════════════════════════
@@ -279,21 +331,268 @@ class Narration:
         return None
 
 
-def wait_until(scene_obj, t, lead=0.25):
-    """Wait so the next animation lands just before second `t` of audio."""
-    if t is None:
-        return
-    gap = (t - lead) - scene_time(scene_obj)
-    if gap > 0.02:
-        scene_obj.wait(gap)
+# ═════════════════════════════════════════════════════════════
+# THE DIRECTOR — the reason nothing on screen ever sits still
+#
+# Scenes used to reach the next narration cue with scene.wait(), which
+# is exactly what a viewer experiences as "the video froze while the
+# teacher kept talking". The Director replaces every one of those waits.
+# Ask it to hold until a cue and it spends the time instead of losing
+# it: a slow camera drift, a highlight on the line under discussion, a
+# progress tick, a spotlight on the active equation. Only the last
+# fraction of a second — too short to animate through — is ever held
+# still, and PACING["max_static_seconds"] is the ceiling on that.
+#
+# Every scene runs through it, so the guarantee holds lesson-wide
+# without a single scene having to think about pacing.
+# ═════════════════════════════════════════════════════════════
+
+class Director:
+    def __init__(self, scene_obj, nar, step, scene_id):
+        self.s        = scene_obj
+        self.nar      = nar
+        self.step     = step
+        self.scene_id = scene_id
+        self.duration = scene_duration(scene_id)
+        self.focus    = None          # mobject the narration is about
+        self._beat    = 0             # rotates the ambient repertoire
+        self._home    = None          # camera rest state
+        self._drift   = 0
+        self.progress = None
+        self._index, self._total = scene_position(scene_id)
+
+    # ── camera ────────────────────────────────────────────────
+    def _frame(self):
+        try:
+            return self.s.camera.frame
+        except Exception:
+            return None
+
+    def anchor_camera(self):
+        """Remember where the camera rests so drift always comes home."""
+        frame = self._frame()
+        if frame is not None and self._home is None:
+            self._home = (frame.width, frame.get_center().copy())
+
+    def _safe_center(self, center, width):
+        """Keep the framed area inside the design canvas.
+
+        The background, header and footer are drawn exactly FW × FH. A
+        camera move that reaches past that shows bare void at the edge,
+        so any target is clamped to what the artwork actually covers.
+        """
+        height = width * FH / FW
+        max_x  = max(FW / 2 - width / 2, 0.0)
+        max_y  = max(FH / 2 - height / 2, 0.0)
+        home_c = self._home[1] if self._home else np.zeros(3)
+        return np.array([
+            float(np.clip(center[0], home_c[0] - max_x, home_c[0] + max_x)),
+            float(np.clip(center[1], home_c[1] - max_y, home_c[1] + max_y)),
+            0.0,
+        ])
+
+    def _camera_beat(self, run_time):
+        """One slow documentary breath — bounded, never cumulative."""
+        frame = self._frame()
+        if frame is None or self._home is None:
+            return False
+        home_w, home_c = self._home
+        lo, hi = PACING["camera_zoom_range"]
+        pan    = PACING["camera_pan_limit"]
+        # Four rest points around home, cycled: in-left, home, in-right, home.
+        phase  = self._drift % 4
+        self._drift += 1
+        width  = home_w * (lo if phase % 2 == 0 else hi)
+        offset = np.array([-pan if phase == 0 else (pan if phase == 2 else 0.0),
+                           0.10 if phase % 2 == 0 else 0.0, 0.0])
+        target = self._safe_center(home_c + offset, width)
+        try:
+            self.s.play(frame.animate.scale_to_fit_width(width).move_to(target),
+                        run_time=run_time, rate_func=rate_functions.ease_in_out_sine)
+            return True
+        except Exception:
+            return False
+
+    def reset_camera(self, run_time=0.8):
+        frame = self._frame()
+        if frame is None or self._home is None:
+            return
+        home_w, home_c = self._home
+        try:
+            self.s.play(frame.animate.scale_to_fit_width(home_w).move_to(home_c),
+                        run_time=run_time,
+                        rate_func=rate_functions.ease_in_out_sine)
+        except Exception:
+            pass
+
+    def spotlight(self, mobj, hold=0.0, run_time=None):
+        """Push in on the line being talked about, then come home."""
+        frame = self._frame()
+        if frame is None or self._home is None or mobj is None:
+            if hold > 0:
+                self.hold(hold)
+            return
+        run_time = run_time or PACING["spotlight_run_seconds"]
+        home_w = self._home[0]
+        width  = min(max(mobj.width + 2.2, home_w * PACING["spotlight_zoom"]),
+                     home_w)
+        try:
+            self.s.play(
+                frame.animate.scale_to_fit_width(width)
+                .move_to(self._safe_center(mobj.get_center(), width)),
+                run_time=run_time,
+                rate_func=rate_functions.ease_in_out_sine)
+        except Exception:
+            return
+        if hold > 0:
+            self.hold(hold)
+        self.reset_camera(run_time=run_time)
+
+    # ── progress indicator ────────────────────────────────────
+    def add_progress_bar(self):
+        """Thin lesson-progress rail just above the footer."""
+        track = Rectangle(width=FW, height=0.055,
+                          fill_color=mc(C_LGRAY), fill_opacity=0.14,
+                          stroke_width=0)
+        track.move_to(np.array([0.0, FOOTER_TOP + 0.03, 0.0]))
+        fill = Rectangle(width=0.001, height=0.055,
+                         fill_color=mc(C_GOLD), fill_opacity=1.0,
+                         stroke_width=0)
+        fill.move_to(track.get_left(), aligned_edge=LEFT)
+        group = VGroup(track, fill)
+        group.set_z_index(85)
+        self.s.add(group)
+        self.progress = fill
+        self._progress_track = track
+        return group
+
+    def _lesson_fraction(self):
+        within = min(max(scene_time(self.s) / max(self.duration, 0.1), 0.0), 1.0)
+        return (self._index + within) / self._total
+
+    def _progress_beat(self, run_time):
+        if self.progress is None:
+            return False
+        width = max(FW * self._lesson_fraction(), 0.001)
+        target = self.progress.copy().stretch_to_fit_width(width)
+        target.move_to(self._progress_track.get_left(), aligned_edge=LEFT)
+        try:
+            self.s.play(Transform(self.progress, target), run_time=run_time,
+                        rate_func=linear)
+            return True
+        except Exception:
+            return False
+
+    # ── ambient repertoire ────────────────────────────────────
+    def _focus_beat(self, run_time):
+        if self.focus is None:
+            return False
+        try:
+            self.s.play(Indicate(self.focus, scale_factor=1.045,
+                                 color=mc(C_SEM_KEY)), run_time=run_time)
+            return True
+        except Exception:
+            return False
+
+    def _underline_beat(self, run_time):
+        if self.focus is None:
+            return False
+        try:
+            rule = Line(self.focus.get_corner(DL) + DOWN * 0.10,
+                        self.focus.get_corner(DR) + DOWN * 0.10,
+                        stroke_color=mc(C_GOLD), stroke_width=3.5)
+            self.s.play(Create(rule), run_time=run_time * 0.55)
+            self.s.play(FadeOut(rule), run_time=run_time * 0.45)
+            return True
+        except Exception:
+            return False
+
+    def _play_ambient(self, budget):
+        """Play one ambient beat that fits in `budget`. Returns seconds used."""
+        before = scene_time(self.s)
+        repertoire = [self._camera_beat, self._focus_beat,
+                      self._progress_beat, self._underline_beat]
+        for _ in range(len(repertoire)):
+            beat = repertoire[self._beat % len(repertoire)]
+            self._beat += 1
+            nominal = (PACING["camera_run_seconds"]
+                       if beat is self._camera_beat
+                       else PACING["ambient_run_seconds"])
+            run_time = min(nominal, budget)
+            if run_time < PACING["min_beat_seconds"]:
+                break
+            if beat(run_time):
+                return max(scene_time(self.s) - before, 0.0)
+        return 0.0
+
+    # ── the API scenes actually use ───────────────────────────
+    def hold(self, seconds):
+        """Spend `seconds` on screen — never lose them to a dead wait."""
+        remaining = float(seconds)
+        while remaining > PACING["max_static_seconds"]:
+            used = self._play_ambient(remaining)
+            if used <= 0.01:
+                break
+            remaining -= used
+        if remaining > 0.02:
+            self.s.wait(remaining)
+
+    def hold_until(self, t, lead=0.25):
+        """Fill the screen until second `t` of the narration."""
+        if t is None:
+            return
+        self.hold(max((t - lead) - scene_time(self.s), 0.0))
+
+    def at(self, spoken, lead=0.30):
+        """Fill until the voice reaches `spoken`."""
+        if spoken and self.nar is not None:
+            self.hold_until(self.nar.when_spoken(spoken), lead=lead)
+
+    def play(self, *anims, **kwargs):
+        if not anims:
+            return
+        try:
+            self.s.play(*anims, **kwargs)
+        except Exception:
+            pass
+
+    def reveal(self, mobj, spoken=None, run_time=0.55, anim=None, lead=0.30,
+               focus=True):
+        """Bring `mobj` in exactly as the voice reaches `spoken`."""
+        self.at(spoken, lead=lead)
+        self.play((anim or FadeIn)(mobj), run_time=run_time)
+        if focus:
+            self.focus = mobj
+
+    def finish(self):
+        """Ride out the rest of the narration with the screen alive.
+
+        The last moment is spent returning the camera home, so the scene
+        hands over to Cell 5's crossfade square-on rather than mid-drift.
+        """
+        remaining = self.duration - scene_time(self.s) - 0.1
+        tail = min(0.7, remaining * 0.25) if remaining > 1.0 else 0.0
+        if remaining - tail > 0.05:
+            self.hold(remaining - tail)
+        if tail > 0.05:
+            if self.progress is not None:
+                self._progress_beat(min(tail * 0.4, 0.3))
+                tail -= min(tail * 0.4, 0.3)
+            if tail > 0.05:
+                self.reset_camera(run_time=tail)
 
 
-def reveal(scene_obj, nar, mobj, spoken=None, run_time=0.55, anim=None, lead=0.30):
-    """FadeIn `mobj` at the moment `spoken` is narrated (or now)."""
-    if spoken is not None and nar is not None:
-        wait_until(scene_obj, nar.when_spoken(spoken), lead=lead)
-    a = (anim or FadeIn)(mobj)
-    scene_obj.play(a, run_time=run_time)
+def open_scene(scene_obj, sd, step, default_id=1, progress=True):
+    """Standard scene bootstrap: narration, audio, background, Director."""
+    scene_id = sd.get("scene_id", default_id)
+    nar = Narration(sd)
+    attach_audio(scene_obj, scene_id)
+    setup_bg(scene_obj)
+    director = Director(scene_obj, nar, step, scene_id)
+    director.anchor_camera()
+    if progress:
+        director.add_progress_bar()
+    return nar, director
 
 
 # ═════════════════════════════════════════════════════════════
@@ -329,6 +628,120 @@ def MATH(s, size=48, color=None, max_w=None):
     if max_w and m.width > max_w:
         m.scale_to_fit_width(max_w)
     return m
+
+
+def MATH_PARTS(s, size=48, color=None, max_w=None):
+    """Compiled math split into the pieces it is built from.
+
+    `MathTex(*parts)` lays the formula out identically to `MathTex(whole)`
+    but keeps each part as its own submobject, so the expression can be
+    written a piece at a time instead of landing complete. Falls back to
+    the single-piece form whenever the split would not compile.
+    """
+    raw = str(s)
+    parts = split_latex_parts(raw)
+    mob = None
+    if len(parts) > 1:
+        try:
+            mob = MathTex(*parts, font_size=size, color=mc(color or C_WHITE))
+        except Exception:
+            mob = None
+    if mob is None or len(mob.submobjects) < 2:
+        whole = MATH(raw, size=size, color=color)
+        mob = VGroup(whole)
+    if max_w and mob.width > max_w:
+        mob.scale_to_fit_width(max_w)
+    return mob
+
+
+def build_stepwise(director, mob, run_time=None, highlight=True,
+                   lag=0.0, spoken_cues=None):
+    """Write a formula one part at a time, marking the part being written.
+
+    This is the single most important pacing behaviour in the engine: no
+    complete equation ever appears in one frame. Each piece is drawn with
+    a stroke animation, and a travelling box marks whichever piece is
+    currently under discussion.
+    """
+    run_time = run_time or PACING["write_run_seconds"]
+    pieces = list(mob.submobjects) or [mob]
+    marker = None
+    cues = list(spoken_cues or [])
+    for i, piece in enumerate(pieces):
+        if i < len(cues) and cues[i]:
+            director.at(cues[i], lead=0.22)
+        elif lag:
+            director.hold(lag)
+        director.play(Write(piece), run_time=run_time)
+        director.focus = piece
+        if not highlight or len(pieces) < 2:
+            continue
+        try:
+            box = SurroundingRectangle(piece, color=mc(C_SEM_KEY),
+                                       stroke_width=2.6, buff=0.08,
+                                       corner_radius=0.08)
+            if marker is None:
+                director.play(Create(box), run_time=0.25)
+                marker = box
+            else:
+                director.play(Transform(marker, box), run_time=0.30)
+        except Exception:
+            pass
+    if marker is not None:
+        director.play(FadeOut(marker), run_time=0.25)
+    director.focus = mob
+    return mob
+
+
+# ── keyword highlighting ──────────────────────────────────────
+# "Notice the denominator…" should make the denominator glow. The words
+# worth glowing come from the lesson's own vocabulary (its title,
+# formula and board lines) plus every number — never from a hand-written
+# list of terms for one lesson.
+
+LESSON_VOCAB = lesson_vocabulary(
+    SCRIPT_DATA.get("title", ""),
+    SCRIPT_DATA.get("subtopic", ""),
+    SCRIPT_DATA.get("concept_cluster", ""),
+    latex_to_plain(SCRIPT_DATA.get("key_formula", "")),
+    board_lines(),
+)
+
+
+def glyph_span(text_mob, needle):
+    """Glyph index range of `needle` inside a Text mobject.
+
+    Manim indexes a Text by rendered glyph, which excludes whitespace,
+    so the character position has to be converted before slicing.
+    """
+    full = (getattr(text_mob, "original_text", None)
+            or getattr(text_mob, "text", "") or "")
+    pos = full.lower().find(str(needle).lower())
+    if pos < 0:
+        return None
+    start  = len(re.sub(r"\s", "", full[:pos]))
+    length = len(re.sub(r"\s", "", full[pos:pos + len(str(needle))]))
+    if length <= 0:
+        return None
+    return start, start + length
+
+
+def highlight_keywords(director, text_mob, sentence, limit=2,
+                       run_time=0.55):
+    """Glow the words in `sentence` that carry the mathematics."""
+    if text_mob is None:
+        return
+    words = emphasis_words(sentence, LESSON_VOCAB, limit=limit)
+    for word in words:
+        span = glyph_span(text_mob, word)
+        try:
+            target = text_mob[span[0]:span[1]] if span else text_mob
+            if len(target) == 0:
+                continue
+            director.play(Indicate(target, scale_factor=1.16,
+                                   color=mc(C_SEM_KEY)), run_time=run_time)
+        except Exception:
+            continue
 
 
 # ═════════════════════════════════════════════════════════════
@@ -687,6 +1100,398 @@ def viz_number_line(values, x_min=None, x_max=None):
     return g
 
 
+# ═════════════════════════════════════════════════════════════
+# CONSTRUCTIONS — visuals that are BUILT, not shown
+#
+# Each one takes something the lesson already contains (a fraction on
+# the board, a power in the formula, a composite number in an example)
+# and produces it on screen the way it would be produced on a board:
+# one digit, one factor, one branch at a time. pick_construction()
+# chooses whichever the current lesson can support — that is the whole
+# of the lesson-specific logic, and it lives in data, not in a scene.
+# ═════════════════════════════════════════════════════════════
+
+class Construction:
+    """A visual with a build animation attached."""
+
+    # A construction that needs the whole stage says so, and the scene
+    # gives it one instead of shrinking it into a side panel.
+    full_stage = False
+
+    def __init__(self, group, caption=""):
+        self.group   = group
+        self.caption = caption
+        # Anything built during play() has to match the size the group
+        # was scaled to when it was placed — otherwise replacement
+        # digits come back at their original font size.
+        self.text_scale = 1.0
+
+    # placement — call sites treat a Construction like a mobject
+    def fit(self, max_w=None, max_h=None):
+        before = max(self.group.width, 1e-6)
+        if max_w and self.group.width > max_w:
+            self.group.scale_to_fit_width(max_w)
+        if max_h and self.group.height > max_h:
+            self.group.scale_to_fit_height(max_h)
+        self.text_scale *= self.group.width / before
+        return self
+
+    def sized(self, mobj):
+        """Scale a mobject built during play() to match this placement."""
+        if abs(self.text_scale - 1.0) > 1e-3:
+            mobj.scale(self.text_scale)
+        return mobj
+
+    def move_to(self, point):
+        self.group.move_to(point)
+        return self
+
+    @property
+    def width(self):
+        return self.group.width
+
+    @property
+    def height(self):
+        return self.group.height
+
+    def play(self, director):
+        director.play(FadeIn(self.group, scale=0.88), run_time=0.6)
+        director.focus = self.group
+
+
+class LiveDivision(Construction):
+    """p ÷ q worked out on screen, one decimal digit at a time.
+
+    "1/8 = 0.125" is a fact to be read. "0. → 0.1 → 0.12 → 0.125 ✓" is a
+    calculation to be watched, and it is the same data either way.
+    """
+
+    def __init__(self, p, q, max_digits=8):
+        self.div = long_division(p, q, max_digits) or {}
+        self.steps = self.div.get("steps", [])
+
+        question = MATH(rf"\frac{{{p}}}{{{q}}}", size=64, color=C_SEM_FORMULA)
+        arrow    = Arrow(UP * 0.30, DOWN * 0.30, buff=0.0,
+                         stroke_width=5, color=mc(C_GOLD),
+                         max_tip_length_to_length_ratio=0.35)
+        self.value = TXT(self.steps[0] if self.steps else "", size=46,
+                         color=C_GOLD, bold=True)
+        terminating = bool(self.div.get("terminating"))
+        self.verdict = verdict_chip(self.div.get("verdict", ""), terminating)
+
+        stack = VGroup(question, arrow, self.value, self.verdict)
+        stack.arrange(DOWN, buff=0.30)
+        super().__init__(stack, caption=self.div.get("display", ""))
+        self._question = question
+
+    def play(self, director):
+        director.play(Write(self._question), run_time=0.7)
+        director.focus = self._question
+        director.play(GrowArrow(self.group[1]), run_time=0.35)
+        director.play(FadeIn(self.value), run_time=0.30)
+        beat = PACING["digit_run_seconds"]
+        for step in self.steps[1:]:
+            nxt = self.sized(TXT(step, size=46, color=C_GOLD, bold=True))
+            nxt.move_to(self.value, aligned_edge=LEFT)
+            director.play(Transform(self.value, nxt), run_time=beat)
+        if self.div.get("repeat_start") is not None:
+            tail = self.sized(TXT(self.div.get("display", ""), size=40,
+                                  color=C_GOLD, bold=True))
+            tail.move_to(self.value, aligned_edge=LEFT)
+            director.play(Transform(self.value, tail), run_time=0.45)
+        director.focus = self.value
+        director.play(FadeIn(self.verdict, scale=0.7), run_time=0.40)
+
+
+class LiveExpansion(Construction):
+    """base^n unpacked into the multiplication it is shorthand for.
+
+    The single most useful picture in any exponent lesson, and it is
+    generated from whatever power the lesson's own board contains.
+    """
+
+    def __init__(self, base, exponent):
+        self.terms = expand_power(base, exponent)
+        power = MATH(rf"{base}^{{{exponent}}}", size=72,
+                     color=C_SEM_FORMULA)
+        equals = TXT("=", size=46, color=C_WHITE, bold=True)
+
+        self.factors = VGroup()
+        for i, term in enumerate(self.terms):
+            if i:
+                self.factors.add(TXT("·", size=40, color=C_SECOND))
+            self.factors.add(TXT(term, size=44, color=C_GOLD, bold=True))
+        self.factors.arrange(RIGHT, buff=0.18)
+
+        row = VGroup(power, equals, self.factors).arrange(RIGHT, buff=0.30)
+        self.count = TXT(f"{len(self.terms)} times", size=24,
+                         color=C_SEM_KEY, bold=True)
+        self.count.next_to(self.factors, DOWN, buff=0.42)
+        self.rule = Line(self.factors.get_corner(DL) + DOWN * 0.16,
+                         self.factors.get_corner(DR) + DOWN * 0.16,
+                         stroke_color=mc(C_SEM_KEY), stroke_width=3.5)
+        super().__init__(VGroup(row, self.rule, self.count),
+                         caption=f"{base}^{exponent}")
+        self._power, self._equals = power, equals
+
+    def play(self, director):
+        director.play(Write(self._power), run_time=0.6)
+        director.focus = self._power
+        director.play(FadeIn(self._equals), run_time=0.25)
+        for piece in self.factors:
+            director.play(FadeIn(piece, scale=0.6), run_time=0.22)
+        director.play(Create(self.rule), run_time=0.35)
+        director.play(FadeIn(self.count, shift=UP * 0.12), run_time=0.35)
+        director.focus = self.factors
+
+
+class LiveFactorTree(Construction):
+    """A number broken down to its primes, one branch at a time."""
+
+    def __init__(self, n, max_depth=3):
+        self.tree = factor_tree(n, max_depth=max_depth)
+        self.levels = []          # [[(node_mobject, edge_or_None)], …]
+        self.group = VGroup()
+        if self.tree:
+            self._layout(self.tree, np.array([0.0, 1.5, 0.0]), 2.6, 0)
+        factors = prime_factorization(n)
+        label = " × ".join(f"{p}^{k}" if k > 1 else str(p) for p, k in factors)
+        self.result = TXT(f"{n} = {label}", size=26, color=C_SEM_KEY, bold=True)
+        if len(self.group):
+            self.result.next_to(self.group, DOWN, buff=0.34)
+        super().__init__(VGroup(self.group, self.result), caption=label)
+
+    def _node(self, value, point, prime):
+        col = C_GGREEN if prime else C_BLUE_L
+        circle = Circle(radius=0.34, fill_color=mc(C_CBG), fill_opacity=1.0,
+                        stroke_color=mc(col), stroke_width=3.0)
+        text = TXT(str(value), size=24, color=col, bold=True)
+        text.move_to(circle.get_center())
+        node = VGroup(circle, text).move_to(point)
+        return node
+
+    def _layout(self, node, point, spread, depth):
+        mob = self._node(node["value"], point, node["prime"])
+        while len(self.levels) <= depth:
+            self.levels.append([])
+        self.levels[depth].append((mob, None))
+        self.group.add(mob)
+        if not node["children"]:
+            return
+        for i, child in enumerate(node["children"]):
+            offset = np.array([(-1 if i == 0 else 1) * spread / 2, -1.25, 0.0])
+            child_point = point + offset
+            edge = Line(point, child_point, stroke_color=mc(C_SECOND),
+                        stroke_width=3.0, buff=0.36)
+            self.group.add(edge)
+            self._layout(child, child_point, spread / 2, depth + 1)
+            self.levels[depth + 1][-1] = (self.levels[depth + 1][-1][0], edge)
+
+    def play(self, director):
+        for depth, level in enumerate(self.levels):
+            anims = []
+            for mob, edge in level:
+                if edge is not None:
+                    anims.append(Create(edge))
+                anims.append(FadeIn(mob, scale=0.7))
+            if anims:
+                director.play(LaggedStart(*anims, lag_ratio=0.25),
+                              run_time=0.55 if depth else 0.4)
+        director.focus = self.group
+        director.play(Write(self.result), run_time=0.6)
+
+
+class LiveCompare(Construction):
+    """Two cases built side by side, each ending on its own verdict.
+
+    Drawn only when the lesson's own board supplies a genuine contrast —
+    contrast_fractions() returns None otherwise and the caller picks
+    something else, so no lesson is forced into a comparison it does not
+    have.
+    """
+
+    full_stage = True
+
+    def __init__(self, spec, panel_w=4.6, panel_h=4.2):
+        self.spec = spec
+        self.panels, self.values, self.verdicts = [], [], []
+        cards = VGroup()
+        for side, colour in (("left", C_GGREEN), ("right", C_ORANGE)):
+            data = spec[side]
+            card = make_card(panel_w, panel_h, border_color=colour)
+            header = make_card_header(data["title"].upper(), panel_w, colour)
+            header.move_to(card.get_top() + DOWN * (header.height / 2 + 0.07))
+
+            p, q = data["fraction"]
+            frac = MATH(rf"\frac{{{p}}}{{{q}}}", size=60, color=C_WHITE)
+            frac.move_to(card.get_center() + UP * 0.95)
+            arrow = Arrow(frac.get_bottom() + DOWN * 0.05,
+                          frac.get_bottom() + DOWN * 0.55, buff=0.0,
+                          stroke_width=4, color=mc(C_SECOND),
+                          max_tip_length_to_length_ratio=0.4)
+            value = TXT(data["steps"][0] if data["steps"] else data["decimal"],
+                        size=32, color=C_GOLD, bold=True)
+            value.move_to(card.get_center() + DOWN * 0.55)
+            chip = verdict_chip(data["verdict"], data["terminating"])
+            chip.move_to(card.get_bottom() + UP * 0.55)
+
+            cards.add(VGroup(card, header, frac, arrow, value, chip))
+            self.panels.append((card, header, frac, arrow))
+            self.values.append((value, data["steps"]))
+            self.verdicts.append(chip)
+
+        cards.arrange(RIGHT, buff=0.7)
+        vs = TXT("VS", size=30, color=C_GOLD, bold=True)
+        vs.move_to(cards.get_center())
+        super().__init__(VGroup(cards, vs))
+        self._vs = vs
+
+    def play(self, director):
+        director.play(*[FadeIn(card) for card, _, _, _ in self.panels],
+                      run_time=0.45)
+        director.play(*[FadeIn(hdr) for _, hdr, _, _ in self.panels],
+                      FadeIn(self._vs, scale=0.7), run_time=0.35)
+        director.play(*[Write(frac) for _, _, frac, _ in self.panels],
+                      run_time=0.7)
+        director.play(*[GrowArrow(arrow) for _, _, _, arrow in self.panels],
+                      run_time=0.3)
+        director.play(*[FadeIn(value) for value, _ in self.values],
+                      run_time=0.3)
+
+        # Both decimals grow together — the difference between them is
+        # the point, so they must be seen happening at the same time.
+        beat = PACING["digit_run_seconds"]
+        longest = max((len(steps) for _, steps in self.values), default=0)
+        for i in range(1, longest):
+            anims = []
+            for value, steps in self.values:
+                if i >= len(steps):
+                    continue
+                nxt = self.sized(TXT(steps[i], size=32, color=C_GOLD,
+                                     bold=True))
+                nxt.move_to(value)
+                anims.append(Transform(value, nxt))
+            if anims:
+                director.play(*anims, run_time=beat)
+
+        for side, (value, _) in zip(("left", "right"), self.values):
+            data = self.spec[side]
+            final = self.sized(TXT(data["decimal"], size=30, color=C_GOLD,
+                                   bold=True))
+            final.move_to(value)
+            director.play(Transform(value, final), run_time=0.35)
+        director.play(*[FadeIn(chip, scale=0.7) for chip in self.verdicts],
+                      run_time=0.4)
+        director.focus = self.group
+
+
+class LiveFlowchart(Construction):
+    """Steps drawn as connected boxes, one arrow at a time."""
+
+    def __init__(self, steps, width=4.8):
+        self.boxes, self.arrows = [], []
+        column = VGroup()
+        for i, step in enumerate(steps[:4]):
+            text = TXT(step, size=19, color=C_WHITE, wrap=34, max_w=width - 0.5)
+            if text.height > 0.85:
+                text.scale_to_fit_height(0.85)
+            colour = [C_BLUE_P, C_PURPLE, C_ORANGE, C_GGREEN][i % 4]
+            box = RoundedRectangle(
+                width=width, height=text.height + 0.46, corner_radius=0.14,
+                fill_color=mc(C_CBG), fill_opacity=1.0,
+                stroke_color=mc(colour), stroke_width=2.4)
+            text.move_to(box.get_center())
+            column.add(VGroup(box, text))
+        column.arrange(DOWN, buff=0.52)
+        self.boxes = list(column)
+
+        arrows = VGroup()
+        for upper, lower in zip(self.boxes, self.boxes[1:]):
+            arrow = Arrow(upper.get_bottom(), lower.get_top(), buff=0.06,
+                          stroke_width=4, color=mc(C_GOLD),
+                          max_tip_length_to_length_ratio=0.32)
+            arrows.add(arrow)
+        self.arrows = list(arrows)
+        super().__init__(VGroup(column, arrows))
+
+    def play(self, director):
+        for i, box in enumerate(self.boxes):
+            if i:
+                director.play(GrowArrow(self.arrows[i - 1]), run_time=0.25)
+            director.play(FadeIn(box, shift=UP * 0.14), run_time=0.35)
+            director.focus = box
+
+
+def verdict_chip(label, good):
+    """Small outcome pill — green when it works out, gold when it does not."""
+    colour = C_GGREEN if good else C_ORANGE
+    mark   = "✓" if good else "…"
+    text   = TXT(f"{mark}  {label}", size=21, color=colour, bold=True)
+    box = RoundedRectangle(
+        width=text.width + 0.5, height=0.58, corner_radius=0.16,
+        fill_color=mc(colour), fill_opacity=0.16,
+        stroke_color=mc(colour), stroke_width=2.2)
+    text.move_to(box.get_center())
+    return VGroup(box, text)
+
+
+def viz_fraction_bar(p, q, width=4.6):
+    """p of q equal parts as a bar — the fraction picture that scales."""
+    q = max(1, min(int(q), 20))
+    p = max(0, min(int(p), q))
+    cell_w = width / q
+    bar = VGroup()
+    for i in range(q):
+        cell = Rectangle(width=cell_w, height=0.85,
+                         fill_color=mc(C_BLUE_L if i < p else C_CBG),
+                         fill_opacity=0.9 if i < p else 1.0,
+                         stroke_color=mc(C_LGRAY), stroke_width=2)
+        bar.add(cell)
+    bar.arrange(RIGHT, buff=0.0)
+    label = MATH(rf"\frac{{{p}}}{{{q}}}", size=44, color=C_GOLD)
+    label.next_to(bar, DOWN, buff=0.28)
+    return VGroup(bar, label)
+
+
+#: kind → how to draw it. pipeline.pacing decides which kind a lesson
+#: earns; this is the only place that knows how each one looks.
+CONSTRUCTION_BUILDERS = {
+    "compare"    : lambda spec: LiveCompare(spec),
+    "division"   : lambda pair: LiveDivision(*pair),
+    "expansion"  : lambda pair: LiveExpansion(*pair),
+    "factor_tree": lambda n: LiveFactorTree(n),
+    "flowchart"  : lambda lines: LiveFlowchart(lines),
+}
+
+
+def pick_construction(plain_lines, raw_lines=(), beats=()):
+    """Build whatever pipeline.pacing says this lesson has earned.
+
+    Falls back to a story illustration drawn from the narration, and
+    finally to None so the caller can supply its own default. Every
+    branch is data-driven — no scene knows which lesson is playing.
+    """
+    try:
+        choice = choose_construction(plain_lines, raw_lines)
+    except Exception:
+        choice = None
+
+    if choice:
+        kind, payload = choice
+        builder = CONSTRUCTION_BUILDERS.get(kind)
+        if builder:
+            try:
+                return builder(payload)
+            except Exception:
+                pass
+
+    for beat in beats:
+        story = story_visual(beat)
+        if story is not None:
+            return Construction(story)
+    return None
+
+
 # ── Dispatcher: sentence → matching illustration ──────────────
 
 _FRAC_WORD_RE = re.compile(r"(\d+)\s*(?:over|/)\s*(\d+)")
@@ -966,10 +1771,8 @@ def section_pill(text, color=None, width=None, size=22):
 
 class Scene01_Opening(MovingCameraScene):
     def construct(self):
-        sd  = get_scene_by_step("opening")
-        nar = Narration(sd)
-        attach_audio(self, sd.get("scene_id", 1))
-        setup_bg(self)
+        sd = get_scene_by_step("opening")
+        nar, director = open_scene(self, sd, "opening", 1, progress=False)
 
         lesson_title = SCRIPT_DATA.get("title", "Today's Lesson")
         beats = sd.get("narration_beats") or split_sentences(sd.get("narration", ""))
@@ -1083,47 +1886,41 @@ class Scene01_Opening(MovingCameraScene):
         q_txt.move_to(np.array([0.0, -0.85, 0]))
 
         self.play(FadeIn(mystery, scale=0.6), run_time=0.7)
-        try:
-            self.play(self.camera.frame.animate.scale(0.92).move_to(
-                np.array([0.0, 0.35, 0])), run_time=1.4)
-        except Exception:
-            pass
-        wait_until(self, nar.when_spoken(curiosity), lead=0.25)
+        director.focus = mystery
+        director.at(curiosity, lead=0.25)
         self.play(Write(q_txt), run_time=1.0)
-        try:
-            self.play(Indicate(mystery, scale_factor=1.06,
-                               color=mc(C_SEM_KEY)), run_time=0.8)
-        except Exception:
-            pass
+        director.focus = q_txt
+        self.play(Indicate(mystery, scale_factor=1.06,
+                           color=mc(C_SEM_KEY)), run_time=0.8)
 
         # ── Transition: mystery dissolves into the title card ──
-        wait_until(self, nar.when_spoken("Hold that thought"), lead=0.20)
-        anims = [FadeOut(mystery, scale=0.8), FadeOut(q_txt, shift=DOWN * 0.3)]
-        try:
-            anims.append(self.camera.frame.animate.scale(1 / 0.92).move_to(ORIGIN))
-        except Exception:
-            pass
-        self.play(*anims, run_time=0.9)
+        director.at("Hold that thought", lead=0.20)
+        director.reset_camera(run_time=0.4)
+        self.play(FadeOut(mystery, scale=0.8),
+                  FadeOut(q_txt, shift=DOWN * 0.3), run_time=0.9)
 
         # ── Title sequence on the narration beat ──────────────
-        reveal(self, nar, brand_row, spoken="Welcome to Math Concepts",
-               run_time=0.6, anim=lambda m: FadeIn(m, shift=DOWN * 0.12))
+        director.reveal(brand_row, spoken="Welcome to Math Concepts",
+                        run_time=0.6,
+                        anim=lambda m: FadeIn(m, shift=DOWN * 0.12))
         self.play(FadeIn(pill_grp, shift=DOWN * 0.08), run_time=0.5)
 
-        reveal(self, nar, day_grp, spoken="Today is Day", run_time=0.45,
-               anim=lambda m: FadeIn(m, shift=LEFT * 0.10))
-        wait_until(self, nar.when_spoken(SCRIPT_DATA.get("title", "")), lead=0.25)
+        director.reveal(day_grp, spoken="Today is Day", run_time=0.45,
+                        anim=lambda m: FadeIn(m, shift=LEFT * 0.10))
+        director.at(SCRIPT_DATA.get("title", ""), lead=0.25)
         self.play(Write(title_l1), run_time=0.8)
         self.play(Write(title_l2), run_time=0.8)
+        director.focus = title_grp
 
-        reveal(self, nar, goal_grp, spoken="By the end of this lesson",
-               run_time=0.5, anim=lambda m: FadeIn(m, shift=UP * 0.08))
+        director.reveal(goal_grp, spoken="By the end of this lesson",
+                        run_time=0.5, anim=lambda m: FadeIn(m, shift=UP * 0.08))
         self.play(
             LaggedStart(*[FadeIn(b, shift=UP * 0.14) for b in badge_mobs],
                         lag_ratio=0.22),
             run_time=1.0,
         )
-        sync_to_audio(self, sd.get("scene_id", 1))
+        director.focus = badges_row
+        director.finish()
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1134,14 +1931,12 @@ class Scene01_Opening(MovingCameraScene):
 # sentence as a clean caption below.
 # ═════════════════════════════════════════════════════════════
 
-class Scene02_Hook(Scene):
+class Scene02_Hook(MovingCameraScene):
     def construct(self):
-        sd  = get_scene_by_step("hook")
-        nar = Narration(sd)
-        attach_audio(self, sd.get("scene_id", 2))
+        sd = get_scene_by_step("hook")
+        nar, director = open_scene(self, sd, "hook", 2)
 
         lesson_title = SCRIPT_DATA.get("title", "")
-        setup_bg(self)
         self.add(make_header(lesson_title, LESSON_ID), make_footer("hook"))
 
         beats = sd.get("narration_beats") or split_sentences(sd.get("narration", ""))
@@ -1175,8 +1970,7 @@ class Scene02_Hook(Scene):
             caption = grp
 
         for beat in beats:
-            t = nar.when_spoken(beat)
-            wait_until(self, t, lead=0.35)
+            director.at(beat, lead=0.35)
             vis = story_visual(beat)
             if vis is not None:
                 if vis.height > 3.1:
@@ -1198,89 +1992,108 @@ class Scene02_Hook(Scene):
                 vis.scale(targets[-1].width / max(vis.width, 1e-6))
                 anims.append(FadeIn(vis, scale=0.7))
                 self.play(*anims, run_time=0.7)
+                director.focus = vis
             set_caption(beat)
+            # The keywords of the sentence just spoken glow in turn, so a
+            # long story beat still has something happening on the words.
+            highlight_keywords(director, caption[0], beat)
 
-        sync_to_audio(self, sd.get("scene_id", 2))
+        director.finish()
 
 
 # ═════════════════════════════════════════════════════════════
 # SCENE 03 — CONCEPT
-# Left: the key idea, sentence by sentence, timed to the voice.
-# Right: an automatic visual — a number line of the lesson's
-# actual values, a story illustration, or the formula.
+# The idea in words, and the idea being built.
+#
+# The right-hand panel is not a picture of the concept, it is the
+# concept happening: a decimal dividing out digit by digit, a power
+# unpacking into its factors, a number falling into its primes —
+# whichever of those the lesson's own board can supply. When that
+# construction is a side-by-side comparison it takes the whole stage,
+# because a comparison shrunk into a side panel is not a comparison.
 # ═════════════════════════════════════════════════════════════
 
-class Scene03_Concept(Scene):
+class Scene03_Concept(MovingCameraScene):
     def construct(self):
-        sd  = get_scene_by_step("concept")
-        nar = Narration(sd)
-        attach_audio(self, sd.get("scene_id", 3))
+        sd = get_scene_by_step("concept")
+        nar, director = open_scene(self, sd, "concept", 3)
 
         lesson_title = SCRIPT_DATA.get("title", "")
-        setup_bg(self)
         self.add(make_header(lesson_title, LESSON_ID), make_footer("concept"))
 
         beats = sd.get("narration_beats") or split_sentences(sd.get("narration", ""))
         content_cy = (CONTENT_TOP + CONTENT_BOT) / 2
 
-        # ── Left: THE KEY IDEA card ───────────────────────────
+        build = pick_construction(board_lines(), board_lines(raw=True), beats)
+        if build is None:
+            vals = fractions_in(board_lines())
+            build = Construction(
+                viz_number_line(vals) if vals
+                else make_formula_box(sd.get("key_formula", ""), 4.8, 1.9))
+
+        if build.full_stage:
+            self._wide_layout(director, beats, build, content_cy)
+        else:
+            self._split_layout(director, beats, build, content_cy)
+        director.finish()
+
+    # ── a comparison owns the stage ───────────────────────────
+    def _wide_layout(self, director, beats, build, content_cy):
+        caption = TXT(beats[0] if beats else "", size=25, color=C_WHITE,
+                      wrap=90, max_w=12.4)
+        caption.move_to(np.array([0.0, CONTENT_TOP - 0.55, 0]))
+        build.fit(max_w=12.4, max_h=4.5)
+        build.move_to(np.array([0.0, content_cy - 0.75, 0]))
+
+        director.reveal(caption, spoken=beats[0] if beats else None,
+                        run_time=0.5)
+        build.play(director)
+        for beat in beats[1:]:
+            director.at(beat, lead=0.30)
+            nxt = TXT(beat, size=25, color=C_WHITE, wrap=90, max_w=12.4)
+            nxt.move_to(caption)
+            director.play(FadeOut(caption, shift=UP * 0.12), run_time=0.22)
+            director.play(FadeIn(nxt, shift=UP * 0.12), run_time=0.28)
+            caption = nxt
+            director.focus = caption
+            highlight_keywords(director, caption, beat)
+
+    # ── everything else: idea on the left, build on the right ─
+    def _split_layout(self, director, beats, build, content_cy):
         left_card = make_card(7.0, 5.4, border_color=C_GGREEN)
         left_card.move_to(np.array([-3.30, content_cy, 0]))
         l_hdr = make_card_header("THE KEY IDEA", 7.0, C_GGREEN)
         l_hdr.move_to(left_card.get_top() + DOWN * (l_hdr.height / 2 + 0.07))
 
-        idea_mobs = []
-        for b in beats:
-            m = TXT(b, size=24, color=C_WHITE, wrap=44, max_w=6.3)
-            idea_mobs.append(m)
+        idea_mobs = [TXT(b, size=24, color=C_WHITE, wrap=44, max_w=6.3)
+                     for b in beats]
         idea_grp = VGroup(*idea_mobs).arrange(DOWN, aligned_edge=LEFT, buff=0.34)
         if idea_grp.height > 4.3:
             idea_grp.scale_to_fit_height(4.3)
         idea_grp.move_to(left_card.get_center() + DOWN * 0.24)
         idea_grp.align_to(left_card.get_left() + RIGHT * 0.30, LEFT)
 
-        # ── Right: automatic visual ───────────────────────────
         right_card = make_card(5.6, 5.4, border_color=C_BLUE_P)
         right_card.move_to(np.array([3.60, content_cy, 0]))
         r_hdr = make_card_header("SEE IT", 5.6, C_BLUE_P)
         r_hdr.move_to(right_card.get_top() + DOWN * (r_hdr.height / 2 + 0.07))
 
-        board_plain = sd.get("board_plain", {})
-        all_lines   = (board_plain.get("worked_example", []) +
-                       board_plain.get("practice", []))
-        vals = fractions_in(all_lines)
+        build.fit(max_w=5.0, max_h=3.9)
+        build.move_to(right_card.get_center() + DOWN * 0.24)
 
-        vis = None
-        if vals:
-            vis = viz_number_line(vals)
-        if vis is None:
-            for b in beats:
-                vis = story_visual(b)
-                if vis is not None:
-                    break
-        if vis is None:
-            vis = make_formula_box(sd.get("key_formula", ""), 4.8, 1.9)
-
-        if vis.width > 5.0:
-            vis.scale_to_fit_width(5.0)
-        if vis.height > 3.9:
-            vis.scale_to_fit_height(3.9)
-        vis.move_to(right_card.get_center() + DOWN * 0.24)
-
-        # ── Animate on the narration beat ─────────────────────
         self.play(FadeIn(left_card), FadeIn(right_card), run_time=0.5)
         self.play(FadeIn(l_hdr), FadeIn(r_hdr), run_time=0.4)
 
-        shown_vis = False
+        built = False
         for b, m in zip(beats, idea_mobs):
-            t = nar.when_spoken(b)
-            wait_until(self, t, lead=0.30)
+            director.at(b, lead=0.30)
             self.play(FadeIn(m, shift=RIGHT * 0.10), run_time=0.45)
-            if not shown_vis:
-                self.play(FadeIn(vis, scale=0.85), run_time=0.6)
-                shown_vis = True
-
-        sync_to_audio(self, sd.get("scene_id", 3))
+            director.focus = m
+            if not built:
+                build.play(director)
+                built = True
+            else:
+                highlight_keywords(director, m, b)
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1290,14 +2103,12 @@ class Scene03_Concept(Scene):
 # narration reaches them.
 # ═════════════════════════════════════════════════════════════
 
-class Scene04_Definition(Scene):
+class Scene04_Definition(MovingCameraScene):
     def construct(self):
-        sd  = get_scene_by_step("definition")
-        nar = Narration(sd)
-        attach_audio(self, sd.get("scene_id", 4))
+        sd = get_scene_by_step("definition")
+        nar, director = open_scene(self, sd, "definition", 4)
 
         lesson_title = SCRIPT_DATA.get("title", "")
-        setup_bg(self)
         self.add(make_header(lesson_title, LESSON_ID), make_footer("definition"))
 
         topic    = SCRIPT_DATA.get("title", lesson_title)
@@ -1314,8 +2125,17 @@ class Scene04_Definition(Scene):
                       wrap=52, max_w=10.6)
         sub_txt.move_to(def_card.get_center() + UP * 0.55)
 
-        fml = make_formula_box(formula, 6.2, 1.5, font_size=56)
-        fml.move_to(def_card.get_center() + DOWN * 0.90)
+        # Box first, formula written into it part by part.
+        fml_box = RoundedRectangle(
+            width=6.2, height=1.5, corner_radius=0.18,
+            fill_color=mc(C_CBG), fill_opacity=1.0,
+            stroke_color=mc(C_SEM_FORMULA), stroke_width=2.5)
+        fml_parts = MATH_PARTS(formula, size=56, color=C_WHITE, max_w=5.7)
+        if fml_parts.height > 1.15:
+            fml_parts.scale_to_fit_height(1.15)
+        fml_group = VGroup(fml_box, fml_parts)
+        fml_group.move_to(def_card.get_center() + DOWN * 0.90)
+        fml_parts.move_to(fml_box.get_center())
 
         prereq = SCRIPT_DATA.get("prerequisite", "Basic arithmetic")
         goal   = SCRIPT_DATA.get("lesson_goal",  "Understand this concept")
@@ -1336,16 +2156,21 @@ class Scene04_Definition(Scene):
 
         # ── Animate on the narration beat ─────────────────────
         self.play(FadeIn(def_card), FadeIn(def_hdr), run_time=0.55)
-        reveal(self, nar, sub_txt, spoken="Here is our focus",
-               run_time=0.6, anim=lambda m: FadeIn(m, shift=RIGHT * 0.10))
-        wait_until(self, nar.when_spoken("In symbols"), lead=0.20)
-        self.play(FadeIn(fml[0]), run_time=0.3)
-        self.play(Write(fml[1]), run_time=0.9)
-        reveal(self, nar, VGroup(pre_card, pre_hdr, pre_txt),
-               spoken="You already know", run_time=0.55)
+        director.reveal(sub_txt, spoken="Here is our focus", run_time=0.6,
+                        anim=lambda m: FadeIn(m, shift=RIGHT * 0.10))
+        highlight_keywords(director, sub_txt, subtopic, limit=2)
+
+        director.at("In symbols", lead=0.20)
+        self.play(FadeIn(fml_box), run_time=0.3)
+        build_stepwise(director, fml_parts)
+        director.spotlight(fml_group)
+
+        director.reveal(VGroup(pre_card, pre_hdr, pre_txt),
+                        spoken="You already know", run_time=0.55)
         self.play(FadeIn(goal_card), FadeIn(goal_hdr), FadeIn(goal_txt),
                   run_time=0.5)
-        sync_to_audio(self, sd.get("scene_id", 4))
+        director.focus = VGroup(goal_card, goal_hdr, goal_txt)
+        director.finish()
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1355,18 +2180,16 @@ class Scene04_Definition(Scene):
 # highlighted phrase chips underneath.
 # ═════════════════════════════════════════════════════════════
 
-class Scene05_Formula(Scene):
+class Scene05_Formula(MovingCameraScene):
     def construct(self):
-        sd  = get_scene_by_step("formula")
-        nar = Narration(sd)
-        attach_audio(self, sd.get("scene_id", 5))
+        sd = get_scene_by_step("formula")
+        nar, director = open_scene(self, sd, "formula", 5)
 
         lesson_title   = SCRIPT_DATA.get("title", "")
         formula_latex  = sd.get("key_formula", SCRIPT_DATA.get("key_formula", ""))
         formula_spoken = sd.get("formula_spoken",
                                 SCRIPT_DATA.get("formula_spoken", ""))
 
-        setup_bg(self)
         self.add(make_header(lesson_title, LESSON_ID), make_footer("formula"))
 
         label = TXT("THE KEY FORMULA", size=34, color=C_GOLD, bold=True)
@@ -1381,7 +2204,7 @@ class Scene05_Formula(Scene):
             width=9.8, height=3.2, corner_radius=0.26,
             fill_color=mc(C_SEM_FORMULA), fill_opacity=0.10, stroke_width=0,
         ).move_to(box.get_center())
-        fml = MATH(formula_latex, size=96, color=C_WHITE, max_w=8.6)
+        fml = MATH_PARTS(formula_latex, size=96, color=C_WHITE, max_w=8.6)
         if fml.height > 2.3:
             fml.scale_to_fit_height(2.3)
         fml.move_to(box.get_center())
@@ -1411,19 +2234,26 @@ class Scene05_Formula(Scene):
         # ── Animate on the narration beat ─────────────────────
         self.play(FadeIn(label, shift=DOWN * 0.10), run_time=0.5)
         self.play(FadeIn(glow), FadeIn(box), run_time=0.4)
-        wait_until(self, nar.when_spoken("The formula is"), lead=0.15)
-        self.play(Write(fml), run_time=1.4)
-        wait_until(self, nar.when_spoken("Watch how each part"), lead=0.25)
-        self.play(
-            LaggedStart(*[FadeIn(c, shift=UP * 0.12) for c in chips],
-                        lag_ratio=0.25),
-            run_time=1.0,
-        )
-        try:
-            self.play(Circumscribe(box, color=mc(C_GOLD)), run_time=1.1)
-        except Exception:
-            pass
-        sync_to_audio(self, sd.get("scene_id", 5))
+
+        # The whole point of this scene: the formula is assembled in
+        # front of the student, term by term, never delivered whole.
+        director.at("The formula is", lead=0.15)
+        build_stepwise(director, fml, run_time=PACING["write_run_seconds"])
+
+        # Then each meaning chip lands with its own term lit up, so the
+        # words and the symbols are connected rather than just adjacent.
+        director.at("Watch how each part", lead=0.25)
+        terms = list(fml.submobjects) or [fml]
+        for i, chip in enumerate(chips):
+            self.play(FadeIn(chip, shift=UP * 0.12), run_time=0.4)
+            term = terms[min(i, len(terms) - 1)]
+            self.play(Indicate(term, scale_factor=1.12,
+                               color=mc(C_SEM_KEY)), run_time=0.5)
+            director.focus = term
+        director.spotlight(fml, hold=0.4)
+        self.play(Circumscribe(box, color=mc(C_GOLD)), run_time=1.1)
+        director.focus = fml
+        director.finish()
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1458,14 +2288,12 @@ def build_board_rows(plain_lines, max_w=11.6):
     return rows
 
 
-class Scene06_WorkedExample(Scene):
+class Scene06_WorkedExample(MovingCameraScene):
     def construct(self):
-        sd  = get_scene_by_step("worked_example")
-        nar = Narration(sd)
-        attach_audio(self, sd.get("scene_id", 6))
+        sd = get_scene_by_step("worked_example")
+        nar, director = open_scene(self, sd, "worked_example", 6)
 
         lesson_title = SCRIPT_DATA.get("title", "")
-        setup_bg(self)
         self.add(make_header(lesson_title, LESSON_ID),
                  make_footer("worked_example"))
 
@@ -1498,27 +2326,54 @@ class Scene06_WorkedExample(Scene):
 
         # ── Animate on the narration beat ─────────────────────
         self.play(FadeIn(pill, shift=DOWN * 0.08), FadeIn(board), run_time=0.6)
-        for (row, is_q), spoken in zip(rows, spoken_lines):
-            t = nar.when_spoken(spoken) if spoken else None
-            wait_until(self, t, lead=0.30)
+
+        marker = None          # travelling rule marking the live line
+        for i, ((row, is_q), spoken, plain) in enumerate(
+                zip(rows, spoken_lines, plain_lines)):
+            director.at(spoken, lead=0.30)
             if is_q:
                 self.play(FadeIn(row, shift=RIGHT * 0.12), run_time=0.5)
+                director.focus = row
+                highlight_keywords(director, row[-1], plain, limit=1)
             else:
                 self.play(Write(row), run_time=0.6)
-        sync_to_audio(self, sd.get("scene_id", 6))
+                director.focus = row
+
+            # A thin rule tracks whichever line is being talked about, so
+            # the eye always knows where "here" is on a full board.
+            try:
+                bar = Line(row.get_corner(UL) + LEFT * 0.22,
+                           row.get_corner(DL) + LEFT * 0.22,
+                           stroke_color=mc(C_SEM_KEY), stroke_width=6)
+                if marker is None:
+                    self.play(Create(bar), run_time=0.2)
+                    marker = bar
+                else:
+                    self.play(Transform(marker, bar), run_time=0.25)
+            except Exception:
+                pass
+
+            # The line that lands the answer earns a push-in.
+            if _VERDICT_RE.search(plain) or i == len(rows) - 1:
+                director.spotlight(row)
+
+        if marker is not None:
+            self.play(FadeOut(marker), run_time=0.25)
+        director.focus = grp
+        director.finish()
 
 
-def play_countdown(scene_obj, nar, number_words, pos, color=None):
+def play_countdown(director, number_words, pos, color=None):
     """Big pulsing countdown digits, each landing on its spoken word.
 
     The narration literally says "Five. Four. Three. Two. One." so every
-    digit appears at the exact moment the voice says it.
+    digit appears at the exact moment the voice says it. A shrinking ring
+    runs the whole count so the thinking time itself is visibly ticking.
     """
     col = color or C_SEM_KEY
     digit_of = {"five": "5", "four": "4", "three": "3", "two": "2", "one": "1"}
     for w in number_words:
-        t = nar.when_spoken(w)
-        wait_until(scene_obj, t, lead=0.15)
+        director.at(w, lead=0.15)
         ring = Circle(radius=0.72, stroke_color=mc(col), stroke_width=4,
                       fill_color=mc(col), fill_opacity=0.10)
         ring.move_to(pos)
@@ -1526,8 +2381,8 @@ def play_countdown(scene_obj, nar, number_words, pos, color=None):
         num.move_to(pos)
         grp = VGroup(ring, num)
         grp.set_z_index(90)
-        scene_obj.play(FadeIn(grp, scale=1.35), run_time=0.28)
-        scene_obj.play(FadeOut(grp, scale=0.75), run_time=0.30)
+        director.play(FadeIn(grp, scale=1.35), run_time=0.28)
+        director.play(FadeOut(grp, scale=0.75), run_time=0.30)
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1537,14 +2392,12 @@ def play_countdown(scene_obj, nar, number_words, pos, color=None):
 # revealed as the voice reaches each part.
 # ═════════════════════════════════════════════════════════════
 
-class Scene07_Mistakes(Scene):
+class Scene07_Mistakes(MovingCameraScene):
     def construct(self):
-        sd  = get_scene_by_step("mistakes")
-        nar = Narration(sd)
-        attach_audio(self, sd.get("scene_id", 7))
+        sd = get_scene_by_step("mistakes")
+        nar, director = open_scene(self, sd, "mistakes", 7)
 
         lesson_title = SCRIPT_DATA.get("title", "")
-        setup_bg(self)
         self.add(make_header(lesson_title, LESSON_ID), make_footer("mistakes"))
 
         cm = sd.get("common_mistake",
@@ -1614,9 +2467,9 @@ class Scene07_Mistakes(Scene):
         think = TXT("What could go wrong here? Think…", size=28,
                     color=C_SEM_KEY, bold=True, max_w=11.0)
         think.move_to(np.array([0.0, panel_cy + 0.9, 0]))
-        reveal(self, nar, think, spoken="think about what could possibly",
-               run_time=0.5)
-        play_countdown(self, nar, ["Three", "Two", "One"],
+        director.reveal(think, spoken="think about what could possibly",
+                        run_time=0.5)
+        play_countdown(director, ["Three", "Two", "One"],
                        np.array([0.0, panel_cy - 0.4, 0]), C_SEM_KEY)
         self.play(FadeOut(think), run_time=0.3)
 
@@ -1625,23 +2478,26 @@ class Scene07_Mistakes(Scene):
                   FadeIn(vs_txt, scale=0.8), run_time=0.6)
 
         for s, m in zip(wrong_sents[:3], wrong_mobs):
-            wait_until(self, nar.when_spoken(s), lead=0.30)
+            director.at(s, lead=0.30)
             self.play(FadeIn(m, shift=RIGHT * 0.08), run_time=0.45)
+            director.focus = m
+            highlight_keywords(director, m, s, limit=2)
         self.play(FadeIn(cross_chip, scale=0.6), run_time=0.35)
+        director.spotlight(left_card)
 
         for s, m in zip(right_sents[:3], right_mobs):
-            wait_until(self, nar.when_spoken(s), lead=0.30)
+            director.at(s, lead=0.30)
             self.play(FadeIn(m, shift=LEFT * 0.08), run_time=0.45)
+            director.focus = m
+            highlight_keywords(director, m, s, limit=2)
         self.play(FadeIn(tick_chip, scale=0.6), run_time=0.35)
 
-        try:
-            r_glow = SurroundingRectangle(
-                right_card, color=mc(C_GGREEN),
-                stroke_width=3.0, buff=0.08, corner_radius=0.18)
-            self.play(Create(r_glow), run_time=0.5)
-        except Exception:
-            pass
-        sync_to_audio(self, sd.get("scene_id", 7))
+        r_glow = SurroundingRectangle(
+            right_card, color=mc(C_GGREEN),
+            stroke_width=3.0, buff=0.08, corner_radius=0.18)
+        self.play(Create(r_glow), run_time=0.5)
+        director.focus = VGroup(right_card, r_glow)
+        director.finish()
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1650,14 +2506,12 @@ class Scene07_Mistakes(Scene):
 # lands exactly when the voice reaches it; verdicts as pills.
 # ═════════════════════════════════════════════════════════════
 
-class Scene08_Practice(Scene):
+class Scene08_Practice(MovingCameraScene):
     def construct(self):
-        sd  = get_scene_by_step("practice")
-        nar = Narration(sd)
-        attach_audio(self, sd.get("scene_id", 8))
+        sd = get_scene_by_step("practice")
+        nar, director = open_scene(self, sd, "practice", 8)
 
         lesson_title = SCRIPT_DATA.get("title", "")
-        setup_bg(self)
         self.add(make_header(lesson_title, LESSON_ID), make_footer("practice"))
 
         plain_lines  = (sd.get("board_plain", {}) or {}).get("practice", [])
@@ -1715,28 +2569,32 @@ class Scene08_Practice(Scene):
         # ── Animate on the narration beat ─────────────────────
         self.play(FadeIn(pill, shift=DOWN * 0.08), run_time=0.5)
         self.play(FadeIn(q_card), run_time=0.35)
-        for m, spoken in zip(q_mobs, q_spoken):
-            t = nar.when_spoken(spoken) if spoken else None
-            wait_until(self, t, lead=0.30)
+        for m, spoken, plain in zip(q_mobs, q_spoken, q_lines):
+            director.at(spoken, lead=0.30)
             self.play(FadeIn(m, shift=RIGHT * 0.10), run_time=0.45)
+            director.focus = m
+            highlight_keywords(director, m, plain, limit=2)
+        director.spotlight(q_card)
 
         # ACTIVE LEARNING: pause invitation + spoken 5-4-3-2-1 countdown
         pause_pill = section_pill("⏸  PAUSE & TRY IT YOURSELF", C_SEM_THEOREM,
                                   size=22)
         pause_pill.move_to(np.array([0.0, -0.35, 0]))
-        reveal(self, nar, pause_pill, spoken="Pause the video now",
-               run_time=0.5)
-        play_countdown(self, nar, ["Five", "Four", "Three", "Two", "One"],
+        director.reveal(pause_pill, spoken="Pause the video now", run_time=0.5)
+        play_countdown(director, ["Five", "Four", "Three", "Two", "One"],
                        np.array([0.0, -1.7, 0]), C_SEM_KEY)
         self.play(FadeOut(pause_pill), run_time=0.3)
 
-        wait_until(self, nar.when_spoken("let us solve it together"), lead=0.25)
+        director.at("let us solve it together", lead=0.25)
         self.play(FadeIn(sol_card), FadeIn(sol_hdr), run_time=0.5)
-        for (row, is_q), spoken in zip(rows, sol_spoken):
-            t = nar.when_spoken(spoken) if spoken else None
-            wait_until(self, t, lead=0.30)
+        for i, ((row, is_q), spoken) in enumerate(zip(rows, sol_spoken)):
+            director.at(spoken, lead=0.30)
             self.play(Write(row), run_time=0.55)
-        sync_to_audio(self, sd.get("scene_id", 8))
+            director.focus = row
+            if i == len(rows) - 1:
+                self.play(Circumscribe(row, color=mc(C_GGREEN)), run_time=0.9)
+                director.spotlight(row)
+        director.finish()
 
 
 # ═════════════════════════════════════════════════════════════
@@ -1744,11 +2602,10 @@ class Scene08_Practice(Scene):
 # Takeaways land as the voice recaps each one.
 # ═════════════════════════════════════════════════════════════
 
-class Scene09_Summary(Scene):
+class Scene09_Summary(MovingCameraScene):
     def construct(self):
-        sd  = get_scene_by_step("summary")
-        nar = Narration(sd)
-        attach_audio(self, sd.get("scene_id", 9))
+        sd = get_scene_by_step("summary")
+        nar, director = open_scene(self, sd, "summary", 9)
 
         lesson_title   = SCRIPT_DATA.get("title", "Today's Lesson")
         formula_plain  = sd.get("formula_plain",
@@ -1756,7 +2613,6 @@ class Scene09_Summary(Scene):
         lesson_goal    = SCRIPT_DATA.get("lesson_goal", "")
         subtopic       = SCRIPT_DATA.get("subtopic", "")
 
-        setup_bg(self)
         self.add(make_footer("summary"))
 
         banner_bg = Rectangle(
@@ -1824,21 +2680,20 @@ class Scene09_Summary(Scene):
         # ── Animate on the narration beat ─────────────────────
         self.play(FadeIn(banner_grp, shift=DOWN * 0.08), run_time=0.6)
         self.play(Write(title_mob), run_time=0.8)
-        wait_until(self, nar.when_spoken("At the center of everything"),
-                   lead=0.25)
+        director.at("At the center of everything", lead=0.25)
         self.play(GrowFromCenter(center_node), run_time=0.7)
+        director.focus = center_node
         for edge, node, cue in branches:
-            wait_until(self, nar.when_spoken(cue), lead=0.25)
+            director.at(cue, lead=0.25)
             self.play(Create(edge), run_time=0.35)
             self.play(FadeIn(node, scale=0.85), run_time=0.40)
+            director.focus = node
         self.play(FadeIn(cta_grp, scale=0.92), run_time=0.5)
-        try:
-            self.play(Flash(cta_bg, color=mc(C_GOLD),
-                            line_length=0.25, num_lines=16,
-                            flash_radius=0.9), run_time=0.8)
-        except Exception:
-            pass
-        sync_to_audio(self, sd.get("scene_id", 9))
+        self.play(Flash(cta_bg, color=mc(C_GOLD),
+                        line_length=0.25, num_lines=16,
+                        flash_radius=0.9), run_time=0.8)
+        director.focus = cta_grp
+        director.finish()
 '''
 
 # ══════════════════════════════════════════════════════════════
@@ -1854,6 +2709,9 @@ def build_manim_source(script: dict) -> str:
     source = source.replace("__AUDIO_DIR__",   str(LESSON_AUDIO))
     source = source.replace("__BANNER_PATH__", str(BANNER_PATH))
     source = source.replace("__LOGO_PATH__",   str(LOGO_PATH))
+
+    # Pacing budget — the render-time contract from constants.py
+    source = source.replace("__PACING__", repr(PACING))
 
     # Colour constants from theme
     source = source.replace("{C_BG}",      C_BG)
