@@ -21,6 +21,7 @@ curriculum/*.json          ← all lesson content lives here (data, not code)
 pipeline/cell1_lesson.py   lesson data + 9-scene teacher narrations
 pipeline/cell2_script.py   master script JSON (scenes, timing, board actions)
 pipeline/cell3_audio.py    Edge-TTS voice (en-GB-Ryan) + per-word timings
+pipeline/pacing.py         what can be built from the lesson, and when
 pipeline/cell4_animation.py Manim renders each scene (board-write style)
 pipeline/cell5_assembly.py mux + 0.3s crossfades → final MP4
 pipeline/cell8_subtitles.py SRT + VTT captions from the word timings
@@ -39,6 +40,48 @@ concept → definition → formula → worked example → mistakes → practice 
 summary) defined in `pipeline/constants.py`. **No lesson content is ever
 hard-coded in the engine** — adding a grade, subject or exam track means
 adding another JSON file to `curriculum/`.
+
+## Pacing: mathematics is built, never displayed
+
+A lesson is judged on movement as much as on looks. If the voice is
+talking, the board has to be changing — a still screen under live
+narration is the single thing that makes a good lesson feel slow.
+
+Two mechanisms enforce that, and neither knows which lesson is playing.
+
+**The Director** (in `cell4_animation.py`) replaces every `wait()` a
+scene used to make. Ask it to hold until the next narration cue and it
+spends the time instead of losing it: a slow documentary camera drift, a
+highlight on the line under discussion, a spotlight push-in on the
+active equation, a progress tick. Only the final fraction of a second is
+ever held still. The ceiling lives in `PACING` in `pipeline/constants.py`
+— change it there, never in a scene.
+
+**Constructions** (chosen by `pipeline/pacing.py`) make sure there is
+something worth watching. The module reads the lesson's own board and
+formula and decides what can be *built*:
+
+| It finds | It builds |
+|----------|-----------|
+| a terminating and a recurring fraction | both decimals side by side, digit by digit, to their verdicts |
+| any fraction that produces decimals | a long division — `0.` → `0.1` → `0.12` → `0.125 ✓` |
+| a power with a small exponent | the expansion — `x⁵ = x·x·x·x·x`, braced and counted |
+| a composite number | a factor tree, one branch at a time |
+| anything else | a flowchart of the steps, or an illustration drawn from the narration |
+
+Formulas are never delivered whole: `split_latex_parts()` cuts an
+expression at its top-level joins so `MathTex(*parts)` lays it out
+identically but writes it a stroke at a time, with a marker travelling to
+whichever term is being spoken about.
+
+Because all of this is derived from curriculum data, a new lesson gets
+the treatment automatically. `tests/test_curriculum_pacing.py` asserts it
+for every active lesson in `curriculum/` — a lesson with nothing to
+animate fails the build rather than shipping as a static screen.
+
+```bash
+python -m unittest discover -s tests      # ~0.5s, no Manim or LaTeX needed
+```
 
 ## Curriculum
 
@@ -131,10 +174,11 @@ with that day number to post it straight from the saved render artifact
 autopilot.py          one-command daily producer + day tracking
 curriculum/           lesson content (JSON, one file per grade/track)
 pipeline/             the 8 production stages + shared paths/constants
+tests/                pacing + scene-template checks (pure Python, fast)
 uploader/             YouTube posting + one-time authorize helper
 state/progress.json   which day runs next, what's done, what's uploaded
 legacy/               original Colab notebook export (frozen reference)
-.github/workflows/    daily automation (opt-in)
+.github/workflows/    daily automation (opt-in) + tests on every push
 ```
 
 ## Roadmap
