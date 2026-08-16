@@ -104,11 +104,20 @@ def concat_scenes(concat_txt, out_path):
 # ADD_CROSSFADES  ← NOW DEFINED HERE, ABOVE assemble_video
 # ══════════════════════════════════════════════════════════════
 
-def add_crossfades(muxed_files, out_path):
+# ffmpeg xfade transition names, curated to ones that read as premium
+# (no harsh pixelation/glitch styles). Picked by lesson_id so
+# consecutive videos don't all cut the same way.
+XFADE_STYLES = ["fade", "dissolve", "smoothleft", "smoothright",
+                "circleopen", "radial", "wipeup", "zoomin"]
+
+
+def add_crossfades(muxed_files, out_path, transition=None):
     """
-    Applies 0.3s crossfade between every consecutive scene pair.
-    Falls back to hard cut concat if xfade fails.
+    Applies a 0.3s crossfade (style rotates per day, see XFADE_STYLES)
+    between every consecutive scene pair. Falls back to hard cut concat
+    if xfade fails.
     """
+    transition = transition or "fade"
     if len(muxed_files) < 2:
         # FIX: was calling undefined build_concat_txt() — now inline
         concat_txt = out_path.parent / "concat_fallback.txt"
@@ -154,7 +163,7 @@ def add_crossfades(muxed_files, out_path):
         a_out = f"[afade{i+1}]" if i < len(muxed_files) - 2 else "[aout]"
 
         filter_parts.append(
-            f"{v_in}xfade=transition=fade:duration={FADE_DUR}"
+            f"{v_in}xfade=transition={transition}:duration={FADE_DUR}"
             f":offset={offset:.3f}{v_out}"
         )
         audio_parts.append(
@@ -252,8 +261,10 @@ def assemble_video(script):
         print(f"  ⚠️  No outro render found — publishing without end-card.\n")
 
     # 2. Concatenation Phase with crossfades
-    print(f"  🎬 Rendering Final Output with Crossfades...")
-    concat_success = add_crossfades(sorted(muxed_files), FINAL_VIDEO_PATH)
+    transition = XFADE_STYLES[(lesson_id - 1) % len(XFADE_STYLES)]
+    print(f"  🎬 Rendering Final Output with '{transition}' Crossfades...")
+    concat_success = add_crossfades(sorted(muxed_files), FINAL_VIDEO_PATH,
+                                    transition=transition)
 
     # 3. Cleanup
     if concat_success:
