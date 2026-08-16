@@ -1,8 +1,39 @@
-"""Shared teaching constants: animation philosophy, voice pitch
-profiles and the fixed 9-scene lesson structure.
+"""Shared teaching constants: animation philosophy, pacing budget, voice
+pitch profiles and the fixed 9-scene lesson structure.
 Read by cells 1, 2, 3 and 4. Lesson CONTENT never lives here —
 it comes from curriculum/*.json.
 """
+
+# ══════════════════════════════════════════════════════════════
+# PACING BUDGET — the contract Cell 4 renders against
+#
+# A finished lesson is judged on movement, not just on looks: if the
+# voice is talking, the board must be changing. These numbers are the
+# limits the Director enforces at render time, scene after scene, for
+# every lesson. Change them here — never in a scene.
+# ══════════════════════════════════════════════════════════════
+
+PACING = {
+    # Hard ceiling on a motionless screen. The Director fills anything
+    # longer with an ambient beat (camera drift, highlight, progress).
+    "max_static_seconds"   : 3.2,
+    # Below this a beat is not worth playing — the gap is just held.
+    "min_beat_seconds"     : 0.9,
+    # How long a single ambient beat runs.
+    "ambient_run_seconds"  : 1.6,
+    # Slow documentary camera move: fraction of frame width to breathe
+    # through, and how far the centre may wander from home.
+    "camera_zoom_range"    : (0.955, 1.0),
+    "camera_pan_limit"     : 0.34,
+    "camera_run_seconds"   : 2.6,
+    # Zoom onto the line being talked about, then return.
+    "spotlight_zoom"       : 0.62,
+    "spotlight_run_seconds": 0.9,
+    # Stroke-by-stroke writing speed for math (seconds per part).
+    "write_run_seconds"    : 0.7,
+    # Digit-by-digit decimal reveal.
+    "digit_run_seconds"    : 0.34,
+}
 
 ANIMATION_PHILOSOPHY = {
     "BOARD_WRITE": (
@@ -28,6 +59,17 @@ ANIMATION_PHILOSOPHY = {
         "New term highlights briefly as spoken. "
         "Previous terms stay visible but slightly dimmed. "
         "Full formula never appears all at once."
+    ),
+    "LIVE_SOLVE": (
+        "The answer is worked out on screen rather than displayed. "
+        "Decimals appear one digit at a time, powers expand into the "
+        "multiplication they stand for, numbers break into factor trees. "
+        "The student watches the mathematics being produced."
+    ),
+    "COMPARE": (
+        "Two cases built side by side so the difference is visible, not "
+        "described. Both panels animate together, each ending on its own "
+        "verdict."
     ),
 }
 

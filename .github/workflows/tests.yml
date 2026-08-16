@@ -1,0 +1,59 @@
+# Fast checks on every push and pull request.
+#
+# None of this needs Manim, LaTeX or ffmpeg — the pacing engine and the
+# scene template are checked as pure Python, so the whole suite runs in
+# seconds. That matters: the alternative way to find a typo in the Manim
+# scene template is a two-hour daily-video run failing at stage 4.
+
+name: Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run the test suite
+        run: python -m unittest discover -s tests -v
+
+      - name: Check every lesson has something to animate
+        run: |
+          python - <<'EOF'
+          import json
+          from pathlib import Path
+          from pipeline.mathtext import latex_to_plain
+          from pipeline.pacing import choose_construction
+
+          from collections import Counter
+          counts, missing = Counter(), []
+          for path in sorted(Path("curriculum").glob("*.json")):
+              for lesson in json.loads(path.read_text()).get("lessons", []):
+                  if lesson.get("status") != "active":
+                      continue
+                  board = lesson.get("board_examples", {}) or {}
+                  raw = (list(board.get("worked_example", []) or [])
+                         + list(board.get("practice", []) or []))
+                  choice = choose_construction(
+                      [latex_to_plain(l) for l in raw], raw)
+                  if choice is None:
+                      missing.append(f"{path.name} day {lesson['day']}")
+                  else:
+                      counts[choice[0]] += 1
+          for kind, n in counts.most_common():
+              print(f"  {kind:<12} {n}")
+          if missing:
+              raise SystemExit(f"::error::lessons with nothing to animate: {missing}")
+          print(f"\nAll {sum(counts.values())} active lessons have a construction.")
+          EOF
