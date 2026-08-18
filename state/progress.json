@@ -1,5 +1,5 @@
 {
-  "next_day": 21,
+  "next_day": 20,
   "completed": [
     1,
     2,
@@ -19,8 +19,7 @@
     16,
     17,
     18,
-    19,
-    20
+    19
   ],
   "uploaded": [
     1,
@@ -45,5 +44,6 @@
   ],
   "last_run": "2026-08-18T15:34:16",
   "open_from_day": 20,
-  "note": "Days 1-19 locked/posted. Autopilot and daily schedule continue from day 20."
+  "note": "Days 1-19 locked. Day 20 marked for REDO with ENGINE_VISUAL_V2. Do not skip to 21 until Day 20 re-renders.",
+  "redo_day_20": true
 }

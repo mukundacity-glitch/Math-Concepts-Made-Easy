@@ -107,6 +107,7 @@ def main():
     print(f"  📚 {lesson['subject']} → {lesson['topic']}")
     print(f"  🗓  {datetime.date.today():%A, %d %B %Y}")
     print(f"  📂 Output: {BASE_DIR}")
+    print(f"  🎨 Engine : ENGINE_VISUAL_V2 (topic diagrams + richer narration)")
     print(f"{'═' * 65}")
 
     for i, (name, module) in enumerate(STAGES, start=1):

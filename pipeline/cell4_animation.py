@@ -60,6 +60,7 @@ with open(TIMED_SCRIPT, "r", encoding="utf-8") as f:
     SCRIPT = json.load(f)
 
 print(f"✅ Timed script loaded → {TIMED_SCRIPT}")
+print("🎨 Animation engine: ENGINE_VISUAL_V2 (topic-specific diagrams)")
 print(f"   Lesson  : Day {lesson_id} — {SCRIPT['title']}")
 print(f"   Scenes  : {len(SCRIPT['scenes'])}")
 print(f"   Total   : {SCRIPT['total_duration_seconds']:.1f}s\n")
@@ -696,8 +697,135 @@ _COUNT_RE     = re.compile(r"(\d+)\s+(pizzas?|chocolates?|apples?|oranges?|mango
 _AMONG_RE     = re.compile(r"(?:among|between)\s+(\d+)")
 
 
+
+def viz_unit_right_triangle():
+    """Unit-hypotenuse right triangle with opp/adj/hyp labels (trig identity)."""
+    A = np.array([-1.6, -1.1, 0])
+    B = np.array([ 1.6, -1.1, 0])
+    C = np.array([-1.6,  1.3, 0])
+    # scale so hyp ~ visual length for labels
+    tri = Polygon(A, B, C,
+                  stroke_color=mc(C_WHITE), stroke_width=4,
+                  fill_color=mc(C_BLUE_P), fill_opacity=0.12)
+    # right-angle square at A
+    ra = Square(side_length=0.28, stroke_color=mc(C_GOLD), stroke_width=3)
+    ra.move_to(A + np.array([0.14, 0.14, 0]))
+    # side highlights
+    opp = Line(A, C, stroke_color=mc(C_ORANGE), stroke_width=8)
+    adj = Line(A, B, stroke_color=mc(C_BLUE_P), stroke_width=8)
+    hyp = Line(C, B, stroke_color=mc(C_GGREEN), stroke_width=8)
+    lab_o = TXT("opp = sin θ", size=20, color=C_ORANGE, bold=True).next_to(opp, LEFT, buff=0.12)
+    lab_a = TXT("adj = cos θ", size=20, color=C_BLUE_P, bold=True).next_to(adj, DOWN, buff=0.12)
+    lab_h = TXT("hyp = 1", size=22, color=C_GGREEN, bold=True).next_to(hyp, UR, buff=0.08)
+    theta = TXT("θ", size=26, color=C_GOLD, bold=True).move_to(B + np.array([-0.55, 0.35, 0]))
+    title = TXT("Shrink hypotenuse to 1", size=22, color=C_GOLD, bold=True)
+    title.next_to(tri, UP, buff=0.35)
+    g = VGroup(tri, ra, opp, adj, hyp, lab_o, lab_a, lab_h, theta, title)
+    return g
+
+
+def viz_pythag_identity_flow():
+    """a²+b²=c² → divide by c² → sin²+cos²=1 with color chips."""
+    rows = VGroup(
+        TXT("Pythagoras", size=20, color=C_LGRAY, bold=True),
+        MATH(r"a^2 + b^2 = c^2", size=42, color=C_WHITE, max_w=6.5),
+        TXT("divide every term by c²", size=18, color=C_GOLD, bold=True),
+        MATH(r"\left(\frac{a}{c}\right)^2 + \left(\frac{b}{c}\right)^2 = 1", size=40, color=C_WHITE, max_w=7.0),
+        TXT("rename sides", size=18, color=C_GOLD, bold=True),
+        MATH(r"\sin^2\theta + \cos^2\theta = 1", size=48, color=C_GGREEN, max_w=7.2),
+    ).arrange(DOWN, buff=0.28)
+    box = RoundedRectangle(width=rows.width + 0.8, height=rows.height + 0.7,
+                           corner_radius=0.18, fill_color=mc(C_CBG), fill_opacity=1.0,
+                           stroke_color=mc(C_GGREEN), stroke_width=3)
+    box.move_to(rows.get_center())
+    return VGroup(box, rows)
+
+
+def viz_mean_median_mode_strip(values=None):
+    """Dot strip showing mean pull vs median resistance (statistics)."""
+    if not values:
+        values = [30, 32, 31, 29, 30, 80]  # last is outlier-ish for demo
+    vals = list(values)
+    xs = list(range(len(vals)))
+    # map to screen
+    dots = VGroup()
+    vmin, vmax = min(vals), max(vals)
+    span = max(vmax - vmin, 1)
+    for i, v in enumerate(vals):
+        x = -3.2 + 6.4 * (i / max(len(vals) - 1, 1))
+        y = -0.8 + 2.2 * ((v - vmin) / span)
+        col = C_ORANGE if v == vmax and v > sorted(vals)[-2] else C_BLUE_P
+        d = Dot(point=np.array([x, y, 0]), radius=0.14, color=mc(col))
+        lab = TXT(str(v), size=16, color=C_WHITE, bold=True).next_to(d, UP, buff=0.08)
+        dots.add(VGroup(d, lab))
+    axis = Line(np.array([-3.6, -1.1, 0]), np.array([3.6, -1.1, 0]),
+                stroke_color=mc(C_LGRAY), stroke_width=3)
+    mean_v = sum(vals) / len(vals)
+    med_v = sorted(vals)[len(vals)//2]
+    def x_for(v):
+        # place marker on axis proportionally by value rank approx
+        return -3.2 + 6.4 * ((v - vmin) / span)
+    mean_m = TXT(f"MEAN ≈ {mean_v:.1f}", size=20, color=C_PURPLE, bold=True)
+    mean_m.move_to(np.array([x_for(mean_v), -1.7, 0]))
+    med_m = TXT(f"MEDIAN = {med_v}", size=20, color=C_GGREEN, bold=True)
+    med_m.move_to(np.array([0.0, 1.6, 0]))
+    title = TXT("Outlier pulls the MEAN — MEDIAN stays put", size=22, color=C_GOLD, bold=True)
+    title.move_to(np.array([0.0, 2.2, 0]))
+    return VGroup(title, axis, dots, mean_m, med_m)
+
+
+def viz_sorted_median_demo():
+    """Before/after sort for median teaching."""
+    before = TXT("Scrambled:  8 , 2 , 5 , 10", size=26, color=C_RED, bold=True)
+    arrow = TXT("↓ SORT smallest → largest", size=22, color=C_GOLD, bold=True)
+    after = TXT("Sorted:  2 , 5 , 8 , 10", size=26, color=C_GGREEN, bold=True)
+    mid = TXT("Median = average of 5 and 8 = 6.5", size=24, color=C_WHITE, bold=True)
+    g = VGroup(before, arrow, after, mid).arrange(DOWN, buff=0.35)
+    box = RoundedRectangle(width=g.width + 0.9, height=g.height + 0.7,
+                           corner_radius=0.18, fill_color=mc(C_CBG), fill_opacity=1.0,
+                           stroke_color=mc(C_ORANGE), stroke_width=3)
+    box.move_to(g.get_center())
+    return VGroup(box, g)
+
+
+def topic_visual(sentence=""):
+    """Lesson-aware illustration from title/formula/hints — not generic cards only."""
+    title = str(SCRIPT_DATA.get("title", "")).lower()
+    sub = str(SCRIPT_DATA.get("subtopic", "")).lower()
+    formula = str(SCRIPT_DATA.get("key_formula", "")).lower()
+    hints = str(SCRIPT_DATA.get("visual_hints", "")).lower()
+    s = f"{sentence} {title} {sub} {formula} {hints}".lower()
+
+    # Trigonometric Pythagorean identity
+    if any(k in s for k in ("sin^2", "sin²", r"sin^2", "cos^2", "identity", "pythagorean trig",
+                             "sin squared", "cos squared")) \
+       or ("sin" in formula and "cos" in formula and "1" in formula):
+        if any(k in str(sentence).lower() for k in ("park", "diagonal", "walk", "mile", "distance", "rectangle")):
+            return viz_unit_right_triangle()
+        if any(k in str(sentence).lower() for k in ("divide", "rename", "transform", "becomes", "identity", "formula")):
+            return viz_pythag_identity_flow()
+        # default for this lesson
+        return viz_unit_right_triangle()
+
+    # Mean / median / mode
+    if any(k in s for k in ("mean", "median", "mode", "average", "outlier", "billionaire", "salary")):
+        if any(k in str(sentence).lower() for k in ("sort", "order", "line", "middle")):
+            return viz_sorted_median_demo()
+        return viz_mean_median_mode_strip()
+
+    # Generic right-triangle trig (ratios day etc.)
+    if any(k in s for k in ("sine", "cosine", "tangent", "opposite", "adjacent", "hypotenuse", "soh cah toa")):
+        return viz_unit_right_triangle()
+
+    return None
+
+
 def story_visual(sentence):
     """Return a drawn illustration matching this narration sentence, or None."""
+    # Prefer lesson-topic diagrams (trig identity, stats, …) over generic pizza/money
+    tv = topic_visual(sentence)
+    if tv is not None:
+        return tv
     s = str(sentence).lower()
     frac = _FRAC_WORD_RE.search(s)
     p, q = (int(frac.group(1)), int(frac.group(2))) if frac else (None, None)
@@ -1250,8 +1378,8 @@ class Scene03_Concept(Scene):
                        board_plain.get("practice", []))
         vals = fractions_in(all_lines)
 
-        vis = None
-        if vals:
+        vis = topic_visual(" ".join(beats[:2]) if beats else "")
+        if vis is None and vals:
             vis = viz_number_line(vals)
         if vis is None:
             for b in beats:

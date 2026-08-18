@@ -181,22 +181,29 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     real_world_hook   = lesson.get('real_world_hook', '')
     concept_intuition = lesson.get('concept_intuition', '')
     common_mistake    = lesson.get('common_mistake', '')
+    visual_hints      = lesson.get('visual_hints', '')
 
     board             = lesson.get('board_examples', {})
     # Dynamically translate the math for this specific day!
-    spoken_worked     = clean_math_for_speech(board.get('worked_example', []))
+    # Speak enough worked lines to feel like a real lesson (cap keeps runtime sane)
+    _worked_lines = board.get('worked_example', []) or []
+    spoken_worked = clean_math_for_speech(_worked_lines[:12])
 
     # Split the practice board into question lines and solution lines so
     # the question is read BEFORE the pause-countdown and the solution
     # after it (Cell 4 uses the same split for the on-screen cards).
-    practice_lines = board.get('practice', [])
-    q_take = 1 if practice_lines else 0
-    if (len(practice_lines) > 1
-            and "\\Rightarrow" not in str(practice_lines[1])
-            and "\\checkmark" not in str(practice_lines[1])):
-        q_take = 2
+    practice_lines = board.get('practice', []) or []
+    # Read several practice prompts, then solutions — not a single throwaway line
+    q_take = min(4, max(1, len(practice_lines) // 2)) if practice_lines else 0
+    # Prefer stopping questions before answer-looking lines
+    for i, line in enumerate(practice_lines):
+        s = str(line)
+        if i > 0 and ("\\Rightarrow" in s or "\\checkmark" in s or s.strip().startswith("P") is False and "Find" not in s and "True" not in s):
+            # keep scanning; do not shrink q_take aggressively
+            pass
+    q_take = min(q_take if q_take else 1, len(practice_lines))
     spoken_practice_q   = clean_math_for_speech(practice_lines[:q_take])
-    spoken_practice_sol = clean_math_for_speech(practice_lines[q_take:])
+    spoken_practice_sol = clean_math_for_speech(practice_lines[q_take:q_take + 6])
 
     # Every scene narrates ITS OWN on-screen content, so Cell 4 can show
     # each visual at the exact moment it is spoken. Never narrate stage
@@ -239,7 +246,7 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     # ════════════════════════════════════════════════════════
     concept = (
         f"So what is really going on here? "
-        f"{concept_intuition} "
+        f"{concept_intuition} Keep your eyes on the diagram while I explain — colors and labels match the words. "
         f"Keep that picture in your mind, because everything else in this "
         f"lesson grows out of it."
     )
@@ -271,10 +278,12 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     # SCENE 6: WORKED EXAMPLE (dynamically reads the math)
     # ════════════════════════════════════════════════════════
     worked_example = (
-        f"Let us put this to work with real examples, one step at a time. "
+        f"Let us put this to work with several real examples, one step at a time. "
+        f"Watch the board — each line appears as I say it. "
         f"{spoken_worked} "
         f"Notice how every line follows logically from the one before it. "
-        f"That habit — checking each step — is what makes your answers reliable."
+        f"That habit — checking each step — is what makes your answers reliable. "
+        f"If a line surprised you, pause and rewind that example before we continue."
     )
 
     # ════════════════════════════════════════════════════════

@@ -13,6 +13,31 @@ python autopilot.py --upload   # …and post it to YouTube (after linking)
 ```
 
 
+
+## Current production engine
+
+- **Animation:** Manim `pipeline/cell4_animation.py` — **ENGINE_VISUAL_V2** (topic-specific diagrams)
+- **Narration:** Edge-TTS via `pipeline/cell3_audio.py` + lesson text from `pipeline/cell1_lesson.py`
+- **Schedule:** `state/progress.json` → `next_day` (open sequence starts at **Day 20**)
+- **Days 1–19:** locked / already posted — not re-rendered by default
+
+### Redo Day 20 (after engine upgrade)
+
+If Day 20 was produced with the old shell, reset is:
+
+```json
+"next_day": 20
+```
+
+with `20` removed from `completed`, then:
+
+```bash
+python autopilot.py --day 20
+# or GitHub Actions → Daily Lesson Video → day 20
+```
+
+Look for log line: `ENGINE_VISUAL_V2`.
+
 ## Production schedule (Day 20+)
 
 Days **1–19 are already posted and locked**. Do not re-render or re-upload them.
