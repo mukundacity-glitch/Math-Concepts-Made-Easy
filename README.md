@@ -14,6 +14,14 @@ python autopilot.py --upload   # …and post it to YouTube (after linking)
 
 
 
+## Manual redo then auto (current plan)
+
+1. **Day 19** — run manually (Actions day `19`) — trig ratios  
+2. **Day 20** — run manually (Actions day `20`) — identity  
+3. **Day 21+** — leave to **daily schedule** (after 20 completes, `next_day=21`)
+
+Days **1–18** stay locked.
+
 ## Current production engine
 
 - **Animation:** Manim `pipeline/cell4_animation.py` — **ENGINE_VISUAL_V2** (topic-specific diagrams)

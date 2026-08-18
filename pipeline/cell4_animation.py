@@ -813,8 +813,12 @@ def topic_visual(sentence=""):
             return viz_sorted_median_demo()
         return viz_mean_median_mode_strip()
 
-    # Generic right-triangle trig (ratios day etc.)
-    if any(k in s for k in ("sine", "cosine", "tangent", "opposite", "adjacent", "hypotenuse", "soh cah toa")):
+    # Trig ratios (Day 19) and general right-triangle trig
+    if any(k in s for k in (
+        "sine", "cosine", "tangent", "opposite", "adjacent", "hypotenuse",
+        "soh", "cah", "toa", "soh cah toa", "trig ratio", "trigonometric ratio",
+        "wheelchair", "ramp", "sin θ", "cos θ", "tan θ",
+    )):
         return viz_unit_right_triangle()
 
     return None
