@@ -24,6 +24,7 @@ from typing import Optional
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
+from pipeline.paths import MIN_OPEN_DAY
 from pipeline.paths import BASE_DIR, safe_filename
 from pipeline.curriculum import get_lesson
 
@@ -334,10 +335,16 @@ def _add_to_playlist(service, video_id: str, playlist_name: str):
 
 
 def upload_day(day: int, dry_run: bool = False, privacy: str = None):
+    day = int(day)
+    if day < MIN_OPEN_DAY and not dry_run:
+        raise SystemExit(
+            f"🛑 Day {day} is LOCKED (Days 1–{MIN_OPEN_DAY - 1} already posted). "
+            f"Upload automation starts at Day {MIN_OPEN_DAY}."
+        )
     # Fail-closed media package check before any real YouTube API call
     if not dry_run:
         from pipeline.media_gate import assert_publishable
-        assert_publishable(int(day))
+        assert_publishable(day)
     lesson = get_lesson(day)
     paths = lesson_paths(lesson)
     privacy = privacy or os.environ.get("YT_PRIVACY", "private")

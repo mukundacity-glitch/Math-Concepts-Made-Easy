@@ -1,10 +1,20 @@
-# Days 1–19 are LOCKED
+# Days 1–19 are LOCKED (already posted)
 
-These lessons are already produced and uploaded (see `state/progress.json`).
+These lessons are already produced and uploaded.
 
-Do **not**:
-- rewrite curriculum entries for days 1–19 unless fixing a critical factual error with explicit human instruction
-- delete progress markers for completed/uploaded days 1–19
-- re-upload replacement videos for days 1–19 from automation
+Automation **must not**:
+- re-render Days 1–19
+- re-upload Days 1–19
+- rewind `state/progress.json` below day 20
+- delete completed/uploaded markers for days 1–19
 
-Automation continues from `state/progress.json` → `next_day` (currently 20+).
+## Production continues from Day 20
+
+| Field | Value |
+|-------|--------|
+| `state/progress.json` → `next_day` | **20** |
+| First open lesson | Day 20 — Pythagorean Trigonometric Identity |
+| Then | Day 21 — Mean, Median, Mode → … through curriculum |
+
+The old single-file Colab export (`math_concepts_colab.py`) was removed.
+All production runs go through `autopilot.py` + `pipeline/*` + `curriculum/*.json`.

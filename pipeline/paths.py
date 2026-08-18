@@ -55,7 +55,12 @@ def read_state() -> dict:
     if STATE_PATH.exists():
         with open(STATE_PATH, encoding="utf-8") as f:
             return json.load(f)
-    return {"next_day": 1, "completed": [], "uploaded": []}
+    # Safe default if state file missing: never restart at Day 1.
+    return {
+        "next_day": 20,
+        "completed": list(range(1, 20)),
+        "uploaded": list(range(1, 20)),
+    }
 
 
 def write_state(state: dict):
@@ -71,6 +76,10 @@ from datetime import date, timedelta
 # day's date is derived from this, never hardcoded individually.
 # 28/07/2026 is the reset/setup day only; Day 1 publishes 29/07/2026.
 START_DATE = date(2026, 7, 29)
+
+# Days 1–19 are already posted. Open production sequence starts here.
+MIN_OPEN_DAY = 20
+
 
 
 def get_publish_date(day_number: int) -> date:

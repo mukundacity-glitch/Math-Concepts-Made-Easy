@@ -22,7 +22,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from pipeline.paths import BASE_DIR, read_state, write_state, safe_filename
+from pipeline.paths import BASE_DIR, read_state, write_state, safe_filename, MIN_OPEN_DAY
 from pipeline.curriculum import MASTER_CURRICULUM, TOTAL_DAYS, get_lesson
 
 STAGES = [
@@ -58,10 +58,33 @@ def main():
                         help="dangerous: allow upload without media gate (default off)")
     parser.add_argument("--no-advance", action="store_true",
                         help="do not advance state/progress.json (re-runs, tests)")
+    parser.add_argument("--allow-locked-day", action="store_true",
+                        help="EMERGENCY only: allow rendering a Day < MIN_OPEN_DAY (1–19). Default: blocked.")
     args = parser.parse_args()
 
     state = read_state()
-    day = args.day if args.day is not None else int(state.get("next_day", 1))
+    day = args.day if args.day is not None else int(state.get("next_day", MIN_OPEN_DAY))
+
+    # ── Days 1–19 lock ──────────────────────────────────────────
+    # Already posted. Do not re-render / re-upload via normal automation.
+    if day < MIN_OPEN_DAY and not args.allow_locked_day:
+        print(f"🛑 Day {day} is LOCKED (Days 1–{MIN_OPEN_DAY - 1} already posted).")
+        print(f"   Production schedule continues from Day {MIN_OPEN_DAY}+.")
+        print(f"   state/progress.json next_day should be >= {MIN_OPEN_DAY}.")
+        print("   Refusing to run. (Emergency override: --allow-locked-day)")
+        return 2
+
+    # Never let automation rewind below the open sequence
+    if int(state.get("next_day", MIN_OPEN_DAY)) < MIN_OPEN_DAY:
+        state["next_day"] = MIN_OPEN_DAY
+        for d in range(1, MIN_OPEN_DAY):
+            if d not in state.setdefault("completed", []):
+                state["completed"].append(d)
+            if d not in state.setdefault("uploaded", []):
+                state["uploaded"].append(d)
+        write_state(state)
+        print(f"🔒 Normalized progress.json → next_day={MIN_OPEN_DAY}")
+
 
     # ── Launch date guard ───────────────────────────────────────
     # Blocks any production/upload before the official Day 1 date.
@@ -97,7 +120,7 @@ def main():
         state = read_state()
         if day not in state.setdefault("completed", []):
             state["completed"].append(day)
-        state["next_day"] = day + 1
+        state["next_day"] = max(day + 1, MIN_OPEN_DAY)
         state["last_run"] = datetime.datetime.now().isoformat(timespec="seconds")
         write_state(state)
         print(f"\n✅ Progress saved — next scheduled lesson: Day {day + 1}")

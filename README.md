@@ -12,6 +12,28 @@ python autopilot.py            # produce the next scheduled lesson
 python autopilot.py --upload   # …and post it to YouTube (after linking)
 ```
 
+
+## Production schedule (Day 20+)
+
+Days **1–19 are already posted and locked**. Do not re-render or re-upload them.
+
+| Item | Value |
+|------|--------|
+| Progress file | `state/progress.json` |
+| Next automated day | **20** |
+| Day 20 topic | Pythagorean Trigonometric Identity |
+| Day 21 topic | Mean, Median, Mode |
+| Daily GitHub Action | `.github/workflows/daily-video.yml` @ **19:00 UTC** |
+| Entry point | `python autopilot.py` (uses `next_day`) |
+
+```bash
+python autopilot.py                 # produces Day 20, then advances to 21, 22, …
+python autopilot.py --day 20        # explicit day (must be >= 20)
+python autopilot.py --upload        # render + YouTube (credentials required)
+```
+
+Days 1–19 are blocked in code (`MIN_OPEN_DAY = 20`) unless `--allow-locked-day` is set for emergencies.
+
 ## How it works
 
 ```
@@ -61,8 +83,8 @@ pip install -r requirements.txt
 sudo apt-get install ffmpeg libcairo2-dev libpango1.0-dev \
      texlive texlive-latex-extra texlive-fonts-recommended dvipng cm-super
 
-python autopilot.py                 # next scheduled day (state/progress.json)
-python autopilot.py --day 7         # a specific day
+python autopilot.py                 # next scheduled day (Day 20+)
+python autopilot.py --day 20        # a specific open day (>= 20)
 python autopilot.py --from-stage 4  # resume after a failed render
 ```
 Output goes to `output/` (override with `MCME_OUTPUT_DIR=/path`).
@@ -133,7 +155,7 @@ curriculum/           lesson content (JSON, one file per grade/track)
 pipeline/             the 8 production stages + shared paths/constants
 uploader/             YouTube posting + one-time authorize helper
 state/progress.json   which day runs next, what's done, what's uploaded
-legacy/               original Colab notebook export (frozen reference)
+legacy/               Days 1–19 lock policy only (old Colab monolith removed)
 .github/workflows/    daily automation (opt-in)
 ```
 
