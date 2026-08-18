@@ -89,6 +89,17 @@ jobs:
       # a credentials hiccup from burying a perfectly good render under a
       # red "everything failed" job — the warning step below calls it out
       # explicitly instead, and the video is safely in the artifact either way.
+      - name: Fail-closed media gate before upload
+        run: |
+          python - <<'EOF'
+          import os
+          from pipeline.media_gate import assert_publishable
+          day = int(os.environ["LESSON_DAY"])
+          assert_publishable(day)
+          EOF
+        env:
+          LESSON_DAY: ${{ steps.day.outputs.day }}
+
       - name: Upload Day ${{ steps.day.outputs.day }} to YouTube
         id: upload
         continue-on-error: true

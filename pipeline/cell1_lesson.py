@@ -75,14 +75,20 @@ print(f"{'═'*60}\n")
 # ══════════════════════════════════════════════════════════════
 
 def validate_lesson(lesson: dict) -> bool:
+    """Fail-closed content gate for every Day 20+ style premium lesson.
+
+    Days already completed (1–19) remain in curriculum history but this gate
+    runs for whatever day is being produced next. It never mutates past days.
+    """
     required = [
         "day", "global_track", "subject", "concept_cluster",
         "topic", "subtopic", "lesson_goal", "prerequisite",
         "key_formula", "formula_spoken",
         "seo_title", "playlist", "status",
         # ── PREMIUM EDUCATIONAL FIELDS ENFORCEMENT ──
-        "real_world_hook", "concept_intuition", "common_mistake"
-]
+        "real_world_hook", "concept_intuition", "common_mistake",
+        "visual_hints",
+    ]
 
     passed = True
     print("🔍 Running quality gate...")
@@ -97,10 +103,55 @@ def validate_lesson(lesson: dict) -> bool:
         print(f"   ❌ Status is '{lesson.get('status')}' — must be 'active'.")
         passed = False
 
+    # Board package: formula + enough worked lines + practice lines
+    board = lesson.get("board_examples") or {}
+    if not isinstance(board, dict) or not board.get("formula"):
+        print("   ❌ board_examples.formula missing")
+        passed = False
+    else:
+        print("   ✅ board_examples.formula")
+
+    worked = board.get("worked_example") or []
+    practice = board.get("practice") or []
+    if len(worked) < 6:
+        print(f"   ❌ board_examples.worked_example needs ≥6 lines (found {len(worked)})")
+        passed = False
+    else:
+        print(f"   ✅ worked_example lines={len(worked)}")
+
+    if len(practice) < 8:
+        print(f"   ❌ board_examples.practice needs ≥8 items (found {len(practice)})")
+        passed = False
+    else:
+        print(f"   ✅ practice items={len(practice)}")
+
+    # Ban leftover placeholder / generic template language in lesson fields
+    blob = json.dumps(lesson, ensure_ascii=False).lower()
+    banned = [
+        "todo: add diagram",
+        "placeholder narration",
+        "lorem ipsum",
+        "mystery math challenge",
+        "html-css-demo",
+        "question-mark screen",
+    ]
+    for b in banned:
+        if b in blob:
+            print(f"   ❌ banned template phrase: {b}")
+            passed = False
+
+    # Unique hook/title presence
+    if len((lesson.get("real_world_hook") or "")) < 40:
+        print("   ❌ real_world_hook too short for topic-specific intro")
+        passed = False
+    if len((lesson.get("seo_title") or "")) < 10:
+        print("   ❌ seo_title too short")
+        passed = False
+
     if passed:
         print("✅ Quality gate passed.\n")
     else:
-        print("\n🛑 Quality gate FAILED. Please fill in the missing premium fields.\n")
+        print("\n🛑 Quality gate FAILED. Fix curriculum fields before render/upload.\n")
     return passed
 
 # ══════════════════════════════════════════════════════════════

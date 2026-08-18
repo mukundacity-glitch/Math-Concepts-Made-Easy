@@ -54,6 +54,8 @@ def main():
                         help="1-based stage number to resume from")
     parser.add_argument("--upload", action="store_true",
                         help="upload the finished video + short to YouTube")
+    parser.add_argument("--skip-media-gate", action="store_true",
+                        help="dangerous: allow upload without media gate (default off)")
     parser.add_argument("--no-advance", action="store_true",
                         help="do not advance state/progress.json (re-runs, tests)")
     args = parser.parse_args()
@@ -102,6 +104,11 @@ def main():
 
     # ── Optional YouTube upload ───────────────────────────────
     if args.upload:
+        # Fail-closed: refuse upload without real finished media package.
+        if not getattr(args, "skip_media_gate", False):
+            from pipeline.media_gate import assert_publishable
+            assert_publishable(day)
+
         from uploader.youtube_upload import credentials_available, upload_day
         if not credentials_available():
             print("\n⚠️  YouTube is not linked yet — skipping upload.")

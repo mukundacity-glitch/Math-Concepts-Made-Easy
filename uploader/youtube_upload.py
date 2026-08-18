@@ -334,6 +334,10 @@ def _add_to_playlist(service, video_id: str, playlist_name: str):
 
 
 def upload_day(day: int, dry_run: bool = False, privacy: str = None):
+    # Fail-closed media package check before any real YouTube API call
+    if not dry_run:
+        from pipeline.media_gate import assert_publishable
+        assert_publishable(int(day))
     lesson = get_lesson(day)
     paths = lesson_paths(lesson)
     privacy = privacy or os.environ.get("YT_PRIVACY", "private")
