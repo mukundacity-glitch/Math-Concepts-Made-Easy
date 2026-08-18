@@ -95,7 +95,7 @@ def get_day_number() -> int:
     env = os.environ.get("LESSON_DAY")
     if env:
         return int(env)
-    return int(read_state().get("next_day", 1))
+    return int(read_state().get("next_day", MIN_OPEN_DAY))
 
 
 _INVALID_FILENAME_CHARS = re.compile(r'[\\/:*?"<>|\r\n]')
