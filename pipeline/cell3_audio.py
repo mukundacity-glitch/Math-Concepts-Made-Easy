@@ -229,7 +229,7 @@ async def process_single_scene(scene: dict) -> dict:
 
 async def generate_all_audio():
     print(f"🎙️  Audio Engine initialising (Concurrent Mode)...")
-    print(f"   Primary  : Ryan {VOICE}  (en-US)")
+    print(f"   Primary  : Ryan {VOICE}  (en-GB)")
     print(f"   Scenes   : {len(script['scenes'])}")
     print(f"   Profiles : {list(cell1_config.PITCH_PROFILES.keys())}\n")
     print(f"{'─'*65}")
