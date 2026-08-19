@@ -60,7 +60,7 @@ with open(TIMED_SCRIPT, "r", encoding="utf-8") as f:
     SCRIPT = json.load(f)
 
 print(f"✅ Timed script loaded → {TIMED_SCRIPT}")
-print("🎨 Animation engine: ENGINE_VISUAL_V2 (topic-specific diagrams)")
+print("🎨 Animation engine: ENGINE_VISUAL_V3 (no-overlap layout + data triangles)")
 print(f"   Lesson  : Day {lesson_id} — {SCRIPT['title']}")
 print(f"   Scenes  : {len(SCRIPT['scenes'])}")
 print(f"   Total   : {SCRIPT['total_duration_seconds']:.1f}s\n")
@@ -698,29 +698,69 @@ _AMONG_RE     = re.compile(r"(?:among|between)\s+(\d+)")
 
 
 
-def viz_unit_right_triangle():
-    """Unit-hypotenuse right triangle with opp/adj/hyp labels (trig identity)."""
-    A = np.array([-1.6, -1.1, 0])
-    B = np.array([ 1.6, -1.1, 0])
-    C = np.array([-1.6,  1.3, 0])
-    # scale so hyp ~ visual length for labels
+def viz_unit_right_triangle(mode="ratios"):
+    """Right triangle with CLEAR side data and non-overlapping exterior labels.
+
+    Manim is NOT HTML/CSS — labels do not reflow. Every label is placed on a
+    fixed exterior anchor with enough buff that it cannot sit on a side.
+    mode:
+      ratios  -> 3-4-5 with opp/adj/hyp numbers (Day 19)
+      identity -> unit hyp with sin/cos meaning (Day 20)
+    """
+    # Right angle at A (bottom-left). Vertical = opposite, horizontal = adjacent.
+    A = np.array([-2.0, -1.35, 0.0])
+    B = np.array([ 2.0, -1.35, 0.0])
+    C = np.array([-2.0,  1.55, 0.0])
+
     tri = Polygon(A, B, C,
-                  stroke_color=mc(C_WHITE), stroke_width=4,
-                  fill_color=mc(C_BLUE_P), fill_opacity=0.12)
-    # right-angle square at A
-    ra = Square(side_length=0.28, stroke_color=mc(C_GOLD), stroke_width=3)
-    ra.move_to(A + np.array([0.14, 0.14, 0]))
-    # side highlights
-    opp = Line(A, C, stroke_color=mc(C_ORANGE), stroke_width=8)
-    adj = Line(A, B, stroke_color=mc(C_BLUE_P), stroke_width=8)
-    hyp = Line(C, B, stroke_color=mc(C_GGREEN), stroke_width=8)
-    lab_o = TXT("opp = sin θ", size=20, color=C_ORANGE, bold=True).next_to(opp, LEFT, buff=0.12)
-    lab_a = TXT("adj = cos θ", size=20, color=C_BLUE_P, bold=True).next_to(adj, DOWN, buff=0.12)
-    lab_h = TXT("hyp = 1", size=22, color=C_GGREEN, bold=True).next_to(hyp, UR, buff=0.08)
-    theta = TXT("θ", size=26, color=C_GOLD, bold=True).move_to(B + np.array([-0.55, 0.35, 0]))
-    title = TXT("Shrink hypotenuse to 1", size=22, color=C_GOLD, bold=True)
-    title.next_to(tri, UP, buff=0.35)
-    g = VGroup(tri, ra, opp, adj, hyp, lab_o, lab_a, lab_h, theta, title)
+                  stroke_color=mc(C_WHITE), stroke_width=3.5,
+                  fill_color=mc(C_BLUE_P), fill_opacity=0.10)
+    ra = Square(side_length=0.32, stroke_color=mc(C_GOLD), stroke_width=2.5)
+    ra.move_to(A + np.array([0.16, 0.16, 0.0]))
+
+    opp = Line(A, C, stroke_color=mc(C_ORANGE), stroke_width=7)
+    adj = Line(A, B, stroke_color=mc(C_BLUE_P), stroke_width=7)
+    hyp = Line(C, B, stroke_color=mc(C_GGREEN), stroke_width=7)
+
+    if mode == "identity":
+        # Keep numbers first, meaning second — never label-only with no data
+        t_opp = "opp = 3\n(sin θ when hyp=5)"
+        t_adj = "adj = 4\n(cos θ when hyp=5)"
+        t_hyp = "hyp = 5\n(scale → 1 later)"
+        title_s = "Right triangle → divide by hyp"
+    else:
+        t_opp = "Opposite = 3"
+        t_adj = "Adjacent = 4"
+        t_hyp = "Hypotenuse = 5"
+        title_s = "Stand at θ — label opp / adj / hyp"
+
+    # EXTERIOR anchors only (never on the edge midpoint inside the stroke)
+    lab_o = TXT(t_opp, size=20, color=C_ORANGE, bold=True, line_spacing=0.85)
+    lab_o.move_to(np.array([-3.35, 0.15, 0.0]))  # left of vertical side
+
+    lab_a = TXT(t_adj, size=20, color=C_BLUE_P, bold=True, line_spacing=0.85)
+    lab_a.move_to(np.array([0.0, -2.05, 0.0]))   # below base
+
+    lab_h = TXT(t_hyp, size=20, color=C_GGREEN, bold=True, line_spacing=0.85)
+    lab_h.move_to(np.array([1.85, 0.85, 0.0]))   # outside hypotenuse, upper-right
+
+    theta = TXT("θ", size=28, color=C_GOLD, bold=True)
+    theta.move_to(B + np.array([-0.70, 0.42, 0.0]))  # inside angle, clear of sides
+
+    # Vertex letters outside corners
+    vA = TXT("A", size=18, color=C_LGRAY, bold=True).move_to(A + np.array([-0.28, -0.28, 0]))
+    vB = TXT("B", size=18, color=C_LGRAY, bold=True).move_to(B + np.array([0.28, -0.28, 0]))
+    vC = TXT("C", size=18, color=C_LGRAY, bold=True).move_to(C + np.array([-0.28, 0.28, 0]))
+
+    title = TXT(title_s, size=22, color=C_GOLD, bold=True)
+    title.move_to(np.array([0.0, 2.25, 0.0]))
+
+    g = VGroup(tri, ra, opp, adj, hyp, lab_o, lab_a, lab_h, theta, vA, vB, vC, title)
+    # Hard clip group into a safe box so Scene02 scaling never crushes labels into each other oddly
+    if g.width > 7.2:
+        g.scale_to_fit_width(7.2)
+    if g.height > 4.0:
+        g.scale_to_fit_height(4.0)
     return g
 
 
@@ -800,12 +840,9 @@ def topic_visual(sentence=""):
     if any(k in s for k in ("sin^2", "sin²", r"sin^2", "cos^2", "identity", "pythagorean trig",
                              "sin squared", "cos squared")) \
        or ("sin" in formula and "cos" in formula and "1" in formula):
-        if any(k in str(sentence).lower() for k in ("park", "diagonal", "walk", "mile", "distance", "rectangle")):
-            return viz_unit_right_triangle()
-        if any(k in str(sentence).lower() for k in ("divide", "rename", "transform", "becomes", "identity", "formula")):
+        if any(k in str(sentence).lower() for k in ("divide", "rename", "transform", "becomes", "identity", "formula", "square")):
             return viz_pythag_identity_flow()
-        # default for this lesson
-        return viz_unit_right_triangle()
+        return viz_unit_right_triangle(mode="identity")
 
     # Mean / median / mode
     if any(k in s for k in ("mean", "median", "mode", "average", "outlier", "billionaire", "salary")):
@@ -819,7 +856,7 @@ def topic_visual(sentence=""):
         "soh", "cah", "toa", "soh cah toa", "trig ratio", "trigonometric ratio",
         "wheelchair", "ramp", "sin θ", "cos θ", "tan θ",
     )):
-        return viz_unit_right_triangle()
+        return viz_unit_right_triangle(mode="ratios")
 
     return None
 
@@ -1286,12 +1323,13 @@ class Scene02_Hook(Scene):
 
         self.play(FadeIn(pill, shift=DOWN * 0.10), run_time=0.5)
 
-        visuals_on_stage = []
         caption = None
 
         def set_caption(text):
             nonlocal caption
-            new_cap = TXT(text, size=25, color=C_WHITE, wrap=64, max_w=11.8)
+            # Short caption only — full narration dump overlaps the diagram
+            short = text if len(text) <= 110 else (text[:107].rsplit(" ", 1)[0] + "…")
+            new_cap = TXT(short, size=22, color=C_WHITE, wrap=52, max_w=11.0)
             new_cap.move_to(np.array([0.0, cap_y, 0]))
             underline = Rectangle(width=min(new_cap.width + 0.4, 12.0),
                                   height=0.03,
@@ -1306,30 +1344,27 @@ class Scene02_Hook(Scene):
                           FadeIn(grp, shift=UP * 0.10, run_time=0.45))
             caption = grp
 
+        # IMPORTANT: Manim has no CSS flex/grid. Stacking every beat's diagram
+        # side-by-side then scale_to_fit_width was crushing labels into each other.
+        # Show at most ONE main visual; replace it when a new illustration appears.
+        current_vis = None
         for beat in beats:
             t = nar.when_spoken(beat)
             wait_until(self, t, lead=0.35)
             vis = story_visual(beat)
             if vis is not None:
-                if vis.height > 3.1:
-                    vis.scale_to_fit_height(3.1)
-                if vis.width > 5.4:
-                    vis.scale_to_fit_width(5.4)
-                visuals_on_stage.append(vis)
-                # Re-arrange all visuals side by side on the stage
-                stage = VGroup(*visuals_on_stage)
-                targets = VGroup(*[v.copy() for v in visuals_on_stage])
-                targets.arrange(RIGHT, buff=0.9)
-                if targets.width > 12.6:
-                    targets.scale_to_fit_width(12.6)
-                targets.move_to(stage_c)
-                anims = []
-                for v, tgt in zip(visuals_on_stage[:-1], targets[:-1]):
-                    anims.append(v.animate.become(tgt))
-                vis.move_to(targets[-1].get_center())
-                vis.scale(targets[-1].width / max(vis.width, 1e-6))
-                anims.append(FadeIn(vis, scale=0.7))
-                self.play(*anims, run_time=0.7)
+                # Fit inside safe content band ABOVE the caption (cap_y ≈ -2.3)
+                if vis.height > 2.8:
+                    vis.scale_to_fit_height(2.8)
+                if vis.width > 10.5:
+                    vis.scale_to_fit_width(10.5)
+                vis.move_to(stage_c)
+                if current_vis is None:
+                    self.play(FadeIn(vis, scale=0.9), run_time=0.55)
+                else:
+                    self.play(FadeOut(current_vis, run_time=0.25),
+                              FadeIn(vis, scale=0.9, run_time=0.45))
+                current_vis = vis
             set_caption(beat)
 
         sync_to_audio(self, sd.get("scene_id", 2))
@@ -1361,15 +1396,6 @@ class Scene03_Concept(Scene):
         l_hdr = make_card_header("THE KEY IDEA", 7.0, C_GGREEN)
         l_hdr.move_to(left_card.get_top() + DOWN * (l_hdr.height / 2 + 0.07))
 
-        idea_mobs = []
-        for b in beats:
-            m = TXT(b, size=24, color=C_WHITE, wrap=44, max_w=6.3)
-            idea_mobs.append(m)
-        idea_grp = VGroup(*idea_mobs).arrange(DOWN, aligned_edge=LEFT, buff=0.34)
-        if idea_grp.height > 4.3:
-            idea_grp.scale_to_fit_height(4.3)
-        idea_grp.move_to(left_card.get_center() + DOWN * 0.24)
-        idea_grp.align_to(left_card.get_left() + RIGHT * 0.30, LEFT)
 
         # ── Right: automatic visual ───────────────────────────
         right_card = make_card(5.6, 5.4, border_color=C_BLUE_P)
@@ -1393,23 +1419,50 @@ class Scene03_Concept(Scene):
         if vis is None:
             vis = make_formula_box(sd.get("key_formula", ""), 4.8, 1.9)
 
-        if vis.width > 5.0:
-            vis.scale_to_fit_width(5.0)
-        if vis.height > 3.9:
-            vis.scale_to_fit_height(3.9)
-        vis.move_to(right_card.get_center() + DOWN * 0.24)
+        # Left panel: do NOT pre-layout every beat then crush with scale_to_fit_height.
+        # That was the main "HTML would wrap but Manim overlaps/crushes" bug.
+        idea_slot_top = left_card.get_top() + DOWN * 1.05
+        idea_slot_left = left_card.get_left() + RIGHT * 0.35
 
-        # ── Animate on the narration beat ─────────────────────
+        # Right visual — clamp inside card with padding
+        if vis.width > 4.6:
+            vis.scale_to_fit_width(4.6)
+        if vis.height > 3.6:
+            vis.scale_to_fit_height(3.6)
+        vis.move_to(right_card.get_center() + DOWN * 0.15)
+
         self.play(FadeIn(left_card), FadeIn(right_card), run_time=0.5)
         self.play(FadeIn(l_hdr), FadeIn(r_hdr), run_time=0.4)
 
         shown_vis = False
-        for b, m in zip(beats, idea_mobs):
+        live_ideas = []  # keep at most 2 sentences on screen
+        for b in beats:
             t = nar.when_spoken(b)
             wait_until(self, t, lead=0.30)
-            self.play(FadeIn(m, shift=RIGHT * 0.10), run_time=0.45)
+            m = TXT(b, size=22, color=C_WHITE, wrap=40, max_w=6.0)
+            if m.height > 1.8:
+                m.scale_to_fit_height(1.8)
+            live_ideas.append(m)
+            # Fade out oldest if more than 2
+            anims = []
+            if len(live_ideas) > 2:
+                old = live_ideas.pop(0)
+                anims.append(FadeOut(old, shift=UP * 0.1))
+            # Re-stack remaining from top of card
+            stack = VGroup(*live_ideas).arrange(DOWN, aligned_edge=LEFT, buff=0.28)
+            stack.move_to(np.array([-3.30, 0.15, 0.0]))
+            stack.align_to(idea_slot_left, LEFT)
+            # Ensure stack stays inside card vertically
+            top_limit = left_card.get_top()[1] - 0.85
+            bot_limit = left_card.get_bottom()[1] + 0.35
+            if stack.get_top()[1] > top_limit:
+                stack.shift(DOWN * (stack.get_top()[1] - top_limit))
+            if stack.get_bottom()[1] < bot_limit:
+                stack.shift(UP * (bot_limit - stack.get_bottom()[1]))
+            anims.append(FadeIn(m, shift=RIGHT * 0.10))
+            self.play(*anims, run_time=0.45)
             if not shown_vis:
-                self.play(FadeIn(vis, scale=0.85), run_time=0.6)
+                self.play(FadeIn(vis, scale=0.9), run_time=0.55)
                 shown_vis = True
 
         sync_to_audio(self, sd.get("scene_id", 3))
@@ -1614,29 +1667,45 @@ class Scene06_WorkedExample(Scene):
         board = make_card(12.6, 4.9, border_color=C_BLUE_P)
         board.move_to(np.array([0.0, -0.42, 0]))
 
-        rows = build_board_rows(plain_lines, max_w=11.6)
-        grp = VGroup(*[r for r, _ in rows])
-        # extra breathing room before each new question
-        grp.arrange(DOWN, aligned_edge=LEFT, buff=0.26)
-        for i, (row, is_q) in enumerate(rows):
-            if is_q and i > 0:
-                row.shift(DOWN * 0.10)
-        if grp.height > 4.3:
-            grp.scale_to_fit_height(4.3)
-        if grp.width > 11.6:
-            grp.scale_to_fit_width(11.6)
-        grp.move_to(board.get_center())
-        grp.align_to(board.get_left() + RIGHT * 0.45, LEFT)
+        # Cap board lines so we never scale_to_fit_height a huge stack into unreadability.
+        MAX_BOARD_LINES = 8
+        plain_lines = list(plain_lines)[:MAX_BOARD_LINES]
+        spoken_lines = list(spoken_lines)[:MAX_BOARD_LINES]
+        if len(spoken_lines) < len(plain_lines):
+            spoken_lines = spoken_lines + [""] * (len(plain_lines) - len(spoken_lines))
 
-        # ── Animate on the narration beat ─────────────────────
+        rows = build_board_rows(plain_lines, max_w=11.6)
+        # Place rows from the top of the board downward — NO global scale crush
         self.play(FadeIn(pill, shift=DOWN * 0.08), FadeIn(board), run_time=0.6)
+
+        cursor_y = board.get_top()[1] - 0.55
+        left_x = board.get_left()[0] + 0.55
+        bottom_limit = board.get_bottom()[1] + 0.40
+        shown = []
+
         for (row, is_q), spoken in zip(rows, spoken_lines):
             t = nar.when_spoken(spoken) if spoken else None
             wait_until(self, t, lead=0.30)
+            # If next row would cross bottom, clear board (page break)
+            if cursor_y - row.height < bottom_limit and shown:
+                self.play(*[FadeOut(r) for r in shown], run_time=0.35)
+                shown.clear()
+                cursor_y = board.get_top()[1] - 0.55
+            row.scale(1.0)
+            if row.width > 11.4:
+                row.scale_to_fit_width(11.4)
+            # Keep a readable minimum size — never shrink below ~70%
+            if row.height > 0.85:
+                row.scale_to_fit_height(0.85)
+            row.move_to(np.array([0.0, cursor_y - row.height / 2, 0.0]))
+            row.align_to(np.array([left_x, 0, 0]), LEFT)
             if is_q:
-                self.play(FadeIn(row, shift=RIGHT * 0.12), run_time=0.5)
+                self.play(FadeIn(row, shift=RIGHT * 0.12), run_time=0.45)
             else:
-                self.play(Write(row), run_time=0.6)
+                self.play(Write(row), run_time=0.55)
+            shown.append(row)
+            cursor_y -= row.height + 0.22
+
         sync_to_audio(self, sd.get("scene_id", 6))
 
 

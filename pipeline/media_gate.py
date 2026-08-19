@@ -36,18 +36,24 @@ def _duration(path: Path) -> float:
         return 0.0
 
 
+def _name_matches_day(name: str, day: int) -> bool:
+    n = name.lower()
+    patterns = [
+        f"day_{day:03d}", f"day_{day:02d}", f"day_{day}",
+        f"day{day:03d}", f"day{day:02d}", f"day{day}",
+        f"day-{day:03d}", f"day-{day}",
+    ]
+    return any(pat in n for pat in patterns)
+
+
 def find_day_outputs(day: int) -> dict:
     """Locate final video/captions/thumbnail for a day under output/."""
     day = int(day)
     finals = list((BASE_DIR / "final_videos").glob("*.mp4")) if (BASE_DIR / "final_videos").exists() else []
-    # Prefer filenames containing day number
-    video = None
-    for p in sorted(finals):
-        name = p.name.lower()
-        if f"day{day:03d}" in name or f"day{day:02d}" in name or f"day_{day}" in name or f"day{day}" in name:
-            video = p
-            break
-    if video is None and len(finals) == 1:
+    candidates = [p for p in sorted(finals)
+                  if _name_matches_day(p.name, day) and "_short_" not in p.name.lower()]
+    video = candidates[0] if candidates else None
+    if video is None and len(finals) == 1 and "_short_" not in finals[0].name.lower():
         video = finals[0]
 
     thumbs = []
@@ -56,7 +62,7 @@ def find_day_outputs(day: int) -> dict:
         thumbs = list(tdir.glob("*.jpg")) + list(tdir.glob("*.png"))
     thumb = None
     for p in sorted(thumbs):
-        if f"day{day:03d}" in p.name.lower() or f"day{day}" in p.name.lower():
+        if _name_matches_day(p.name, day):
             thumb = p
             break
     if thumb is None and len(thumbs) == 1:
