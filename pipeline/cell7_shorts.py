@@ -212,4 +212,4 @@ print(f"  ⏱️  Duration : max 59 seconds each")
 print(f"  📂 Location : {FINAL_DIR}")
 print(f"{'═'*65}")
 print(f"\n  ▶ All 3 Shorts are picked up automatically by uploader.youtube_upload,\n"
-      f"    spread across the day (see uploader/youtube_upload.py SHORTS_POST_TIMES_UTC).\n")
+      f"    spread across the day in America/New_York local time.\n")

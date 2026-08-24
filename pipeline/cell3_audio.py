@@ -27,6 +27,7 @@ import sys as _sys
 from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 from pipeline.paths import load_cell1_config
+from pipeline.audio_sync import apply_word_timing
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 # ══════════════════════════════════════════════════════════════
@@ -213,6 +214,11 @@ async def process_single_scene(scene: dict) -> dict:
 
     # Determine engine used
     engine = "edge-tts" if await _check_words_populated(words_path) else "gtts"
+    try:
+        words = json.loads(words_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        words = []
+    apply_word_timing(scene, words)
 
     print(f"      ✅ Scene {scene_id:02d} [{step}] complete. ({duration_with_buffer}s | {engine})")
 
@@ -323,4 +329,3 @@ _failed = [r["step"] for r in results if not r["success"]]
 if _failed:
     raise SystemExit(f"🛑 Audio generation failed for scenes: {_failed}. "
                      f"Fix connectivity and re-run (autopilot.py --from-stage 3).")
-

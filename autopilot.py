@@ -22,13 +22,16 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from pipeline.paths import BASE_DIR, read_state, write_state, safe_filename, MIN_OPEN_DAY
+from pipeline.paths import (
+    BASE_DIR, MIN_OPEN_DAY, load_cell1_config, read_state, safe_filename, write_state,
+)
 from pipeline.curriculum import MASTER_CURRICULUM, TOTAL_DAYS, get_lesson
 
 STAGES = [
     ("Lesson & narration builder", "pipeline.cell1_lesson"),
     ("Script builder",             "pipeline.cell2_script"),
     ("Audio engine (Edge-TTS)",    "pipeline.cell3_audio"),
+    ("Semantic manifest QA",       "pipeline.cell9_quality"),
     ("Manim animation engine",     "pipeline.cell4_animation"),
     ("Video assembly",             "pipeline.cell5_assembly"),
     ("Subtitle engine",            "pipeline.cell8_subtitles"),
@@ -59,13 +62,13 @@ def main():
     parser.add_argument("--no-advance", action="store_true",
                         help="do not advance state/progress.json (re-runs, tests)")
     parser.add_argument("--allow-locked-day", action="store_true",
-                        help="EMERGENCY only: allow rendering a Day < MIN_OPEN_DAY (1–19). Default: blocked.")
+                        help="EMERGENCY only: allow rendering a locked posted day. Default: blocked.")
     args = parser.parse_args()
 
     state = read_state()
     day = args.day if args.day is not None else int(state.get("next_day", MIN_OPEN_DAY))
 
-    # ── Days 1–19 lock ──────────────────────────────────────────
+    # ── Posted-day lock ─────────────────────────────────────────
     # Already posted. Do not re-render / re-upload via normal automation.
     if day < MIN_OPEN_DAY and not args.allow_locked_day:
         print(f"🛑 Day {day} is LOCKED (Days 1–{MIN_OPEN_DAY - 1} already posted).")
@@ -107,7 +110,7 @@ def main():
     print(f"  📚 {lesson['subject']} → {lesson['topic']}")
     print(f"  🗓  {datetime.date.today():%A, %d %B %Y}")
     print(f"  📂 Output: {BASE_DIR}")
-    print(f"  🎨 Engine : ENGINE_VISUAL_V3 (topic diagrams + richer narration)")
+    print(f"  🎨 Engine : ENGINE_VISUAL_V4 (scene manifest + semantic QA)")
     print(f"{'═' * 65}")
 
     for i, (name, module) in enumerate(STAGES, start=1):
@@ -116,17 +119,8 @@ def main():
             continue
         run_stage(i, name, module, day)
 
-    # ── Record progress ───────────────────────────────────────
-    if not args.no_advance:
-        state = read_state()
-        if day not in state.setdefault("completed", []):
-            state["completed"].append(day)
-        state["next_day"] = max(day + 1, MIN_OPEN_DAY)
-        state["last_run"] = datetime.datetime.now().isoformat(timespec="seconds")
-        write_state(state)
-        print(f"\n✅ Progress saved — next scheduled lesson: Day {day + 1}")
-
     # ── Optional YouTube upload ───────────────────────────────
+    upload_succeeded = not args.upload
     if args.upload:
         # Fail-closed: refuse upload without real finished media package.
         if not getattr(args, "skip_media_gate", False):
@@ -135,16 +129,38 @@ def main():
 
         from uploader.youtube_upload import credentials_available, upload_day
         if not credentials_available():
+            upload_succeeded = False
             print("\n⚠️  YouTube is not linked yet — skipping upload.")
             print("   See README → 'Linking your YouTube channel' for the "
                   "one-time setup. The finished video is waiting in "
                   f"{BASE_DIR / 'final_videos'}")
         else:
             upload_day(day)
-            state = read_state()
-            if day not in state.setdefault("uploaded", []):
-                state["uploaded"].append(day)
-            write_state(state)
+            upload_succeeded = True
+
+    # ── Record progress only after all requested work succeeds ──
+    if not args.no_advance and upload_succeeded:
+        from pipeline.creative_history import record_lesson
+
+        state = read_state()
+        if day not in state.setdefault("completed", []):
+            state["completed"].append(day)
+        if args.upload and day not in state.setdefault("uploaded", []):
+            state["uploaded"].append(day)
+        state["completed"].sort()
+        state.setdefault("uploaded", []).sort()
+        state["next_day"] = max(day + 1, MIN_OPEN_DAY)
+        state["last_run"] = datetime.datetime.now().isoformat(timespec="seconds")
+        write_state(state)
+        config = load_cell1_config()
+        record_lesson(
+            day,
+            config.LESSON_PLAN["hook_variant"],
+            config.LESSON_PLAN["outro_variant"],
+        )
+        print(f"\n✅ Progress saved — next scheduled lesson: Day {day + 1}")
+    elif not args.no_advance and args.upload:
+        print("\n⏸️  Progress not advanced because the requested upload did not succeed.")
 
     safe = safe_filename(lesson["seo_title"])
     print(f"\n{'═' * 65}")

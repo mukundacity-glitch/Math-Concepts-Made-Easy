@@ -1,7 +1,7 @@
-"""Shared teaching constants: animation philosophy, voice pitch
-profiles and the fixed 9-scene lesson structure.
+"""Shared teaching constants: animation philosophy and voice profiles.
 Read by cells 1, 2, 3 and 4. Lesson CONTENT never lives here —
-it comes from curriculum/*.json.
+it comes from curriculum/*.json. ``SCENE_ORDER`` is the supported Manim
+renderer order; the lesson planner chooses the actual subset for each lesson.
 """
 
 ANIMATION_PHILOSOPHY = {
@@ -48,7 +48,7 @@ PITCH_PROFILES = {
 }
 
 # ══════════════════════════════════════════════════════════════
-# SCENE ORDER + MAPS — READ BY CELLS 2, 3, 4
+# SUPPORTED RENDER STEPS + MAPS — READ BY CELLS 1, 2, 3, 4
 # ══════════════════════════════════════════════════════════════
 
 SCENE_ORDER = [
@@ -79,4 +79,3 @@ SCENE_ANIMATION_MAP = {
     "practice"      : "BOARD_WRITE",
     "summary"       : "VISUAL_ONLY",
 }
-

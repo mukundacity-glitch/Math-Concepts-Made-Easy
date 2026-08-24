@@ -1,42 +1,63 @@
-# Full autopilot — renders AND uploads to YouTube every day, no manual step.
+# Fully automatic daily production and YouTube publishing.
 #
-# ONE-TIME SETUP (GitHub repo → Settings → Secrets and variables → Actions):
-#
-#   SECRETS (paste full file contents):
-#     YT_CLIENT_SECRET_JSON   →  contents of secrets/client_secret.json
-#     YT_TOKEN_JSON           →  contents of secrets/token.json
-#
-#   No variables needed — schedule runs automatically every day.
-#   To temporarily pause posting, set variable  AUTOPILOT_PAUSED = true
+# Scheduled runs start at 06:00 America/New_York. Rendering happens first;
+# YouTube receives the main video as a scheduled private upload and publishes it
+# at 09:00 local time. The paired UTC schedules plus the gate below preserve
+# those local times across daylight-saving changes.
 
 name: Daily Lesson Video
 
 on:
   schedule:
-    # 19:00 UTC = 3 PM EDT (summer) / 2 PM EST (winter)
-    # Gives ~2 h render time before the 5 PM homework-help window.
-    - cron: "0 19 * * *"
+    - cron: "0 10 * * *" # 06:00 EDT
+    - cron: "0 11 * * *" # 06:00 EST
   workflow_dispatch:
     inputs:
       day:
-        description: "Lesson day number (leave blank = next in sequence)"
+        description: "Lesson day number (blank = next in sequence)"
         required: false
       privacy:
-        description: "YouTube privacy"
+        description: "YouTube privacy for a manual run"
         required: false
         default: "public"
         type: choice
-        options:
-          - public
-          - unlisted
-          - private
+        options: [public, unlisted, private]
+
+concurrency:
+  group: daily-lesson-production
+  cancel-in-progress: false
 
 jobs:
-  produce-and-publish:
-    # Always run — paused only when owner explicitly sets AUTOPILOT_PAUSED=true
-    if: ${{ vars.AUTOPILOT_PAUSED != 'true' }}
+  schedule_gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    outputs:
+      should_run: ${{ steps.gate.outputs.should_run }}
+    steps:
+      - name: Select the DST-correct schedule
+        id: gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import datetime as dt
+          import os
+          from zoneinfo import ZoneInfo
+
+          if os.environ["EVENT_NAME"] == "workflow_dispatch":
+              print("should_run=true")
+          else:
+              offset = dt.datetime.now(ZoneInfo("America/New_York")).utcoffset()
+              expected_utc_hour = 10 if offset == dt.timedelta(hours=-4) else 11
+              scheduled_utc_hour = int(os.environ["EVENT_SCHEDULE"].split()[1])
+              print(f"should_run={'true' if scheduled_utc_hour == expected_utc_hour else 'false'}")
+          PY
+
+  produce-and-publish:
+    needs: schedule_gate
+    if: ${{ needs.schedule_gate.outputs.should_run == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
     permissions:
       contents: write
 
@@ -48,7 +69,7 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install system dependencies (Manim + LaTeX + ffmpeg)
+      - name: Install system dependencies
         run: |
           sudo apt-get update -y
           sudo apt-get install -y --no-install-recommends \
@@ -59,67 +80,69 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      # Resolved up front (rather than left to autopilot.py's own default)
-      # so every later step — the artifact name, the upload, the recovery
-      # workflow — all agree on exactly which day this run is for.
+      - name: Run automated tests
+        run: pytest -q
+
       - name: Determine lesson day
         id: day
         env:
           DAY_OVERRIDE: ${{ github.event.inputs.day }}
         run: |
-          python - <<'EOF' >> "$GITHUB_OUTPUT"
-          import json, os
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+
           override = os.environ.get("DAY_OVERRIDE", "").strip()
-          if override:
-              day = int(override)
-          else:
-              state = json.load(open("state/progress.json"))
-              day = int(state.get("next_day", 1))
+          state = json.load(open("state/progress.json", encoding="utf-8"))
+          day = int(override) if override else int(state["next_day"])
+          if day < int(state.get("open_from_day", 22)):
+              raise SystemExit(f"Day {day} is already posted and locked")
           print(f"day={day}")
-          EOF
+          PY
 
-      # Rendering is the expensive, must-not-fail-silently part. Kept as
-      # its own step (no continue-on-error) so a render bug still fails
-      # the job loudly, distinct from an upload/credentials problem below.
-      - name: Produce Day ${{ steps.day.outputs.day }}
-        run: python autopilot.py --day ${{ steps.day.outputs.day }}
+      - name: Produce and verify Day ${{ steps.day.outputs.day }}
+        run: python autopilot.py --day ${{ steps.day.outputs.day }} --no-advance
 
-      # Uploading depends on external YouTube OAuth credentials that can
-      # expire or be revoked outside our control. continue-on-error keeps
-      # a credentials hiccup from burying a perfectly good render under a
-      # red "everything failed" job — the warning step below calls it out
-      # explicitly instead, and the video is safely in the artifact either way.
       - name: Upload Day ${{ steps.day.outputs.day }} to YouTube
         id: upload
         continue-on-error: true
         env:
           YT_CLIENT_SECRET_JSON: ${{ secrets.YT_CLIENT_SECRET_JSON }}
           YT_TOKEN_JSON: ${{ secrets.YT_TOKEN_JSON }}
-          YT_PRIVACY: ${{ github.event.inputs.privacy || vars.YT_PRIVACY || 'public' }}
+          YT_PRIVACY: ${{ github.event_name == 'schedule' && 'public' || github.event.inputs.privacy || vars.YT_PRIVACY || 'public' }}
+          YT_MAIN_PUBLISH_LOCAL_TIME: ${{ github.event_name == 'schedule' && '09:00' || '' }}
         run: python -m uploader.youtube_upload --day ${{ steps.day.outputs.day }}
 
-      - name: Mark day as uploaded in progress state
+      - name: Advance progress only after upload succeeds
         if: steps.upload.outcome == 'success'
+        env:
+          LESSON_DAY: ${{ steps.day.outputs.day }}
         run: |
-          python - <<'EOF'
-          import json
-          from pathlib import Path
-          p = Path("state/progress.json")
-          state = json.loads(p.read_text())
-          day = ${{ steps.day.outputs.day }}
-          if day not in state.setdefault("uploaded", []):
-              state["uploaded"].append(day)
-          p.write_text(json.dumps(state, indent=2) + "\n")
-          EOF
+          python - <<'PY'
+          import datetime as dt
+          import os
+          from pipeline.creative_history import record_lesson
+          from pipeline.paths import load_cell1_config, read_state, write_state
 
-      - name: Warn if upload failed
+          day = int(os.environ["LESSON_DAY"])
+          state = read_state()
+          for key in ("completed", "uploaded"):
+              if day not in state.setdefault(key, []):
+                  state[key].append(day)
+                  state[key].sort()
+          state["next_day"] = max(day + 1, int(state.get("open_from_day", 22)))
+          state["last_run"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+          write_state(state)
+          plan = load_cell1_config().LESSON_PLAN
+          record_lesson(day, plan["hook_variant"], plan["outro_variant"])
+          PY
+
+      - name: Warn without advancing when upload fails
         if: steps.upload.outcome == 'failure'
         run: |
-          echo "::warning::Day ${{ steps.day.outputs.day }} rendered successfully but the YouTube upload failed — see the 'Upload Day ${{ steps.day.outputs.day }} to YouTube' step above for the exact error."
-          echo "::warning::The finished video + Shorts are attached to this run as the 'lesson-output-day${{ steps.day.outputs.day }}' artifact. Once credentials are fixed, run the 'Publish Lesson to YouTube' workflow for day ${{ steps.day.outputs.day }} to post it — no re-render needed."
-          echo "::warning::If the error mentions 'invalid_grant' / 'Token has been expired or revoked', your Google OAuth consent screen is likely still in Testing status (refresh tokens auto-expire after 7 days there) — publish it to Production, then re-run \`python -m uploader.authorize\` and update the YT_TOKEN_JSON secret."
+          echo "::warning::Day ${{ steps.day.outputs.day }} passed rendering and QA, but YouTube upload failed. The day counter was not advanced, so the next scheduled run will retry this same lesson."
 
-      - name: Save video as downloadable artifact (7-day backup)
+      - name: Save output artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -130,12 +153,17 @@ jobs:
             output/final_videos/*.srt
             output/final_videos/*.vtt
             output/thumbnails/*.jpg
+            output/logs/*coverage.json
 
-      - name: Commit updated progress state
-        if: always()
+      - name: Commit successful progress
+        if: steps.upload.outcome == 'success'
         run: |
           git config user.name "autopilot"
           git config user.email "actions@users.noreply.github.com"
-          git add state/progress.json
-          git diff --cached --quiet || git commit -m "autopilot: advance lesson day"
-          git push || true
+          git add state/progress.json state/creative_history.json
+          git diff --cached --quiet || git commit -m "autopilot: publish day ${{ steps.day.outputs.day }}"
+          git push
+
+      - name: Fail job when upload failed
+        if: steps.upload.outcome == 'failure'
+        run: exit 1

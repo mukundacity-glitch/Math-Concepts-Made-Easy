@@ -1,0 +1,19 @@
+{
+  "lessons": [
+    {
+      "day": 19,
+      "hook_variant": "real_life_problem",
+      "outro_variant": "practice_prompt"
+    },
+    {
+      "day": 20,
+      "hook_variant": "pattern_spotting",
+      "outro_variant": "tomorrow_teaser"
+    },
+    {
+      "day": 21,
+      "hook_variant": "prediction",
+      "outro_variant": "confidence_close"
+    }
+  ]
+}

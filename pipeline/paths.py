@@ -57,9 +57,9 @@ def read_state() -> dict:
             return json.load(f)
     # Safe default if state file missing: never restart at Day 1.
     return {
-        "next_day": 19,
-        "completed": list(range(1, 19)),
-        "uploaded": list(range(1, 19)),
+        "next_day": 22,
+        "completed": list(range(1, 22)),
+        "uploaded": list(range(1, 22)),
     }
 
 
@@ -77,8 +77,8 @@ from datetime import date, timedelta
 # 28/07/2026 is the reset/setup day only; Day 1 publishes 29/07/2026.
 START_DATE = date(2026, 7, 29)
 
-# Days 1–19 are already posted. Open production sequence starts here.
-MIN_OPEN_DAY = 19
+# Days 1–21 are already posted. Open production sequence starts at Day 22.
+MIN_OPEN_DAY = 22
 
 
 

@@ -1,7 +1,8 @@
 # Publish a finished lesson to YouTube.
 #
-# Run this AFTER you have reviewed the video in the lesson-output artifact
-# from the daily-video workflow and decided it is ready to go live.
+# Recovery workflow for a lesson that rendered successfully but could not be
+# uploaded because of a temporary YouTube/OAuth failure. Normal daily posting
+# does not require a manual verification step.
 #
 # How to use:
 #   GitHub repo → Actions → "Publish Lesson to YouTube" → Run workflow
@@ -22,7 +23,7 @@ on:
       privacy:
         description: "Privacy setting"
         required: false
-        default: "private"
+        default: "public"
         type: choice
         options:
           - private

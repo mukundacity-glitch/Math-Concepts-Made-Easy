@@ -1,7 +1,7 @@
 """Fail-closed media gate before YouTube publish.
 
 Refuses upload when the finished lesson package is incomplete.
-Does not touch Days 1–19 source curriculum entries.
+Does not touch Days 1–21 source curriculum entries.
 """
 
 from __future__ import annotations
@@ -73,12 +73,23 @@ def find_day_outputs(day: int) -> dict:
         caps = list(video.parent.glob(video.stem + ".*"))
     vtt = next((p for p in caps if p.suffix.lower() == ".vtt"), None)
     srt = next((p for p in caps if p.suffix.lower() == ".srt"), None)
+    shorts = {}
+    for key in ("HOOK", "FORMULA", "MISTAKE"):
+        shorts[key] = next(
+            (
+                path for path in sorted(finals)
+                if _name_matches_day(path.name, day)
+                and f"_short_{key.lower()}" in path.name.lower()
+            ),
+            None,
+        )
 
     return {
         "video": video,
         "thumbnail": thumb,
         "vtt": vtt,
         "srt": srt,
+        "shorts": shorts,
     }
 
 
@@ -122,6 +133,14 @@ def validate_publish_package(day: int) -> tuple[bool, list[str]]:
         cap = outs["vtt"] or outs["srt"]
         if not _ok_file(cap, 50):
             errors.append("captions file too small")
+
+    for key, short in outs["shorts"].items():
+        if short is None or not _ok_file(short, 50_000):
+            errors.append(f"missing/too-small {key} Short")
+            continue
+        duration = _duration(short)
+        if duration <= 0 or duration > 60.5:
+            errors.append(f"{key} Short duration invalid: {duration:.1f}s")
 
     return (len(errors) == 0, errors)
 
