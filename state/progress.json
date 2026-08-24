@@ -1,56 +1,18 @@
 {
   "next_day": 22,
   "completed": [
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-    21
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+    12, 13, 14, 15, 16, 17, 18, 19, 20, 21
   ],
   "uploaded": [
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    21
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+    12, 13, 14, 15, 16, 17, 18, 19, 20, 21
   ],
-  "last_run": "2026-08-20T20:00:03",
-  "open_from_day": 19,
-  "auto_from_day": 21,
-  "manual_redo_queue": [
-    19,
-    20
-  ],
-  "schedule_auto_from": 21,
-  "note": "Days 1-18 locked. Manual: run 19 then 20. After 20 succeeds next_day=21 for scheduled auto-post (Mean/Median/Mode)."
+  "locked_through_day": 21,
+  "open_from_day": 22,
+  "auto_from_day": 22,
+  "schedule_auto_from": 22,
+  "schedule_timezone": "America/New_York",
+  "scheduled_publish_local_time": "09:00",
+  "note": "Videos 1-21 are posted and locked. Automatic daily publishing resumes with Video 22."
 }

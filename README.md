@@ -1,200 +1,117 @@
-# Math Concepts Made Easy — Automated AI Math Teacher
+# Math Concepts Made Easy — Daily Video Autopilot
 
-Fully automated lesson factory for the **Math Concepts Made Easy** YouTube
-channel. One command turns a curriculum entry into a complete, classroom-style
-math video: narrated with a natural teacher voice, animated with Manim
-blackboard writing, assembled with crossfades, subtitled, thumbnailed, and cut
-into a vertical Short — then (once linked) posted to YouTube automatically
-every day.
+This repository turns one curriculum entry into a narrated, animated math
+lesson, three vertical Shorts, captions, and a thumbnail, then publishes the
+package to YouTube automatically.
 
-```
-python autopilot.py            # produce the next scheduled lesson
-python autopilot.py --upload   # …and post it to YouTube (after linking)
-```
+## Current production status
 
+- Videos **1–21 are already posted and locked**.
+- `state/progress.json` points to **Video 22**.
+- The scheduled workflow starts at **06:00 America/New_York** every day.
+- The main lesson is uploaded privately with YouTube `publishAt` and becomes
+  public at **09:00 America/New_York**. The schedule is daylight-saving safe.
+- No manual verification is required. Automated tests, semantic lesson QA,
+  media validation, and a successful YouTube API upload are required before the
+  day counter advances.
+- If upload fails, the counter stays on the same lesson and the next scheduled
+  run retries it.
 
+The first scheduled run after this update produces Day 22,
+**Relationship Between Zeroes and Coefficients**.
 
-## Manual redo then auto (current plan)
-
-1. **Day 19** — run manually (Actions day `19`) — trig ratios  
-2. **Day 20** — run manually (Actions day `20`) — identity  
-3. **Day 21+** — leave to **daily schedule** (after 20 completes, `next_day=21`)
-
-Days **1–18** stay locked.
-
-## Current production engine
-
-- **Animation:** Manim `pipeline/cell4_animation.py` — **ENGINE_VISUAL_V3** (topic-specific diagrams)
-- **Narration:** Edge-TTS via `pipeline/cell3_audio.py` + lesson text from `pipeline/cell1_lesson.py`
-- **Schedule:** `state/progress.json` → `next_day` (open sequence starts at **Day 20**)
-- **Days 1–19:** locked / already posted — not re-rendered by default
-
-### Redo Day 20 (after engine upgrade)
-
-If Day 20 was produced with the old shell, reset is:
-
-```json
-"next_day": 20
-```
-
-with `20` removed from `completed`, then:
+## Commands
 
 ```bash
-python autopilot.py --day 20
-# or GitHub Actions → Daily Lesson Video → day 20
+python autopilot.py                 # next open lesson
+python autopilot.py --day 22        # an explicit open lesson
+python autopilot.py --upload        # render and upload locally
+python autopilot.py --from-stage 5  # resume at Manim rendering
+pytest -q                           # fast regression suite
 ```
 
-Look for log line: `ENGINE_VISUAL_V3`.
+Normal commands reject Days 1–21. `--allow-locked-day` is an emergency-only
+override and should not be used by automation.
 
-## Production schedule (Day 20+)
+## Content-driven pipeline
 
-Days **1–19 are already posted and locked**. Do not re-render or re-upload them.
+1. `pipeline/cell1_lesson.py` validates curriculum content, selects teaching
+   stages, rotates hooks/outros, and writes narration.
+2. `pipeline/cell2_script.py` creates the JSON visual scene manifest.
+3. `pipeline/cell3_audio.py` creates Edge-TTS audio and word timings.
+4. `pipeline/cell9_quality.py` fails closed on semantic coverage, pacing,
+   narration/action sync, LaTeX, and creative repetition.
+5. `pipeline/cell4_animation.py` renders the selected manifest scenes with
+   Manim and narration-timed visual reveals.
+6. `pipeline/cell5_assembly.py` assembles the long video.
+7. `pipeline/cell8_subtitles.py` creates SRT and VTT captions.
+8. `pipeline/cell6_thumbnail.py` creates the thumbnail.
+9. `pipeline/cell7_shorts.py` creates HOOK, FORMULA, and MISTAKE Shorts.
+10. `pipeline/media_gate.py` validates final media before the uploader may call
+    YouTube.
 
-| Item | Value |
-|------|--------|
-| Progress file | `state/progress.json` |
-| Next automated day | **20** |
-| Day 20 topic | Pythagorean Trigonometric Identity |
-| Day 21 topic | Mean, Median, Mode |
-| Daily GitHub Action | `.github/workflows/daily-video.yml` @ **19:00 UTC** |
-| Entry point | `python autopilot.py` (uses `next_day`) |
+The planner may select these teaching stages when the lesson content supports
+them: hook, intuition, definition, diagram/model, formula/rule, worked example,
+common mistake, student pause, and recap. The renderer compatibility step names
+are an implementation detail; lesson content is not hard-coded in scene code.
 
-```bash
-python autopilot.py                 # produces Day 20, then advances to 21, 22, …
-python autopilot.py --day 20        # explicit day (must be >= 20)
-python autopilot.py --upload        # render + YouTube (credentials required)
+The scene manifest records, for every scene:
+
+- purpose and learning purpose;
+- narration and sentence beats;
+- stable object IDs;
+- registered visual actions and narration timing markers;
+- expected and exact audio duration;
+- transition style.
+
+`pipeline/visual_actions.py` owns the reusable action registry. It includes
+formula writing and transformation, diagrams, triangles, circles, fractions,
+number lines, coordinates, graphs, tables, substitution, simplification,
+wrong/correct comparison, pauses, reveals, highlights, and camera focus.
+
+## Automatic posting
+
+`.github/workflows/daily-video.yml` is enabled by its cron schedule. It uses two
+UTC cron entries plus a New York timezone gate so the local schedule remains
+06:00 through daylight-saving changes. Scheduled runs always use public release
+mode and set the main-video release to 09:00 local time.
+
+Required GitHub Actions secrets:
+
+- `YT_CLIENT_SECRET_JSON`
+- `YT_TOKEN_JSON`
+
+Repository variable `YT_PRIVACY` affects manual runs only; scheduled runs are
+always configured for the 09:00 public release.
+
+Keep the Google OAuth consent app in production status; testing-mode refresh
+tokens may expire. The recovery-only `Publish Lesson to YouTube` workflow can
+retry an artifact after a credential outage without re-rendering it.
+
+## Curriculum and output
+
+Lesson data lives in `curriculum/*.json`; code should never contain a
+lesson-specific answer. Outputs default to `output/` and can be redirected with
+`MCME_OUTPUT_DIR`.
+
+Important state:
+
+- `state/progress.json` — posted/open sequence and publishing schedule;
+- `state/creative_history.json` — recent hook/outro variants used to prevent
+  repetition.
+
+Quality reports are written to `output/logs/day_XXX_coverage.json` and included
+in the workflow artifact with the video package.
+
+## Repository layout
+
+```text
+autopilot.py             orchestration and posted-day lock
+curriculum/              data-only lesson catalogue
+pipeline/                planning, narration, timing, rendering, QA, assembly
+uploader/                YouTube OAuth and upload/scheduling
+state/                   progress and creative-rotation history
+tests/                   manifest, timing, lock, and schedule regressions
+.github/workflows/       CI, daily autopilot, and upload recovery
+legacy/                  immutable posted-video policy
 ```
-
-Days 1–19 are blocked in code (`MIN_OPEN_DAY = 20`) unless `--allow-locked-day` is set for emergencies.
-
-## How it works
-
-```
-curriculum/*.json          ← all lesson content lives here (data, not code)
-        │
-        ▼
-pipeline/cell1_lesson.py   lesson data + 9-scene teacher narrations
-pipeline/cell2_script.py   master script JSON (scenes, timing, board actions)
-pipeline/cell3_audio.py    Edge-TTS voice (en-GB-Ryan) + per-word timings
-pipeline/cell4_animation.py Manim renders each scene (board-write style)
-pipeline/cell5_assembly.py mux + 0.3s crossfades → final MP4
-pipeline/cell8_subtitles.py SRT + VTT captions from the word timings
-pipeline/cell6_thumbnail.py cinematic 4K-supersampled thumbnail
-pipeline/cell7_shorts.py   3 vertical Shorts per day (exact 1080x1920,
-                           letterboxed — never cropped): HOOK, FORMULA, MISTAKE
-        │
-        ▼
-uploader/youtube_upload.py posts video + all 3 Shorts, sets thumbnail,
-                           captions, playlist — Shorts auto-scheduled at
-                           12:00 / 18:00 / 22:00 UTC via YouTube publishAt
-```
-
-Every scene follows the fixed 9-step teaching structure (opening → hook →
-concept → definition → formula → worked example → mistakes → practice →
-summary) defined in `pipeline/constants.py`. **No lesson content is ever
-hard-coded in the engine** — adding a grade, subject or exam track means
-adding another JSON file to `curriculum/`.
-
-## Curriculum
-
-| File | Track | Days |
-|------|-------|------|
-| `curriculum/grade9.json` | Number Systems, Polynomials, Coordinate Geometry, Linear Equations, Triangles, Quadrilaterals, Circles, intro Trig, Statistics | 1–21 |
-| `curriculum/grade10.json` | Quadratic Equations, Trigonometry, Sequences & Series, Sets, Limits, intro Calculus, SAT & ACT strategy | 22–40 |
-
-Each lesson entry carries the full teaching design: goal, prerequisite,
-real-world hook, concept intuition, key formula (LaTeX + spoken form),
-board examples, common mistake, practice, SEO title, thumbnail angle and
-playlist. The quality gate in Cell 1 refuses to build a lesson with any of
-these missing, and the math-syntax check refuses malformed LaTeX.
-
-## Running it
-
-### Locally
-```bash
-pip install -r requirements.txt
-sudo apt-get install ffmpeg libcairo2-dev libpango1.0-dev \
-     texlive texlive-latex-extra texlive-fonts-recommended dvipng cm-super
-
-python autopilot.py                 # next scheduled day (Day 20+)
-python autopilot.py --day 20        # a specific open day (>= 20)
-python autopilot.py --from-stage 4  # resume after a failed render
-```
-Output goes to `output/` (override with `MCME_OUTPUT_DIR=/path`).
-Optional branding: put your banner at `output/2.png` and logo at
-`output/assets/logo.png`.
-
-### In Google Colab
-Clone the repo and run `python autopilot.py` — Google Drive is mounted
-automatically and everything is written to `MyDrive/Math-9`, same as the
-original notebook.
-
-### Automatically, every day (GitHub Actions)
-`.github/workflows/daily-video.yml` produces the next lesson every day at
-12:30 UTC. It is **off by default**; flip it on with one repository
-variable: `Settings → Secrets and variables → Actions → Variables →
-AUTOPILOT_ENABLED = true`. Finished videos are attached to each workflow
-run as artifacts, and `state/progress.json` is committed back so the day
-counter always advances.
-
-## Linking your YouTube channel (later — one-time setup)
-
-The pipeline is fully usable before linking; uploads simply skip with a
-warning until these steps are done.
-
-1. In [Google Cloud Console](https://console.cloud.google.com) create a
-   project and enable **YouTube Data API v3**.
-2. Configure the OAuth consent screen (External, add your Gmail as a test
-   user), then create an **OAuth client ID → Desktop app** and save the
-   downloaded file as `secrets/client_secret.json`.
-3. On your own computer run `python -m uploader.authorize`, sign in with
-   the channel's Google account, and allow access — this writes
-   `secrets/token.json`.
-4. Test without posting: `python -m uploader.youtube_upload --day 1 --dry-run`
-5. Real uploads start as **private** so you can review them. When happy,
-   set `YT_PRIVACY=public`.
-6. For daily auto-posting from GitHub Actions, paste the contents of the
-   two files into repository **secrets** `YT_CLIENT_SECRET_JSON` and
-   `YT_TOKEN_JSON`, and add the variable `YT_PRIVACY = public`.
-7. **Publish the OAuth consent screen to "In production"** (same page as
-   step 2 — no Google verification required for a personal channel tool).
-   Apps left in "Testing" status have their refresh token auto-expire
-   after **7 days**, which silently breaks daily uploads once a week until
-   someone re-authorizes by hand. Production status removes that expiry.
-
-`secrets/` is git-ignored — credentials never enter the repository.
-
-## Troubleshooting
-
-**Upload step fails with `invalid_grant: Token has been expired or
-revoked.`** — the refresh token was rejected. This is almost always the
-7-day Testing-mode expiry from step 7 above (fix it there, permanently);
-occasionally it's a token you revoked yourself in your Google Account's
-[connected apps](https://myaccount.google.com/permissions) page. Either
-way: re-run `python -m uploader.authorize` and update the `YT_TOKEN_JSON`
-secret. `daily-video.yml` uploads the render step and the upload step
-separately — a token failure only fails the upload step (with a
-`::warning::` explaining exactly this), so the render, thumbnail, Shorts
-and the day counter all still complete normally and the video isn't lost.
-Once the token is fixed, run **Actions → "Publish Lesson to YouTube"**
-with that day number to post it straight from the saved render artifact
-— no need to wait for or trigger a re-render.
-
-## Repo layout
-
-```
-autopilot.py          one-command daily producer + day tracking
-curriculum/           lesson content (JSON, one file per grade/track)
-pipeline/             the 8 production stages + shared paths/constants
-uploader/             YouTube posting + one-time authorize helper
-state/progress.json   which day runs next, what's done, what's uploaded
-legacy/               Days 1–19 lock policy only (old Colab monolith removed)
-.github/workflows/    daily automation (opt-in)
-```
-
-## Roadmap
-
-- [ ] Day-2 review videos (homework solutions + quiz) per topic
-- [ ] Practice-sheet PDF generator into `practice_sheets/`
-- [ ] Grade-level expansion: more Grade 10 depth, SAT course track
-- [ ] Community-post announcements alongside each upload

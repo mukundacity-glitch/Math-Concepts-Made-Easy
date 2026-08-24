@@ -17,6 +17,8 @@ from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 from pipeline.paths import load_cell1_config
 from pipeline.mathtext import latex_to_plain, spoken_lines, split_sentences
+from pipeline.lesson_qa import assert_lesson_quality
+from pipeline.scene_manifest import build_scene_manifest
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 # ══════════════════════════════════════════════════════════════
@@ -224,7 +226,9 @@ def build_script(config) -> dict:
     scenes = []
     total_estimated = 0.0
 
-    step_order = cell1_config.SCENE_ORDER
+    manifest = build_scene_manifest(lesson, narrations, cell1_config.LESSON_PLAN)
+    manifest_by_step = {scene["step"]: scene for scene in manifest["scenes"]}
+    step_order = cell1_config.LESSON_PLAN["scene_order"]
 
     for step in step_order:
         narration_block = narrations.get(step, {})
@@ -294,9 +298,20 @@ def build_script(config) -> dict:
             "formula_plain"   : latex_to_plain(lesson["key_formula"]),
             "animation_type"  : cell1_config.SCENE_ANIMATION_MAP.get(step, "VISUAL_ONLY"),
         }
+        # The declarative manifest is authoritative for scene identity,
+        # purpose, object IDs, actions and timing markers.  The legacy
+        # registry above supplies only current Manim compatibility metadata.
+        manifest_scene = manifest_by_step[step]
+        for key in (
+            "scene_id", "stage", "purpose", "learning_purpose", "objects",
+            "actions", "timing_markers", "transition_style",
+            "expected_duration",
+        ):
+            scene[key] = manifest_scene[key]
         scenes.append(scene)
-        print(f"   ✅ Scene {registry['scene_id']:02d} [{step:10s}]  "
-              f"{wc:>4} words  ~{est_secs:>6.1f}s  [{registry['animation_type']}]")
+        print(f"   ✅ Scene {scene['scene_id']:02d} [{step:10s}]  "
+              f"{wc:>4} words  ~{est_secs:>6.1f}s  "
+              f"[{registry['animation_type']}] / {len(scene['actions'])} actions")
 
     print()
 
@@ -327,6 +342,10 @@ def build_script(config) -> dict:
         "subheading"           : lesson["subheading"],
         "intro_teaser"         : lesson["intro_teaser"],
         "outro_message"        : lesson["outro_message"],
+        "manifest_schema"      : manifest["schema_version"],
+        "selected_stages"      : manifest["selected_stages"],
+        "hook_variant"         : manifest["hook_variant"],
+        "outro_variant"        : manifest["outro_variant"],
 
         # ── Asset paths ───────────────────────────────────────
         "banner_path"          : str(config.BANNER_PATH),
@@ -368,11 +387,11 @@ def validate_script(script: dict) -> bool:
             print(f"   ✅ {field}")
 
     scenes = script.get("scenes", [])
-    if len(scenes) != 9:
-        print(f"   ❌ Expected 9 scenes, got {len(scenes)}")
+    if len(scenes) < 4:
+        print(f"   ❌ Expected at least 4 selected scenes, got {len(scenes)}")
         passed = False
     else:
-        print(f"   ✅ Scene count: {len(scenes)}")
+        print(f"   ✅ Content-selected scene count: {len(scenes)}")
 
     for s in scenes:
         narration = s.get("narration", {})
@@ -443,7 +462,10 @@ SCRIPT = build_script(cell1_config)
 
 if not validate_script(SCRIPT):
     raise SystemExit("🛑 Script validation failed. Fix issues above before continuing.")
+try:
+    assert_lesson_quality(SCRIPT)
+except ValueError as exc:
+    raise SystemExit(f"🛑 {exc}") from exc
 
 SCRIPT_PATH = save_script(SCRIPT, cell1_config)
 print_summary(SCRIPT)
-

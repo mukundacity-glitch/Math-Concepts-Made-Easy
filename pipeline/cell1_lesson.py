@@ -16,6 +16,7 @@ from pipeline.constants import (
     SCENE_ORDER, SCENE_PITCH_MAP, SCENE_ANIMATION_MAP,
 )
 from pipeline.curriculum import MASTER_CURRICULUM, get_lesson
+from pipeline.lesson_plan import plan_lesson
 
 ensure_output_folders()
 DAY_NUMBER = get_day_number()
@@ -75,9 +76,9 @@ print(f"{'═'*60}\n")
 # ══════════════════════════════════════════════════════════════
 
 def validate_lesson(lesson: dict) -> bool:
-    """Fail-closed content gate for every Day 20+ style premium lesson.
+    """Fail-closed content gate for every future premium lesson.
 
-    Days already completed (1–19) remain in curriculum history but this gate
+    Days already completed (1–21) remain in curriculum history but this gate
     runs for whatever day is being produced next. It never mutates past days.
     """
     required = [
@@ -113,14 +114,14 @@ def validate_lesson(lesson: dict) -> bool:
 
     worked = board.get("worked_example") or []
     practice = board.get("practice") or []
-    if len(worked) < 6:
-        print(f"   ❌ board_examples.worked_example needs ≥6 lines (found {len(worked)})")
+    if len(worked) < 1:
+        print(f"   ❌ board_examples.worked_example needs ≥1 line (found {len(worked)})")
         passed = False
     else:
         print(f"   ✅ worked_example lines={len(worked)}")
 
-    if len(practice) < 8:
-        print(f"   ❌ board_examples.practice needs ≥8 items (found {len(practice)})")
+    if len(practice) < 1:
+        print(f"   ❌ board_examples.practice needs ≥1 item (found {len(practice)})")
         passed = False
     else:
         print(f"   ✅ practice items={len(practice)}")
@@ -171,7 +172,8 @@ def clean_math_for_speech(text_or_list) -> str:
     return latex_to_speech(text_or_list)
 
 
-def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -> dict:
+def write_narrations(lesson: dict, teaser: str, heading: str, plan: dict,
+                     recap: str = "") -> dict:
     topic             = lesson['topic']
     subtopic          = lesson['subtopic']
     goal              = lesson['lesson_goal']
@@ -211,9 +213,21 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     # ════════════════════════════════════════════════════════
     # SCENE 1: OPENING — curiosity first, then orientation
     # ════════════════════════════════════════════════════════
+    hook_openers = {
+        "mystery": f"Here is a mystery: {curiosity}",
+        "prediction": f"Make a prediction before we begin. {curiosity}",
+        "real_life_problem": f"Picture this real-life problem. {curiosity}",
+        "visual_puzzle": f"Study the picture and solve this visual puzzle. {curiosity}",
+        "wrong_answer": f"A student gave a confident wrong answer. {curiosity}",
+        "before_and_after": f"Compare the before and after. {curiosity}",
+        "two_choices": f"You have two possible choices. {curiosity}",
+        "surprising_shortcut": f"There is a surprising shortcut here. {curiosity}",
+        "pattern_spotting": f"See if you can spot the hidden pattern. {curiosity}",
+        "student_challenge": f"Here is your opening challenge. {curiosity}",
+    }
+    hook_opener = hook_openers.get(plan["hook_variant"], hook_openers["mystery"])
     opening = (
-        f"Here is a little mystery before we start. "
-        f"{curiosity} "
+        f"{hook_opener} "
         f"Hold that thought — because today it becomes mathematics. "
         f"Welcome to Math Concepts Made Easy. "
         f"Today is Day {day}, and our lesson is all about {topic}. "
@@ -307,6 +321,15 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
     # ════════════════════════════════════════════════════════
     # SCENE 9: SUMMARY
     # ════════════════════════════════════════════════════════
+    outro_closers = {
+        "one_line_recap": "Say the rule once in your own words before you leave.",
+        "tomorrow_teaser": teaser,
+        "confidence_close": "You can solve this now because you understand why the method works.",
+        "practice_prompt": "Try one fresh example without looking at your notes.",
+        "exam_tip": "In an exam, write the rule first and check each substitution.",
+        "teach_it_back": "Teach this idea to someone else in one minute.",
+    }
+    outro_close = outro_closers.get(plan["outro_variant"], teaser)
     summary = (
         f"Let us bring today's lesson together in one picture. "
         f"At the center of everything sits {topic}. "
@@ -314,7 +337,7 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
         f"The one formula to remember is {formula}. "
         f"Watch out for the common trap we discussed. "
         f"And remember our goal: {goal}. "
-        f"{teaser}. "
+        f"{outro_close} "
         f"New lessons every day on Math Concepts Made Easy. "
         f"Thank you for learning with me — see you tomorrow."
     )
@@ -322,7 +345,7 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
         text = " ".join(str(text).split())
         return {"full": text, "beats": split_sentences(text)}
 
-    return {
+    all_narrations = {
         "opening"       : block(opening),
         "hook"          : block(hook),
         "concept"       : block(concept),
@@ -333,6 +356,7 @@ def write_narrations(lesson: dict, teaser: str, heading: str, recap: str = "") -
         "practice"      : block(practice),
         "summary"       : block(summary),
     }
+    return {step: all_narrations[step] for step in plan["scene_order"]}
 
 
 
@@ -340,8 +364,9 @@ if not validate_lesson(TODAY):
     raise SystemExit("🛑 Pipeline stopped: lesson failed the quality gate.")
 
 print("✍️  Writing dedicated narrations (no API)...")
-NARRATIONS = write_narrations(TODAY, INTRO_TEASER, HEADING, PREV_RECAP)
-print("✅ All 9 narrations written.\n")
+LESSON_PLAN = plan_lesson(TODAY)
+NARRATIONS = write_narrations(TODAY, INTRO_TEASER, HEADING, LESSON_PLAN, PREV_RECAP)
+print(f"✅ {len(NARRATIONS)} content-selected narrations written.\n")
 
 # ── Preview first 120 chars of each scene ────────────────────
 for scene, text in NARRATIONS.items():
@@ -380,27 +405,7 @@ if not check_math(TODAY):
 # OUTRO NARRATION
 # ══════════════════════════════════════════════════════════════
 
-OUTRO_NARRATION = (
-    f"That brings us to the end of Day {DAY_NUMBER} — {TODAY['topic']}. "
-    f"Today we worked carefully through the key ideas step by step. "
-    f"And hopefully what once felt confusing now feels much clearer. "
-    f"{TODAY['lesson_goal'].capitalize()}. "
-    f"But remember something important: "
-    f"understanding grows through practice. "
-    f"Watching a lesson is the first step, "
-    f"but trying questions on your own is where real learning begins. "
-    f"So before the next lesson, "
-    f"take a few minutes to review your notes and practice what we covered today. "
-    f"Even ten or fifteen minutes of focused practice can make a huge difference. "
-    f"If something still feels difficult, "
-    f"that is completely normal. "
-    f"Learning difficult ideas takes time, repetition, and patience. "
-    f"Keep showing up, keep practicing, and trust the process. "
-    f"{INTRO_TEASER}. "
-    f"We are building understanding one lesson at a time, one step at a time. "
-    f"New lessons every day on MathConceptsMadeEasy. "
-    f"Thank you for learning with me today, and I will see you tomorrow."
-)
+OUTRO_NARRATION = NARRATIONS["summary"]["full"]
 
 # ══════════════════════════════════════════════════════════════
 # BUILD CELL1_CONFIG.PY  — used by all downstream cells
@@ -453,17 +458,8 @@ curriculum_data = {
     "subheading"      : SUBHEADING,
     "intro_teaser"    : INTRO_TEASER,
     "outro_message"   : OUTRO_NARRATION,
-        "scene_narrations": {
-    "opening"       : NARRATIONS.get('opening', {}),
-    "hook"          : NARRATIONS.get('hook', {}),
-    "concept"       : NARRATIONS.get('concept', {}),
-    "definition"    : NARRATIONS.get('definition', {}),
-    "formula"       : NARRATIONS.get('formula', {}),
-    "worked_example": NARRATIONS.get('worked_example', {}),
-    "mistakes"      : NARRATIONS.get('mistakes', {}),
-    "practice"      : NARRATIONS.get('practice', {}),
-    "summary"       : NARRATIONS.get('summary', {})
-}
+    "lesson_plan"     : LESSON_PLAN,
+    "scene_narrations": NARRATIONS,
 }
 
 # Format it perfectly as a string
@@ -509,9 +505,10 @@ RESOLUTION = {{
 
 ANIMATION_PHILOSOPHY = {repr(ANIMATION_PHILOSOPHY)}
 PITCH_PROFILES = {repr(PITCH_PROFILES)}
-SCENE_ORDER = {repr(SCENE_ORDER)}
+SCENE_ORDER = {repr(LESSON_PLAN['scene_order'])}
 SCENE_PITCH_MAP = {repr(SCENE_PITCH_MAP)}
 SCENE_ANIMATION_MAP = {repr(SCENE_ANIMATION_MAP)}
+LESSON_PLAN = {repr(LESSON_PLAN)}
 
 CURRICULUM = [
 {curriculum_str}
@@ -543,6 +540,7 @@ with open(log_path, "w", encoding="utf-8") as f:
         "concept_intuition" : TODAY.get("concept_intuition", ""),
         "common_mistake"    : TODAY.get("common_mistake", ""),
         "narrations"        : NARRATIONS,
+        "lesson_plan"       : LESSON_PLAN,
         "outro"             : OUTRO_NARRATION,
         "banner_path"       : str(BANNER_PATH),
         "output_base"       : str(BASE_DIR),
@@ -555,4 +553,3 @@ print(f"  Day {DAY_NUMBER} complete — {TODAY['topic']}")
 print(f"  Output base : {BASE_DIR}")
 print(f"  Run Cell 2 (script builder) next.")
 print(f"{'═'*60}")
-

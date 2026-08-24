@@ -27,6 +27,7 @@ from pathlib import Path as _Path
 REPO_ROOT = _Path(__file__).resolve().parents[1]
 _sys.path.insert(0, str(REPO_ROOT))
 from pipeline.paths import load_cell1_config
+from pipeline.visual_actions import validate_registered_actions
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 # ══════════════════════════════════════════════════════════════
@@ -60,7 +61,11 @@ with open(TIMED_SCRIPT, "r", encoding="utf-8") as f:
     SCRIPT = json.load(f)
 
 print(f"✅ Timed script loaded → {TIMED_SCRIPT}")
-print("🎨 Animation engine: ENGINE_VISUAL_V3 (no-overlap layout + data triangles)")
+_action_errors = validate_registered_actions(SCRIPT.get("scenes", []))
+if _action_errors:
+    raise SystemExit("🛑 Invalid visual manifest: " + " | ".join(_action_errors))
+
+print("🎨 Animation engine: ENGINE_VISUAL_V4 (manifest-driven + narration-synced)")
 print(f"   Lesson  : Day {lesson_id} — {SCRIPT['title']}")
 print(f"   Scenes  : {len(SCRIPT['scenes'])}")
 print(f"   Total   : {SCRIPT['total_duration_seconds']:.1f}s\n")
@@ -828,6 +833,40 @@ def viz_sorted_median_demo():
     return VGroup(box, g)
 
 
+def viz_quadratic_roots_flow():
+    """Quadratic coefficients branching to root sum and product."""
+    source = MATH(r"ax^2+bx+c=0", size=44, color=C_WHITE, max_w=6.6)
+    source_box = RoundedRectangle(
+        width=source.width + 0.8, height=source.height + 0.55,
+        corner_radius=0.16, fill_color=mc(C_CBG), fill_opacity=1.0,
+        stroke_color=mc(C_BLUE_P), stroke_width=3,
+    ).move_to(source.get_center())
+    source_group = VGroup(source_box, source)
+
+    sum_rule = MATH(r"\alpha+\beta=-\frac{b}{a}", size=38,
+                    color=C_GOLD, max_w=4.5)
+    product_rule = MATH(r"\alpha\beta=\frac{c}{a}", size=38,
+                        color=C_GGREEN, max_w=4.5)
+    rules = VGroup(sum_rule, product_rule).arrange(RIGHT, buff=1.0)
+    rules.next_to(source_group, DOWN, buff=1.0)
+    arrows = VGroup(
+        Arrow(source_group.get_bottom(), sum_rule.get_top(), buff=0.12,
+              color=mc(C_GOLD), stroke_width=3),
+        Arrow(source_group.get_bottom(), product_rule.get_top(), buff=0.12,
+              color=mc(C_GGREEN), stroke_width=3),
+    )
+    labels = VGroup(
+        TXT("SUM — flip b's sign", size=18, color=C_GOLD, bold=True),
+        TXT("PRODUCT — keep c's sign", size=18, color=C_GGREEN, bold=True),
+    )
+    labels[0].next_to(sum_rule, DOWN, buff=0.18)
+    labels[1].next_to(product_rule, DOWN, buff=0.18)
+    title = TXT("The roots are encoded in the coefficients", size=22,
+                color=C_WHITE, bold=True)
+    title.next_to(source_group, UP, buff=0.28)
+    return VGroup(title, source_group, arrows, rules, labels)
+
+
 def topic_visual(sentence=""):
     """Lesson-aware illustration from title/formula/hints — not generic cards only."""
     title = str(SCRIPT_DATA.get("title", "")).lower()
@@ -835,6 +874,13 @@ def topic_visual(sentence=""):
     formula = str(SCRIPT_DATA.get("key_formula", "")).lower()
     hints = str(SCRIPT_DATA.get("visual_hints", "")).lower()
     s = f"{sentence} {title} {sub} {formula} {hints}".lower()
+
+    # Quadratic root/coefficient relationship (Day 22 and later reviews)
+    if any(k in s for k in (
+        "zeroes and coefficients", "sum of zeroes", "product of zeroes",
+        "sum of roots", "product of roots", r"\alpha+\beta", r"\alpha\beta",
+    )):
+        return viz_quadratic_roots_flow()
 
     # Trigonometric Pythagorean identity
     if any(k in s for k in ("sin^2", "sin²", r"sin^2", "cos^2", "identity", "pythagorean trig",
@@ -2108,7 +2154,13 @@ def render_all_scenes(script: dict):
         label       = scene["label"]
 
         if not class_name:
-            print(f"  ⚠️  No class mapped for step '{step}' — skipping.")
+            print(f"  ❌ No class mapped for step '{step}'.")
+            results.append({
+                "scene_id": scene_id,
+                "step": step,
+                "success": False,
+                "path": None,
+            })
             continue
 
         print(f"  ▶ Scene {scene_id:02d} [{step:10s}] {label}")

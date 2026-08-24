@@ -20,6 +20,7 @@ import sys
 from datetime import datetime, time, timezone
 from pathlib import Path
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
@@ -39,12 +40,10 @@ SCOPES = [
 
 CHANNEL_TAGLINE = "New math lessons every day on Math Concepts Made Easy."
 
-# 3 Shorts a day, each a different type, spread across the day so the
-# channel posts multiple times without dumping everything at once.
-# Times are UTC-of-day on the actual upload date. Order: morning teaser
-# → pre-video formula reveal (the main lesson video goes out around
-# 19:00 UTC) → evening CTA.
-SHORTS_SCHEDULE_UTC = {
+# Local publishing is DST-safe.  The daily workflow renders at 06:00 New York
+# time, uploads the main lesson privately, and YouTube makes it public at 09:00.
+PUBLISH_TIMEZONE = ZoneInfo("America/New_York")
+SHORTS_SCHEDULE_LOCAL = {
     "HOOK":    time(12, 0),
     "FORMULA": time(18, 0),
     "MISTAKE": time(22, 0),
@@ -57,18 +56,31 @@ SHORT_TYPE_META = {
 }
 
 
-def compute_publish_at(short_key: str) -> Optional[str]:
-    """ISO 8601 UTC publishAt for a Short's scheduled slot *today* (the
-    calendar day this upload actually runs on), or None if that slot has
-    already passed today (upload immediately instead). Anchored to the
-    real run date rather than the lesson's nominal day number so the 3
-    Shorts always land spread across whichever day they're posted."""
-    slot_time = SHORTS_SCHEDULE_UTC[short_key]
+def _compute_local_publish_at(slot_time: time) -> Optional[str]:
+    """Return today's local slot as an ISO UTC timestamp, or None if past."""
     now = datetime.now(timezone.utc)
-    publish_dt = datetime.combine(now.date(), slot_time, tzinfo=timezone.utc)
+    local_date = now.astimezone(PUBLISH_TIMEZONE).date()
+    publish_dt = datetime.combine(local_date, slot_time, tzinfo=PUBLISH_TIMEZONE)
+    publish_dt = publish_dt.astimezone(timezone.utc)
     if publish_dt <= now:
         return None
     return publish_dt.isoformat().replace("+00:00", "Z")
+
+
+def compute_publish_at(short_key: str) -> Optional[str]:
+    return _compute_local_publish_at(SHORTS_SCHEDULE_LOCAL[short_key])
+
+
+def compute_main_publish_at() -> Optional[str]:
+    """Optional scheduled main-video release, configured as local HH:MM."""
+    value = os.environ.get("YT_MAIN_PUBLISH_LOCAL_TIME", "").strip()
+    if not value:
+        return None
+    try:
+        hour, minute = (int(part) for part in value.split(":", 1))
+        return _compute_local_publish_at(time(hour, minute))
+    except (TypeError, ValueError):
+        raise SystemExit("🛑 YT_MAIN_PUBLISH_LOCAL_TIME must use HH:MM (for example 09:00).")
 
 
 def _materialize_env_secrets():
@@ -209,7 +221,7 @@ def lesson_paths(lesson: dict) -> dict:
         "video": final_dir / f"Day_{day:03d}_{safe}.mp4",
         "shorts": {
             key: final_dir / f"Day_{day:03d}_{safe}_SHORT_{key}.mp4"
-            for key in SHORTS_SCHEDULE_UTC
+            for key in SHORTS_SCHEDULE_LOCAL
         },
         "thumbnail": BASE_DIR / "thumbnails" / f"Day_{day:03d}_{safe}_Thumb.jpg",
         "srt": final_dir / f"Day_{day:03d}_{safe}.srt",
@@ -358,8 +370,9 @@ def upload_day(day: int, dry_run: bool = False, privacy: str = None):
             "description": build_short_description(lesson, key),
             "publish_at": compute_publish_at(key),
         }
-        for key in SHORTS_SCHEDULE_UTC
+        for key in SHORTS_SCHEDULE_LOCAL
     }
+    main_publish_at = compute_main_publish_at() if privacy == "public" else None
 
     print(f"\n{'═' * 65}")
     print(f"  📤 YOUTUBE UPLOAD — Day {day}: {lesson['topic']}")
@@ -369,6 +382,10 @@ def upload_day(day: int, dry_run: bool = False, privacy: str = None):
     print(f"  Playlist : {lesson['playlist']}")
     print(f"  Tags     : {', '.join(tags[:8])}…")
     print(f"  Video    : {paths['video']}")
+    if main_publish_at:
+        print(f"  Release  : {main_publish_at} (09:00 America/New_York)")
+    else:
+        print("  Release  : immediately after upload")
     for key, short_path in paths["shorts"].items():
         if privacy != "public":
             slot = f"immediately as {privacy} (scheduling only applies to public)"
@@ -394,7 +411,10 @@ def upload_day(day: int, dry_run: bool = False, privacy: str = None):
     service = get_service()
 
     print("\n▶ Uploading main lesson…")
-    video_id = _upload_file(service, paths["video"], title, description, tags, privacy)
+    video_id = _upload_file(
+        service, paths["video"], title, description, tags, privacy,
+        publish_at=main_publish_at,
+    )
     if paths["thumbnail"].exists():
         _set_thumbnail(service, video_id, paths["thumbnail"])
     if paths["srt"].exists():
@@ -411,7 +431,7 @@ def upload_day(day: int, dry_run: bool = False, privacy: str = None):
                      tags + ["shorts"], privacy, publish_at=meta["publish_at"])
 
     print(f"\n🎉 Day {day} posted to YouTube — 1 lesson + "
-          f"{len(SHORTS_SCHEDULE_UTC)} Shorts spread across the day.")
+          f"{len(SHORTS_SCHEDULE_LOCAL)} Shorts spread across the day.")
 
 
 def main():
