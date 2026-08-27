@@ -48,12 +48,12 @@
     21,
     22
   ],
-  "locked_through_day": 21,
-  "open_from_day": 22,
+  "locked_through_day": 22,
+  "open_from_day": 23,
   "auto_from_day": 22,
   "schedule_auto_from": 22,
   "schedule_timezone": "America/New_York",
   "scheduled_publish_local_time": "09:00",
-  "note": "Videos 1-21 are posted and locked. Automatic daily publishing resumes with Video 22.",
+  "note": "Uploaded lessons are locked. next_day is the only lesson eligible for automatic publishing.",
   "last_run": "2026-08-25T10:43:27+00:00"
 }

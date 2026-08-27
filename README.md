@@ -6,8 +6,10 @@ package to YouTube automatically.
 
 ## Current production status
 
-- Videos **1–21 are already posted and locked**.
-- `state/progress.json` points to **Video 22**.
+- Every lesson listed in `state/progress.json` under `uploaded` is posted and
+  locked against duplicate uploads.
+- `next_day` is the single lesson eligible for the next production run; it
+  advances only after YouTube confirms the upload.
 - The scheduled workflow starts at **06:00 America/New_York** every day.
 - The main lesson is uploaded privately with YouTube `publishAt` and becomes
   public at **09:00 America/New_York**. The schedule is daylight-saving safe.
@@ -17,21 +19,21 @@ package to YouTube automatically.
 - If upload fails, the counter stays on the same lesson and the next scheduled
   run retries it.
 
-The first scheduled run after this update produces Day 22,
-**Relationship Between Zeroes and Coefficients**.
+The next scheduled run reads its lesson number from `next_day`; no test or
+workflow is tied to a fixed video number.
 
 ## Commands
 
 ```bash
 python autopilot.py                 # next open lesson
-python autopilot.py --day 22        # an explicit open lesson
 python autopilot.py --upload        # render and upload locally
 python autopilot.py --from-stage 5  # resume at Manim rendering
 pytest -q                           # fast regression suite
 ```
 
-Normal commands reject Days 1–21. `--allow-locked-day` is an emergency-only
-override and should not be used by automation.
+Normal commands reject every uploaded lesson and any out-of-sequence day.
+`--allow-locked-day` is an emergency render-only override and should not be
+used by automation or for duplicate uploads.
 
 ## Content-driven pipeline
 
@@ -96,7 +98,7 @@ lesson-specific answer. Outputs default to `output/` and can be redirected with
 
 Important state:
 
-- `state/progress.json` — posted/open sequence and publishing schedule;
+- `state/progress.json` — uploaded lock, next eligible day, and schedule;
 - `state/creative_history.json` — recent hook/outro variants used to prevent
   repetition.
 

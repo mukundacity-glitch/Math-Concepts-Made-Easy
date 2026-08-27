@@ -14,6 +14,10 @@
 
 name: Publish Lesson to YouTube
 
+concurrency:
+  group: daily-lesson-production
+  cancel-in-progress: false
+
 on:
   workflow_dispatch:
     inputs:
@@ -78,15 +82,14 @@ jobs:
       - name: Mark day as uploaded in progress state
         run: |
           python - <<'EOF'
-          import json, sys
-          from pathlib import Path
-          p = Path("state/progress.json")
-          state = json.loads(p.read_text())
+          from pipeline.paths import read_state, write_state
+          from pipeline.progress import mark_uploaded
+
+          state = read_state()
           day = int("${{ github.event.inputs.day }}")
-          if day not in state.setdefault("uploaded", []):
-              state["uploaded"].append(day)
-          p.write_text(json.dumps(state, indent=2) + "\n")
-          print(f"Marked day {day} as uploaded.")
+          mark_uploaded(state, day)
+          write_state(state)
+          print(f"Marked Day {day} uploaded; Day {state['next_day']} is next.")
           EOF
 
       - name: Commit progress state
