@@ -91,12 +91,15 @@ jobs:
           python - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           import os
+          from pipeline.progress import validate_next_publish_day
 
           override = os.environ.get("DAY_OVERRIDE", "").strip()
           state = json.load(open("state/progress.json", encoding="utf-8"))
-          day = int(override) if override else int(state["next_day"])
-          if day < int(state.get("open_from_day", 22)):
-              raise SystemExit(f"Day {day} is already posted and locked")
+          requested_day = int(override) if override else None
+          try:
+              day = validate_next_publish_day(state, requested_day)
+          except ValueError as exc:
+              raise SystemExit(f"Publishing guard rejected the run: {exc}") from exc
           print(f"day={day}")
           PY
 
@@ -119,19 +122,14 @@ jobs:
           LESSON_DAY: ${{ steps.day.outputs.day }}
         run: |
           python - <<'PY'
-          import datetime as dt
           import os
           from pipeline.creative_history import record_lesson
           from pipeline.paths import load_cell1_config, read_state, write_state
+          from pipeline.progress import mark_uploaded
 
           day = int(os.environ["LESSON_DAY"])
           state = read_state()
-          for key in ("completed", "uploaded"):
-              if day not in state.setdefault(key, []):
-                  state[key].append(day)
-                  state[key].sort()
-          state["next_day"] = max(day + 1, int(state.get("open_from_day", 22)))
-          state["last_run"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+          mark_uploaded(state, day)
           write_state(state)
           plan = load_cell1_config().LESSON_PLAN
           record_lesson(day, plan["hook_variant"], plan["outro_variant"])

@@ -23,9 +23,10 @@ REPO_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from pipeline.paths import (
-    BASE_DIR, MIN_OPEN_DAY, load_cell1_config, read_state, safe_filename, write_state,
+    BASE_DIR, load_cell1_config, read_state, safe_filename, write_state,
 )
-from pipeline.curriculum import MASTER_CURRICULUM, TOTAL_DAYS, get_lesson
+from pipeline.curriculum import TOTAL_DAYS, get_lesson
+from pipeline.progress import mark_uploaded, validate_next_publish_day
 
 STAGES = [
     ("Lesson & narration builder", "pipeline.cell1_lesson"),
@@ -66,27 +67,15 @@ def main():
     args = parser.parse_args()
 
     state = read_state()
-    day = args.day if args.day is not None else int(state.get("next_day", MIN_OPEN_DAY))
-
-    # ── Posted-day lock ─────────────────────────────────────────
-    # Already posted. Do not re-render / re-upload via normal automation.
-    if day < MIN_OPEN_DAY and not args.allow_locked_day:
-        print(f"🛑 Day {day} is LOCKED (Days 1–{MIN_OPEN_DAY - 1} already posted).")
-        print(f"   Production schedule continues from Day {MIN_OPEN_DAY}+.")
-        print(f"   state/progress.json next_day should be >= {MIN_OPEN_DAY}.")
-        print("   Refusing to run. (Emergency override: --allow-locked-day)")
-        return 2
-
-    # Never let automation rewind below the open sequence
-    if int(state.get("next_day", MIN_OPEN_DAY)) < MIN_OPEN_DAY:
-        state["next_day"] = MIN_OPEN_DAY
-        for d in range(1, MIN_OPEN_DAY):
-            if d not in state.setdefault("completed", []):
-                state["completed"].append(d)
-            if d not in state.setdefault("uploaded", []):
-                state["uploaded"].append(d)
-        write_state(state)
-        print(f"🔒 Normalized progress.json → next_day={MIN_OPEN_DAY}")
+    if args.allow_locked_day:
+        day = args.day if args.day is not None else int(state["next_day"])
+    else:
+        try:
+            day = validate_next_publish_day(state, args.day)
+        except ValueError as exc:
+            print(f"🛑 {exc}")
+            print("   Refusing to run. (Emergency render override: --allow-locked-day)")
+            return 2
 
 
     # ── Launch date guard ───────────────────────────────────────
@@ -120,7 +109,7 @@ def main():
         run_stage(i, name, module, day)
 
     # ── Optional YouTube upload ───────────────────────────────
-    upload_succeeded = not args.upload
+    upload_succeeded = False
     if args.upload:
         # Fail-closed: refuse upload without real finished media package.
         if not getattr(args, "skip_media_gate", False):
@@ -139,18 +128,11 @@ def main():
             upload_succeeded = True
 
     # ── Record progress only after all requested work succeeds ──
-    if not args.no_advance and upload_succeeded:
+    if not args.no_advance and args.upload and upload_succeeded:
         from pipeline.creative_history import record_lesson
 
         state = read_state()
-        if day not in state.setdefault("completed", []):
-            state["completed"].append(day)
-        if args.upload and day not in state.setdefault("uploaded", []):
-            state["uploaded"].append(day)
-        state["completed"].sort()
-        state.setdefault("uploaded", []).sort()
-        state["next_day"] = max(day + 1, MIN_OPEN_DAY)
-        state["last_run"] = datetime.datetime.now().isoformat(timespec="seconds")
+        mark_uploaded(state, day)
         write_state(state)
         config = load_cell1_config()
         record_lesson(
@@ -161,6 +143,16 @@ def main():
         print(f"\n✅ Progress saved — next scheduled lesson: Day {day + 1}")
     elif not args.no_advance and args.upload:
         print("\n⏸️  Progress not advanced because the requested upload did not succeed.")
+    elif not args.no_advance:
+        state = read_state()
+        if day not in state.setdefault("completed", []):
+            state["completed"].append(day)
+            state["completed"].sort()
+        write_state(state)
+        print(
+            f"\n⏸️  Render saved; publishing remains on Day {state['next_day']} "
+            "until its YouTube upload succeeds."
+        )
 
     safe = safe_filename(lesson["seo_title"])
     print(f"\n{'═' * 65}")
