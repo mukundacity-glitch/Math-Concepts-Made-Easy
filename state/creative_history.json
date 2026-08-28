@@ -19,6 +19,11 @@
       "day": 22,
       "hook_variant": "mystery",
       "outro_variant": "one_line_recap"
+    },
+    {
+      "day": 23,
+      "hook_variant": "visual_puzzle",
+      "outro_variant": "exam_tip"
     }
   ]
 }
