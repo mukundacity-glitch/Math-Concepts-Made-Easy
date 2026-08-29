@@ -24,6 +24,11 @@
       "day": 23,
       "hook_variant": "visual_puzzle",
       "outro_variant": "exam_tip"
+    },
+    {
+      "day": 24,
+      "hook_variant": "before_and_after",
+      "outro_variant": "teach_it_back"
     }
   ]
 }
