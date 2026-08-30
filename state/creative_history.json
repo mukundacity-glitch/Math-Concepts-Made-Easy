@@ -29,6 +29,11 @@
       "day": 24,
       "hook_variant": "before_and_after",
       "outro_variant": "teach_it_back"
+    },
+    {
+      "day": 25,
+      "hook_variant": "two_choices",
+      "outro_variant": "tomorrow_teaser"
     }
   ]
 }
