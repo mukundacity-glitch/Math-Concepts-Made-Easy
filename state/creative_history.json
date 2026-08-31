@@ -34,6 +34,11 @@
       "day": 25,
       "hook_variant": "two_choices",
       "outro_variant": "tomorrow_teaser"
+    },
+    {
+      "day": 26,
+      "hook_variant": "surprising_shortcut",
+      "outro_variant": "confidence_close"
     }
   ]
 }
