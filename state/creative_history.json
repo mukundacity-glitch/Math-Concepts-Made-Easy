@@ -39,6 +39,11 @@
       "day": 26,
       "hook_variant": "surprising_shortcut",
       "outro_variant": "confidence_close"
+    },
+    {
+      "day": 27,
+      "hook_variant": "pattern_spotting",
+      "outro_variant": "exam_tip"
     }
   ]
 }
