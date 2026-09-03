@@ -49,6 +49,11 @@
       "day": 28,
       "hook_variant": "student_challenge",
       "outro_variant": "one_line_recap"
+    },
+    {
+      "day": 29,
+      "hook_variant": "mystery",
+      "outro_variant": "practice_prompt"
     }
   ]
 }
