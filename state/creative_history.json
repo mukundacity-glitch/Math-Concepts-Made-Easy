@@ -64,6 +64,11 @@
       "day": 31,
       "hook_variant": "wrong_answer",
       "outro_variant": "tomorrow_teaser"
+    },
+    {
+      "day": 32,
+      "hook_variant": "two_choices",
+      "outro_variant": "confidence_close"
     }
   ]
 }
