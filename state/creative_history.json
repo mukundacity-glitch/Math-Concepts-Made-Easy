@@ -69,6 +69,11 @@
       "day": 32,
       "hook_variant": "two_choices",
       "outro_variant": "confidence_close"
+    },
+    {
+      "day": 33,
+      "hook_variant": "surprising_shortcut",
+      "outro_variant": "exam_tip"
     }
   ]
 }
