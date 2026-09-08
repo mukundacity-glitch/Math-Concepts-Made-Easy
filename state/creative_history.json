@@ -74,6 +74,11 @@
       "day": 33,
       "hook_variant": "surprising_shortcut",
       "outro_variant": "exam_tip"
+    },
+    {
+      "day": 34,
+      "hook_variant": "pattern_spotting",
+      "outro_variant": "one_line_recap"
     }
   ]
 }
