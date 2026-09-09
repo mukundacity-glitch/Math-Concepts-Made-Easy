@@ -79,6 +79,11 @@
       "day": 34,
       "hook_variant": "pattern_spotting",
       "outro_variant": "one_line_recap"
+    },
+    {
+      "day": 35,
+      "hook_variant": "student_challenge",
+      "outro_variant": "practice_prompt"
     }
   ]
 }

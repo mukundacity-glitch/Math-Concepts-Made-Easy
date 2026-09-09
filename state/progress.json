@@ -1,5 +1,5 @@
 {
-  "next_day": 35,
+  "next_day": 36,
   "completed": [
     1,
     2,
@@ -34,7 +34,8 @@
     31,
     32,
     33,
-    34
+    34,
+    35
   ],
   "uploaded": [
     1,
@@ -70,14 +71,15 @@
     31,
     32,
     33,
-    34
+    34,
+    35
   ],
-  "locked_through_day": 34,
-  "open_from_day": 35,
+  "locked_through_day": 35,
+  "open_from_day": 36,
   "auto_from_day": 22,
   "schedule_auto_from": 22,
   "schedule_timezone": "America/New_York",
   "scheduled_publish_local_time": "09:00",
   "note": "Uploaded lessons are locked. next_day is the only lesson eligible for automatic publishing.",
-  "last_run": "2026-09-08T14:22:56+00:00"
+  "last_run": "2026-09-09T14:19:59+00:00"
 }
