@@ -89,6 +89,11 @@
       "day": 36,
       "hook_variant": "mystery",
       "outro_variant": "teach_it_back"
+    },
+    {
+      "day": 37,
+      "hook_variant": "real_life_problem",
+      "outro_variant": "tomorrow_teaser"
     }
   ]
 }
