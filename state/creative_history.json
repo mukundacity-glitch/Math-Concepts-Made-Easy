@@ -94,6 +94,11 @@
       "day": 37,
       "hook_variant": "real_life_problem",
       "outro_variant": "tomorrow_teaser"
+    },
+    {
+      "day": 38,
+      "hook_variant": "wrong_answer",
+      "outro_variant": "confidence_close"
     }
   ]
 }
