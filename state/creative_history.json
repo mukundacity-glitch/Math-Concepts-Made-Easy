@@ -1,11 +1,6 @@
 {
   "lessons": [
     {
-      "day": 19,
-      "hook_variant": "real_life_problem",
-      "outro_variant": "practice_prompt"
-    },
-    {
       "day": 20,
       "hook_variant": "pattern_spotting",
       "outro_variant": "tomorrow_teaser"
@@ -99,6 +94,11 @@
       "day": 38,
       "hook_variant": "wrong_answer",
       "outro_variant": "confidence_close"
+    },
+    {
+      "day": 39,
+      "hook_variant": "two_choices",
+      "outro_variant": "exam_tip"
     }
   ]
 }
