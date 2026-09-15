@@ -1,11 +1,6 @@
 {
   "lessons": [
     {
-      "day": 21,
-      "hook_variant": "prediction",
-      "outro_variant": "confidence_close"
-    },
-    {
       "day": 22,
       "hook_variant": "mystery",
       "outro_variant": "one_line_recap"
@@ -99,6 +94,11 @@
       "day": 40,
       "hook_variant": "surprising_shortcut",
       "outro_variant": "one_line_recap"
+    },
+    {
+      "day": 41,
+      "hook_variant": "pattern_spotting",
+      "outro_variant": "practice_prompt"
     }
   ]
 }
