@@ -98,6 +98,7 @@ from pathlib import Path
 # ── Repo imports (shared LaTeX → text/speech translation) ─────
 sys.path.insert(0, r"__REPO_ROOT__")
 from pipeline.mathtext import latex_to_plain, normalize_word, split_sentences
+from pipeline.practice import split_practice
 
 # ── Data loading ──────────────────────────────────────────────
 SCRIPT_PATH  = Path(r"__SCRIPT_PATH__")
@@ -1913,19 +1914,11 @@ class Scene08_Practice(Scene):
             plain_lines  = ["Solve today's problem with the formula."]
             spoken_lines = [""]
 
-        # First line(s) up to the one ending in '?' form the question
-        q_count = 1
-        for i, l in enumerate(plain_lines):
-            if l.rstrip().endswith("?"):
-                q_count = i + 1
-                break
-        # include a following enumeration line (e.g. the list of numbers)
-        if (q_count < len(plain_lines)
-                and not _VERDICT_RE.search(plain_lines[q_count])
-                and len(plain_lines[q_count]) < 60
-                and "→" not in plain_lines[q_count]):
-            q_count += 1
-        q_lines, sol_lines = plain_lines[:q_count], plain_lines[q_count:]
+        explicit_board = sd.get("board_examples", {})
+        q_raw, sol_raw = split_practice(explicit_board)
+        q_lines = [latex_to_plain(line) for line in q_raw]
+        sol_lines = [latex_to_plain(line) for line in sol_raw]
+        q_count = len(q_lines)
         q_spoken, sol_spoken = spoken_lines[:q_count], spoken_lines[q_count:]
 
         pill = section_pill("✎  YOUR TURN — PRACTICE!", C_ORANGE, size=24)
@@ -1951,13 +1944,15 @@ class Scene08_Practice(Scene):
 
         rows = build_board_rows(sol_lines, max_w=11.6)
         sol_grp = VGroup(*[r for r, _ in rows])
-        sol_grp.arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+        if rows:
+            sol_grp.arrange(DOWN, aligned_edge=LEFT, buff=0.22)
         if sol_grp.height > 2.2:
             sol_grp.scale_to_fit_height(2.2)
         if sol_grp.width > 11.6:
             sol_grp.scale_to_fit_width(11.6)
-        sol_grp.move_to(sol_card.get_center() + DOWN * 0.20)
-        sol_grp.align_to(sol_card.get_left() + RIGHT * 0.45, LEFT)
+        if rows:
+            sol_grp.move_to(sol_card.get_center() + DOWN * 0.20)
+            sol_grp.align_to(sol_card.get_left() + RIGHT * 0.45, LEFT)
 
         # ── Animate on the narration beat ─────────────────────
         self.play(FadeIn(pill, shift=DOWN * 0.08), run_time=0.5)
@@ -2186,6 +2181,11 @@ def render_all_scenes(script: dict):
             cwd=str(TEMP_DIR)
         )
 
+        log_dir = cell1_config.BASE_DIR / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        (log_dir / f"day_{lesson_id:03d}_{step}_render.log").write_text(
+            result.stdout + "\n" + result.stderr, encoding="utf-8")
+
         # ── Locate rendered file ──────────────────────────────
         expected_mp4 = render_root / f"{class_name}.mp4"
 
@@ -2198,7 +2198,7 @@ def render_all_scenes(script: dict):
             )
             expected_mp4 = found[0] if found else None
 
-        if expected_mp4 and Path(expected_mp4).exists():
+        if result.returncode == 0 and expected_mp4 and Path(expected_mp4).exists():
             dest = LESSON_RENDER / f"scene_{scene_id:02d}_{step}.mp4"
             shutil.copy(str(expected_mp4), str(dest))
             size_kb = dest.stat().st_size // 1024

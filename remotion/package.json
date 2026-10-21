@@ -1,0 +1,6 @@
+{
+  "name": "math-concepts-animation", "version": "1.0.0", "private": true,
+  "scripts": {"studio": "remotion studio --no-open", "check": "tsc --noEmit", "still": "remotion still src/index.ts MathScene", "render": "remotion render src/index.ts MathScene"},
+  "dependencies": {"@remotion/cli": "4.0.537", "remotion": "4.0.537", "react": "19.2.0", "react-dom": "19.2.0", "katex": "0.16.25"},
+  "devDependencies": {"@types/react": "19.2.2", "@types/react-dom": "19.2.2", "@types/katex": "0.16.7", "typescript": "5.9.3"}
+}

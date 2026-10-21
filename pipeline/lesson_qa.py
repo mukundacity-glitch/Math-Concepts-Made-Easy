@@ -7,6 +7,8 @@ from pathlib import Path
 
 from pipeline.creative_history import recent_variants
 from pipeline.visual_actions import validate_registered_actions
+from pipeline.lesson_plan import _validate_design
+from pipeline.visual_models import validate_visual
 
 
 def _balanced_latex(value: str) -> bool:
@@ -23,9 +25,26 @@ def build_coverage_report(script: dict, check_history: bool = True) -> dict:
         if required not in steps:
             errors.append(f"missing required {required} stage")
 
+    design = script.get("lesson_design")
+    if design:
+        try:
+            _validate_design(design)
+        except ValueError as exc:
+            errors.append(str(exc))
+        worked = next((scene for scene in scenes if scene.get("step") == "worked_example"), {})
+        if len(worked.get("panels", [])) < len(design.get("worked_examples", [])):
+            errors.append("not every authored worked problem reached the scene manifest")
+        practice = next((scene for scene in scenes if scene.get("step") == "practice"), {})
+        if len(practice.get("pauses", [])) < len(design.get("practice_set", [design["student_pause"]])):
+            errors.append("every practice problem needs thinking time before its answer")
     errors.extend(validate_registered_actions(scenes))
     for scene in scenes:
         scene_id = scene.get("scene_id")
+        for panel in scene.get("panels", []):
+            try:
+                validate_visual(panel["visual"])
+            except (KeyError, ValueError) as exc:
+                errors.append(f"scene {scene_id}: {exc}")
         narration = str(scene.get("narration", "")).strip()
         beats = scene.get("narration_beats", [])
         actions = scene.get("actions", [])
@@ -56,10 +75,10 @@ def build_coverage_report(script: dict, check_history: bool = True) -> dict:
     if check_history:
         hook = script.get("hook_variant")
         outro = script.get("outro_variant")
-        if hook and hook in recent_variants("hook_variant", 3):
-            errors.append(f"hook variant {hook!r} appeared in the previous three lessons")
-        if outro and outro in recent_variants("outro_variant", 1):
-            errors.append(f"outro variant {outro!r} repeats consecutively")
+        if hook and hook in recent_variants("hook_variant", 5):
+            errors.append(f"hook variant {hook!r} appeared in the previous five lessons")
+        if outro and outro in recent_variants("outro_variant", 5):
+            errors.append(f"outro variant {outro!r} appeared in the previous five lessons")
 
     return {
         "lesson_id": script.get("lesson_id"),

@@ -69,6 +69,17 @@ jobs:
           python-version: "3.11"
           cache: pip
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: remotion/package-lock.json
+
+      - name: Install and check the Remotion renderer
+        run: |
+          npm ci --prefix remotion
+          npm run check --prefix remotion
+
       - name: Install system dependencies
         run: |
           sudo apt-get update -y
@@ -81,7 +92,9 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run automated tests
-        run: python -m pytest -q
+        run: |
+          python -m pytest -q
+          python -m pipeline.audit
 
       - name: Determine lesson day
         id: day
@@ -132,7 +145,7 @@ jobs:
           mark_uploaded(state, day)
           write_state(state)
           plan = load_cell1_config().LESSON_PLAN
-          record_lesson(day, plan["hook_variant"], plan["outro_variant"])
+          record_lesson(day, plan["hook_variant"], plan["outro_variant"], visual_style=plan.get("visual_style"))
           PY
 
       - name: Warn without advancing when upload fails
@@ -151,15 +164,17 @@ jobs:
             output/final_videos/*.srt
             output/final_videos/*.vtt
             output/thumbnails/*.jpg
-            output/logs/*coverage.json
+            output/logs/*
+            output/scripts/*.json
+            output/cell1_config.py
 
-      - name: Commit successful progress
-        if: steps.upload.outcome == 'success'
+      - name: Commit confirmed upload receipts and successful progress
+        if: always()
         run: |
           git config user.name "autopilot"
           git config user.email "actions@users.noreply.github.com"
-          git add state/progress.json state/creative_history.json
-          git diff --cached --quiet || git commit -m "autopilot: publish day ${{ steps.day.outputs.day }}"
+          git add state/progress.json state/creative_history.json state/upload_receipts.json
+          git diff --cached --quiet || git commit -m "autopilot: save confirmed publishing state"
           git push
 
       - name: Fail job when upload failed

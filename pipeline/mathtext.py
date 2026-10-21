@@ -114,6 +114,7 @@ def latex_to_plain(latex) -> str:
     if latex is None:
         return ""
     text = str(latex)
+    text = re.sub(r"(?<=[A-Za-z])\s*\\circ\s*(?=[A-Za-z])", " composed with ", text)
 
     # Nested-safe: unwrap \text{} and fractions repeatedly
     for _ in range(4):
@@ -148,6 +149,7 @@ def latex_to_speech(latex) -> str:
     if isinstance(latex, (list, tuple)):
         return " ".join(latex_to_speech(item) for item in latex)
     text = str(latex)
+    text = re.sub(r"(?<=[A-Za-z])\s*\\circ\s*(?=[A-Za-z])", " composed with ", text)
 
     for _ in range(4):
         new = _TEXT_RE.sub(r"\1", text)

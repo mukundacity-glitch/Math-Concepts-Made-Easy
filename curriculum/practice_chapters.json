@@ -1,0 +1,102 @@
+{
+  "lessons": [
+    {
+      "day": 131,
+      "grade": 9,
+      "global_track": "Algebra",
+      "subject": "Algebra",
+      "concept_cluster": "Linear Equations from Shopping",
+      "topic": "Linear Equations from Shopping",
+      "subtopic": "Models, worked examples, and independent practice",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "CBSE"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Translate the model, solve the problem, and verify the result.",
+      "prerequisite": "Arithmetic and algebraic notation",
+      "key_formula": "np+c=T",
+      "formula_spoken": "The total is the number of items times the unit price plus the fixed cost.",
+      "visual_type": "diagram_and_board",
+      "narration_style": "visual reasoning",
+      "estimated_minutes": 8,
+      "seo_title": "Linear Equations from Shopping — Grade 9 Worked Examples",
+      "thumbnail_angle": "See the objects. Solve the equation.",
+      "playlist": "Grade 9 Mathematics",
+      "status": "active",
+      "real_world_hook": "Three apples cost twelve dollars. What does one apple cost?",
+      "concept_intuition": "Three apples have the same price. Together they cost twelve dollars. Let p be the price of one apple.",
+      "visual_hints": "Use the exact authored visual data in the lesson design.",
+      "common_mistake": "Subtract three from twelve to find the unit price. Three is the number of equal groups. Divide twelve by three.",
+      "board_examples": {
+        "formula": "np+c=T",
+        "worked_example": [
+          "3p=12",
+          "p=12/3=4",
+          "3(4)=12"
+        ],
+        "practice": [
+          "3p+0=6",
+          "p=2"
+        ],
+        "practice_question": [
+          "3p+0=6"
+        ],
+        "practice_solution": [
+          "3p=6",
+          "p=2"
+        ]
+      }
+    },
+    {
+      "day": 132,
+      "grade": 10,
+      "global_track": "Algebra",
+      "subject": "Algebra",
+      "concept_cluster": "Quadratic Area Models",
+      "topic": "Quadratic Area Models",
+      "subtopic": "Models, worked examples, and independent practice",
+      "difficulty": "intermediate",
+      "exam_tags": [
+        "GCSE",
+        "CBSE"
+      ],
+      "video_type": "concept",
+      "lesson_goal": "Translate the model, solve the problem, and verify the result.",
+      "prerequisite": "Arithmetic and algebraic notation",
+      "key_formula": "(x+a)(x+b)=x^2+(a+b)x+ab",
+      "formula_spoken": "The product of x plus a and x plus b equals x squared plus a plus b times x plus a times b.",
+      "visual_type": "diagram_and_board",
+      "narration_style": "visual reasoning",
+      "estimated_minutes": 8,
+      "seo_title": "Quadratic Area Models — Grade 10 Worked Examples",
+      "thumbnail_angle": "See the objects. Solve the equation.",
+      "playlist": "Grade 10 Mathematics",
+      "status": "active",
+      "real_world_hook": "A polynomial can encode an area. Arrange the pieces and its factors become side lengths.",
+      "concept_intuition": "One square x-squared tile, five x-tiles, and six unit tiles can form a rectangle.",
+      "visual_hints": "Use the exact authored visual data in the lesson design.",
+      "common_mistake": "The roots of (x+2)(x+3)=0 are 2 and 3. Each factor must equal zero, giving negative 2 and negative 3.",
+      "board_examples": {
+        "formula": "(x+a)(x+b)=x^2+(a+b)x+ab",
+        "worked_example": [
+          "x^2+5x+6",
+          "x^2+2x+3x+6",
+          "(x+2)(x+3)"
+        ],
+        "practice": [
+          "x^2+3x+2=0",
+          "x=-1\\ \text{or}\\ x=-2"
+        ],
+        "practice_question": [
+          "x^2+3x+2=0"
+        ],
+        "practice_solution": [
+          "(x+1)(x+2)=0",
+          "x=-1\\ \text{or}\\ x=-2"
+        ]
+      }
+    }
+  ]
+}

@@ -33,7 +33,7 @@ STAGES = [
     ("Script builder",             "pipeline.cell2_script"),
     ("Audio engine (Edge-TTS)",    "pipeline.cell3_audio"),
     ("Semantic manifest QA",       "pipeline.cell9_quality"),
-    ("Manim animation engine",     "pipeline.cell4_animation"),
+    ("Concept animation engine",   "pipeline.remotion_render"),
     ("Video assembly",             "pipeline.cell5_assembly"),
     ("Subtitle engine",            "pipeline.cell8_subtitles"),
     ("Thumbnail engine",           "pipeline.cell6_thumbnail"),
@@ -139,6 +139,7 @@ def main():
             day,
             config.LESSON_PLAN["hook_variant"],
             config.LESSON_PLAN["outro_variant"],
+            visual_style=config.LESSON_PLAN.get("visual_style"),
         )
         print(f"\n✅ Progress saved — next scheduled lesson: Day {day + 1}")
     elif not args.no_advance and args.upload:

@@ -92,10 +92,11 @@ jobs:
           print(f"Marked Day {day} uploaded; Day {state['next_day']} is next.")
           EOF
 
-      - name: Commit progress state
+      - name: Commit confirmed receipts and progress
+        if: always()
         run: |
           git config user.name "autopilot"
           git config user.email "actions@users.noreply.github.com"
-          git add state/progress.json
+          git add state/progress.json state/upload_receipts.json
           git diff --cached --quiet || git commit -m "autopilot: mark day ${{ github.event.inputs.day }} as uploaded"
           git push

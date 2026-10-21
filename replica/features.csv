@@ -1,0 +1,13 @@
+feature,area,priority,original,clone,notes
+Topic-specific opening,narration,must,partial,yes,Authored designs override generic openings
+Three worked examples,content,must,no,partial,Eight chapter designs; legacy entries still need content authoring
+Six independent practice questions,content,must,no,partial,Eight chapter designs
+Measured silent thinking time,audio,must,no,yes,Offline FFmpeg timing regression passes; live voice test blocked
+Exact apple counts,graphics,must,no,yes,Counts validated as integers; Grade 9 render checked
+Algebra area model,graphics,must,no,yes,One x-squared tile plus exact x and unit tile counts
+Explicit graph coordinates,graphics,must,partial,yes,No arbitrary expression evaluation in the renderer
+Generated contextual artwork,graphics,should,no,partial,Composite-functions car-wash artwork integrated
+Chapter-wide curriculum rewrite,content,must,no,partial,124 existing entries still use their prior problems
+Daily scheduling,publishing,must,yes,yes,Preserved existing DST-safe appointments
+Partial upload retry receipts,publishing,must,no,yes,Confirmed video IDs persist before package completion
+Live end-to-end upload,publishing,must,no,no,Requires permission for live narration disclosure; not run

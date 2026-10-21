@@ -37,10 +37,14 @@ def build_scene_manifest(lesson: dict, narrations: dict, plan: dict) -> dict:
         narration = block.get("full", "") if isinstance(block, dict) else str(block)
         beats = block.get("beats", []) if isinstance(block, dict) else split_sentences(narration)
         beats = beats or split_sentences(narration)
-        expected = estimate_duration(narration)
+        expected = estimate_duration(narration) + sum(float(pause["seconds"]) for pause in block.get("pauses", [])) if isinstance(block, dict) else estimate_duration(narration)
         objects, actions = build_visual_spec(step, beats, lesson, expected)
         label, purpose, animation_type, transition = STEP_META[step]
         scenes.append({
+            "pauses": block.get("pauses", []) if isinstance(block, dict) else [],
+            "panels": block.get("panels", []) if isinstance(block, dict) else [],
+            "pause_after_sentence": block.get("pause_after_sentence") if isinstance(block, dict) else None,
+            "pause_seconds": block.get("pause_seconds", 0) if isinstance(block, dict) else 0,
             "scene_id": scene_id,
             "stage": stage_by_step[step],
             "step": step,
@@ -59,7 +63,9 @@ def build_scene_manifest(lesson: dict, narrations: dict, plan: dict) -> dict:
             "animation_type": animation_type,
         })
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
+        "visual_style": plan.get("visual_style", "paper"),
+        "lesson_design": plan.get("lesson_design"),
         "lesson_id": int(lesson.get("day", lesson.get("id"))),
         "hook_variant": plan["hook_variant"],
         "outro_variant": plan["outro_variant"],

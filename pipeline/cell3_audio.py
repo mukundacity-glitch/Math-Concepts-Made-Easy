@@ -4,7 +4,7 @@
 # Pattern: FPL Vortex streaming approach
 #   → Edge-TTS Ryan (en-GB-RyanNeural)
 #   → Streaming chunks (not .save())
-#   → 3-attempt retry before gTTS failsafe
+#   → 3-attempt retry, Ryan only; fail closed
 #   → Word boundary JSON saved per scene
 #     (used by Cell 4 for animation sync)
 #   → ffprobe exact duration per scene
@@ -20,7 +20,8 @@ import nest_asyncio
 nest_asyncio.apply()
 
 import edge_tts
-from gtts import gTTS
+from pipeline.voice import (VOICE as DAY2_VOICE, configure_edge_transport,
+                            speech_options, validate_word_stream)
 
 # ── Load Cell 1 config (written by pipeline/cell1_lesson.py) ──
 import sys as _sys
@@ -28,13 +29,14 @@ from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 from pipeline.paths import load_cell1_config
 from pipeline.audio_sync import apply_word_timing
+from pipeline.pause_audio import synthesize_with_pauses
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 # ══════════════════════════════════════════════════════════════
 # CONFIGURATION
 # ══════════════════════════════════════════════════════════════
 
-VOICE      = cell1_config.TTS_CONFIG["voice"]
+VOICE      = DAY2_VOICE
 _RATE      = cell1_config.TTS_CONFIG["rate"]
 _PITCH     = cell1_config.TTS_CONFIG["pitch"]
 RETRIES    = 3
@@ -116,14 +118,7 @@ async def _stream_edge_tts(
     """
     for attempt in range(1, RETRIES + 1):
         try:
-            profile    = cell1_config.PITCH_PROFILES.get(
-                pitch_profile, {"rate": "+0%", "pitch": "+0Hz"}
-            )
-            comm       = edge_tts.Communicate(
-                text, VOICE,
-                rate=profile["rate"],
-                pitch=profile["pitch"],
-            )
+            comm = edge_tts.Communicate(text, DAY2_VOICE, **speech_options(pitch_profile))
             word_list  = []
 
             with open(str(audio_path), "wb") as audio_f:
@@ -143,6 +138,8 @@ async def _stream_edge_tts(
                             "end"   : round(start_s + dur_s, 4),
                         })
 
+            validate_word_stream(audio_path.stat().st_size, word_list)
+
             # Save word boundary data for animation sync
             with open(str(words_path), "w", encoding="utf-8") as wf:
                 json.dump(word_list, wf, indent=2, ensure_ascii=False)
@@ -159,26 +156,6 @@ async def _stream_edge_tts(
                 return False
 
 
-def _gtts_fallback(text: str, audio_path: Path, words_path: Path):
-    """
-    Google TTS failsafe. No word boundaries available.
-    Saves an empty words JSON so downstream cells do not crash.
-    """
-    print("      🔄 Activating failsafe: Google TTS (en, co.uk)...")
-    try:
-        tts = gTTS(text=text, lang='en', tld='co.uk')
-        tts.save(str(audio_path))
-        # Save empty word list — Cell 4 will use estimated timing instead
-        with open(str(words_path), "w", encoding="utf-8") as wf:
-            json.dump([], wf)
-        print("      ✓ Failsafe audio saved (Google TTS).")
-        return True
-    except Exception as e:
-        print(f"      ❌ Google TTS also failed: {e}")
-        return False
-        # ══════════════════════════════════════════════════════════════
-# CONCURRENT AUDIO GENERATION ENGINE
-# ══════════════════════════════════════════════════════════════
 
 async def process_single_scene(scene: dict) -> dict:
     """Handles TTS streaming and duration calculation for a single scene."""
@@ -189,31 +166,33 @@ async def process_single_scene(scene: dict) -> dict:
     audio_path = LESSON_AUDIO / f"scene_{scene_id:02d}.mp3"
     words_path = LESSON_AUDIO / f"scene_{scene_id:02d}.words.json"
 
-    # Attempt Edge-TTS
     pitch_profile = scene.get("pitch_profile", "calm_explain")
-    success = await _stream_edge_tts(text, audio_path, words_path, pitch_profile)
-
+    engines = []
+    async def synthesize(text_part, part_audio, part_words):
+        success = await _stream_edge_tts(text_part, part_audio, part_words, pitch_profile)
+        if success:
+            engines.append("edge-tts")
+            return True
+        return False
+    if scene.get("pauses"):
+        success = await synthesize_with_pauses(scene, audio_path, words_path, synthesize, get_exact_duration_async)
+    else:
+        success = await synthesize(text, audio_path, words_path)
     if not success:
-        success = _gtts_fallback(text, audio_path, words_path)
-        if not success:
-            return {
-                "scene_id"     : scene_id,
-                "step"         : step,
-                "success"      : False,
-                "engine"       : "none",
-                "duration"     : 0.0,
-                "pitch_profile": pitch_profile,
-            }
+        return {"scene_id":scene_id,"step":step,"success":False,"engine":"none",
+                "duration":0.0,"pitch_profile":pitch_profile}
 
     # Calculate exact duration asynchronously
     exact_dur = await get_exact_duration_async(audio_path)
+    if exact_dur <= 0:
+        raise RuntimeError(f"Invalid audio duration for scene {scene_id}")
     # 0.4s buffer already added by Manim scene hold
     # Add 0.25s silence pad to prevent abrupt cuts between scenes
     duration_with_buffer = round(exact_dur + 0.65, 3)
     scene["duration_seconds"] = duration_with_buffer
 
     # Determine engine used
-    engine = "edge-tts" if await _check_words_populated(words_path) else "gtts"
+    engine = "+".join(sorted(set(engines)))
     try:
         words = json.loads(words_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -239,6 +218,9 @@ async def generate_all_audio():
     print(f"   Scenes   : {len(script['scenes'])}")
     print(f"   Profiles : {list(cell1_config.PITCH_PROFILES.keys())}\n")
     print(f"{'─'*65}")
+
+    # Validate the exact Day 2 engine before any network request.
+    configure_edge_transport()
 
     # Launch all scenes concurrently
     tasks = [process_single_scene(scene) for scene in script["scenes"]]

@@ -11,6 +11,7 @@ import sys as _sys
 from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 from pipeline.paths import load_cell1_config, safe_filename
+from pipeline.audio_master import narration_filter
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 # ══════════════════════════════════════════════════════════════
@@ -67,7 +68,8 @@ def mux_scene(scene_id, step, vid_path, aud_path, out_path):
         "-pix_fmt", "yuv420p",
         "-c:a", "aac",
         "-b:a", "192k",
-        "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
+        "-af", narration_filter(aud_path),
+        "-ar", "48000", "-ac", "2",
         "-shortest",
         str(out_path)
     ]

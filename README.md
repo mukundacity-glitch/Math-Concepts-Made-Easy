@@ -117,3 +117,68 @@ tests/                   manifest, timing, lock, and schedule regressions
 .github/workflows/       CI, daily autopilot, and upload recovery
 legacy/                  immutable posted-video policy
 ```
+
+## Content-first Remotion lessons
+
+Install the pinned renderer with `npm ci --prefix remotion`. Normal autopilot
+runs now use `pipeline.remotion_render`; it writes the existing per-scene video
+contract so assembly, captions and Shorts continue to work.
+
+For an inspectable preview without speech requests, uploads or progress changes:
+
+```bash
+python -m pipeline.preview --day 42
+npm run studio --prefix remotion
+```
+
+Select `MathScene` in Studio and load a scene JSON from
+`output/preview/day_042/` as input props. The composition duration follows those
+props. To inspect a single authored frame:
+
+```bash
+cd remotion
+npx remotion still src/index.ts MathScene out/concept.png --props=../output/preview/day_042/concept.json --frame=120
+```
+
+`curriculum/designs/catalogue.json` contains eight authored Grade 9–12 chapter
+designs. Each has three worked examples and six practice questions. Other
+curriculum entries retain their existing problems; they are not presented as
+fully rewritten premium content. `python -m pipeline.audit` reports coverage
+and typesets every expression through KaTeX before production.
+
+Visuals use validated explicit numerical data. Three apples means three drawn
+objects. A graph uses authored coordinate pairs; a rectangle uses exact tile
+counts. Every practice question reserves measured silent thinking time before
+its solution. Speech services receive lesson narration when normal production
+runs; no voice cloning or vidIQ integration is used.
+
+Generated contextual artwork is in `remotion/public/artwork/`; its prompt and
+provenance are documented alongside it. No mathematical diagram depends on
+image generation.
+
+Confirmed main-video and Short IDs are recorded in `state/upload_receipts.json`
+so a partial package retry reuses completed uploads. Failed production does not
+advance the lesson number. Both publishing workflows persist receipts even if a
+later asset fails. Full render logs and timed scripts are saved with artifacts.
+
+
+Voice settings match the FPL Day 2 runner and its linked DAY-2 notebook,
+read without modifying that project. The engine is pinned to `edge-tts==7.2.8`
+with `en-GB-RyanNeural`, real WordBoundary timing and no provider fallback.
+The notebook's effective runtime profiles (including its rate overrides) map
+onto the existing math scene names:
+
+| Math scenes | Day 2 mood | Rate | Pitch | Volume |
+| --- | --- | --- | --- | --- |
+| Intro and hook | intro | +13% | -4 Hz | +0% |
+| Concept, definition, formula, examples | analysis | +17% | -4 Hz | +0% |
+| Emphasis and encouragement | key_stat | +18% | 0 Hz | +0% |
+| Mistake clinic | warning | +11% | -4 Hz | +0% |
+| Closing | outro | +11% | -4 Hz | +0% |
+
+Narration uses measured two-pass loudness normalization to -18 LUFS,
+-1.5 dBTP, LRA 7, stereo 48 kHz. Thinking pauses remain in the audio;
+no FPL branding, music, opening or outro assets are imported. Missing audio
+or invalid/missing word timings fail production instead of changing voices.
+The matching transport is configured locally, but no live synthesis was run
+for this update. FPL Day 2 and Day 3 are unchanged.

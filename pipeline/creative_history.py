@@ -32,13 +32,14 @@ def recent_variants(kind: str, count: int = 3, path: Path = HISTORY_PATH) -> lis
 
 
 def record_lesson(day: int, hook_variant: str, outro_variant: str,
-                  path: Path = HISTORY_PATH) -> None:
+                  path: Path = HISTORY_PATH, *, visual_style: str | None = None) -> None:
     history = read_creative_history(path)
     rows = [row for row in history["lessons"] if int(row.get("day", -1)) != int(day)]
     rows.append({
         "day": int(day),
         "hook_variant": str(hook_variant),
         "outro_variant": str(outro_variant),
+        "visual_style": visual_style,
     })
     history["lessons"] = sorted(rows, key=lambda row: int(row["day"]))[-20:]
     path.parent.mkdir(parents=True, exist_ok=True)
