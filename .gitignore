@@ -12,3 +12,13 @@ __pycache__/
 
 # Manim / media scratch
 media/
+
+# Remotion build and dependencies
+remotion/node_modules/
+remotion/build/
+remotion/out/
+remotion/.remotion/
+
+# Renderer runtime cache
+.cache/
+.remotion/

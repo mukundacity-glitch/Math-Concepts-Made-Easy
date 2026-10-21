@@ -13,11 +13,17 @@ CURRICULUM_DIR = Path(__file__).resolve().parents[1] / "curriculum"
 
 def load_curriculum() -> list:
     lessons = []
+    designs_path = CURRICULUM_DIR / "designs" / "catalogue.json"
+    designs = json.loads(designs_path.read_text(encoding="utf-8"))["topics"] if designs_path.exists() else {}
+    state_path = CURRICULUM_DIR.parent / "state" / "progress.json"
+    uploaded = set(json.loads(state_path.read_text(encoding="utf-8")).get("uploaded", [])) if state_path.exists() else set()
     for path in sorted(CURRICULUM_DIR.glob("*.json")):
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
         for lesson in data["lessons"]:
             lesson.setdefault("grade", data.get("grade"))
+            if lesson["day"] not in uploaded and lesson.get("topic") in designs:
+                lesson["lesson_design"] = designs[lesson["topic"]]
         lessons.extend(data["lessons"])
 
     lessons.sort(key=lambda l: l["day"])

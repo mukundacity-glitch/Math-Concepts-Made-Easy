@@ -13,5 +13,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: remotion/package-lock.json
+
+      - name: Install and check the Remotion renderer
+        run: |
+          npm ci --prefix remotion
+          npm run check --prefix remotion
+
+      - name: Install offline audio-test dependency
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: pip install pytest
       - run: python -m pytest -q
+      - run: python -m pipeline.audit

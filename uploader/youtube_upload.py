@@ -28,6 +28,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from pipeline.paths import BASE_DIR, read_state, safe_filename
 from pipeline.curriculum import get_lesson
 from pipeline.progress import validate_next_publish_day
+from pipeline.upload_receipts import receipt_for, save_receipt
 
 SECRETS_DIR = REPO_ROOT / "secrets"
 CLIENT_SECRET_PATH = SECRETS_DIR / "client_secret.json"
@@ -411,15 +412,22 @@ def upload_day(day: int, dry_run: bool = False, privacy: str = None):
     service = get_service()
 
     print("\n▶ Uploading main lesson…")
-    video_id = _upload_file(
-        service, paths["video"], title, description, tags, privacy,
-        publish_at=main_publish_at,
-    )
+    video_id = receipt_for(day, "main")
+    new_main = video_id is None
+    if new_main:
+        video_id = _upload_file(
+            service, paths["video"], title, description, tags, privacy,
+            publish_at=main_publish_at,
+        )
+        save_receipt(day, "main", video_id)
+    else:
+        print(f"   Reusing confirmed main upload: {video_id}")
     if paths["thumbnail"].exists():
         _set_thumbnail(service, video_id, paths["thumbnail"])
     if paths["srt"].exists():
         _upload_captions(service, video_id, paths["srt"])
-    _add_to_playlist(service, video_id, lesson["playlist"])
+    if new_main:
+        _add_to_playlist(service, video_id, lesson["playlist"])
 
     for key, short_path in paths["shorts"].items():
         if not short_path.exists():
@@ -427,8 +435,12 @@ def upload_day(day: int, dry_run: bool = False, privacy: str = None):
             continue
         meta = short_meta[key]
         print(f"\n▶ Uploading Short [{key}]…")
-        _upload_file(service, short_path, meta["title"], meta["description"],
-                     tags + ["shorts"], privacy, publish_at=meta["publish_at"])
+        if receipt_for(day, key):
+            print(f"   Reusing confirmed Short upload: {key}")
+            continue
+        short_id = _upload_file(service, short_path, meta["title"], meta["description"],
+                                tags + ["shorts"], privacy, publish_at=meta["publish_at"])
+        save_receipt(day, key, short_id)
 
     print(f"\n🎉 Day {day} posted to YouTube — 1 lesson + "
           f"{len(SHORTS_SCHEDULE_LOCAL)} Shorts spread across the day.")

@@ -28,6 +28,7 @@ from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 from pipeline.paths import load_cell1_config
 from pipeline.audio_sync import apply_word_timing
+from pipeline.pause_audio import synthesize_with_pauses
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 # ══════════════════════════════════════════════════════════════
@@ -122,7 +123,8 @@ async def _stream_edge_tts(
             comm       = edge_tts.Communicate(
                 text, VOICE,
                 rate=profile["rate"],
-                pitch=profile["pitch"],
+                pitch=profile["pitch"], boundary="WordBoundary",
+                connect_timeout=10, receive_timeout=30,
             )
             word_list  = []
 
@@ -166,7 +168,7 @@ def _gtts_fallback(text: str, audio_path: Path, words_path: Path):
     """
     print("      🔄 Activating failsafe: Google TTS (en, co.uk)...")
     try:
-        tts = gTTS(text=text, lang='en', tld='co.uk')
+        tts = gTTS(text=text, lang='en', tld='co.uk', timeout=(10, 30))
         tts.save(str(audio_path))
         # Save empty word list — Cell 4 will use estimated timing instead
         with open(str(words_path), "w", encoding="utf-8") as wf:
@@ -189,31 +191,36 @@ async def process_single_scene(scene: dict) -> dict:
     audio_path = LESSON_AUDIO / f"scene_{scene_id:02d}.mp3"
     words_path = LESSON_AUDIO / f"scene_{scene_id:02d}.words.json"
 
-    # Attempt Edge-TTS
     pitch_profile = scene.get("pitch_profile", "calm_explain")
-    success = await _stream_edge_tts(text, audio_path, words_path, pitch_profile)
-
+    engines = []
+    async def synthesize(text_part, part_audio, part_words):
+        success = await _stream_edge_tts(text_part, part_audio, part_words, pitch_profile)
+        if success:
+            engines.append("edge-tts")
+            return True
+        fallback = await asyncio.to_thread(_gtts_fallback, text_part, part_audio, part_words)
+        if fallback:
+            engines.append("gtts")
+        return fallback
+    if scene.get("pauses"):
+        success = await synthesize_with_pauses(scene, audio_path, words_path, synthesize, get_exact_duration_async)
+    else:
+        success = await synthesize(text, audio_path, words_path)
     if not success:
-        success = _gtts_fallback(text, audio_path, words_path)
-        if not success:
-            return {
-                "scene_id"     : scene_id,
-                "step"         : step,
-                "success"      : False,
-                "engine"       : "none",
-                "duration"     : 0.0,
-                "pitch_profile": pitch_profile,
-            }
+        return {"scene_id":scene_id,"step":step,"success":False,"engine":"none",
+                "duration":0.0,"pitch_profile":pitch_profile}
 
     # Calculate exact duration asynchronously
     exact_dur = await get_exact_duration_async(audio_path)
+    if exact_dur <= 0:
+        raise RuntimeError(f"Invalid audio duration for scene {scene_id}")
     # 0.4s buffer already added by Manim scene hold
     # Add 0.25s silence pad to prevent abrupt cuts between scenes
     duration_with_buffer = round(exact_dur + 0.65, 3)
     scene["duration_seconds"] = duration_with_buffer
 
     # Determine engine used
-    engine = "edge-tts" if await _check_words_populated(words_path) else "gtts"
+    engine = "+".join(sorted(set(engines)))
     try:
         words = json.loads(words_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):

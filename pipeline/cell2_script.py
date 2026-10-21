@@ -305,7 +305,7 @@ def build_script(config) -> dict:
         for key in (
             "scene_id", "stage", "purpose", "learning_purpose", "objects",
             "actions", "timing_markers", "transition_style",
-            "expected_duration",
+            "expected_duration", "panels", "pause_after_sentence", "pause_seconds", "pauses",
         ):
             scene[key] = manifest_scene[key]
         scenes.append(scene)
@@ -342,6 +342,8 @@ def build_script(config) -> dict:
         "subheading"           : lesson["subheading"],
         "intro_teaser"         : lesson["intro_teaser"],
         "outro_message"        : lesson["outro_message"],
+        "visual_style": manifest["visual_style"],
+        "lesson_design": manifest["lesson_design"],
         "manifest_schema"      : manifest["schema_version"],
         "selected_stages"      : manifest["selected_stages"],
         "hook_variant"         : manifest["hook_variant"],
