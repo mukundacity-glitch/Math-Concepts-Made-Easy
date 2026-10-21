@@ -309,8 +309,8 @@ THEME = {{
 
 TTS_CONFIG = {{
     "voice" : "en-GB-RyanNeural",
-    "rate"  : "-12%",
-    "pitch" : "-1Hz",
+    "rate"  : "+17%",
+    "pitch" : "-4Hz",
 }}
 
 RESOLUTION = {{

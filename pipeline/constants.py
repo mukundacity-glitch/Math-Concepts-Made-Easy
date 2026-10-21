@@ -35,17 +35,7 @@ ANIMATION_PHILOSOPHY = {
 # PITCH PROFILES — 9 profiles. Cell 3 applies as SSML prosody.
 # ══════════════════════════════════════════════════════════════
 
-PITCH_PROFILES = {
-    "calm_intro"       : {"rate": "-5%",  "pitch": "+0Hz",  "volume": "+0%"},
-    "excited_hook"     : {"rate": "+8%",  "pitch": "+3Hz",  "volume": "+8%"},
-    "calm_explain"     : {"rate": "-8%",  "pitch": "+0Hz",  "volume": "+0%"},
-    "slow_formal"      : {"rate": "-12%", "pitch": "-2Hz",  "volume": "+0%"},
-    "slow_formula"     : {"rate": "-18%", "pitch": "-3Hz",  "volume": "+0%"},
-    "emphasis"         : {"rate": "-5%",  "pitch": "+5Hz",  "volume": "+10%"},
-    "friendly_mistake" : {"rate": "+0%",  "pitch": "+2Hz",  "volume": "+0%"},
-    "encouraging"      : {"rate": "+3%",  "pitch": "+4Hz",  "volume": "+5%"},
-    "warm_close"       : {"rate": "-5%",  "pitch": "+1Hz",  "volume": "-3%"},
-}
+from pipeline.voice import PITCH_PROFILES
 
 # ══════════════════════════════════════════════════════════════
 # SUPPORTED RENDER STEPS + MAPS — READ BY CELLS 1, 2, 3, 4

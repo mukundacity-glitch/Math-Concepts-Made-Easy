@@ -160,3 +160,25 @@ Confirmed main-video and Short IDs are recorded in `state/upload_receipts.json`
 so a partial package retry reuses completed uploads. Failed production does not
 advance the lesson number. Both publishing workflows persist receipts even if a
 later asset fails. Full render logs and timed scripts are saved with artifacts.
+
+
+Voice settings match the FPL Day 2 runner and its linked DAY-2 notebook,
+read without modifying that project. The engine is pinned to `edge-tts==7.2.8`
+with `en-GB-RyanNeural`, real WordBoundary timing and no provider fallback.
+The notebook's effective runtime profiles (including its rate overrides) map
+onto the existing math scene names:
+
+| Math scenes | Day 2 mood | Rate | Pitch | Volume |
+| --- | --- | --- | --- | --- |
+| Intro and hook | intro | +13% | -4 Hz | +0% |
+| Concept, definition, formula, examples | analysis | +17% | -4 Hz | +0% |
+| Emphasis and encouragement | key_stat | +18% | 0 Hz | +0% |
+| Mistake clinic | warning | +11% | -4 Hz | +0% |
+| Closing | outro | +11% | -4 Hz | +0% |
+
+Narration uses measured two-pass loudness normalization to -18 LUFS,
+-1.5 dBTP, LRA 7, stereo 48 kHz. Thinking pauses remain in the audio;
+no FPL branding, music, opening or outro assets are imported. Missing audio
+or invalid/missing word timings fail production instead of changing voices.
+The matching transport is configured locally, but no live synthesis was run
+for this update. FPL Day 2 and Day 3 are unchanged.

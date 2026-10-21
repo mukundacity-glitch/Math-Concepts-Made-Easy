@@ -9,3 +9,5 @@
 2026-10-20: Added actual silent practice intervals and offset word timings. Offline tone/silence test verifies answer timing. Live TTS test was rejected by automatic approval review; no production upload was attempted.
 
 2026-10-20: Preserved daily schedule and posted-day locks. Added per-video upload receipts for partial retries and full render-log artifacts.
+
+2026-10-20: Read FPL Day 2 runner, media settings and linked notebook without executing or modifying them. Matched effective Ryan prosody (including runtime rates), pinned Edge 7.2.8 transport, mandatory measured word boundaries, no Google fallback, and measured two-pass -18 LUFS narration mastering. Verified offline only; FPL Day 3 untouched.
