@@ -87,7 +87,8 @@ export const validateLessonProps = (props: PremiumLessonProps): void => {
         let previousEnd = 0;
         for (const item of media.captions) {
           if (typeof item.text !== 'string' || !item.text.trim() ||
-              item.text.length > 125 || /[\\u0000-\\u001f]/.test(item.text) ||
+              item.text.length > 125 || [...item.text].some((ch) =>
+                ch.charCodeAt(0) < 32 || ch.charCodeAt(0) === 127) ||
               !Number.isSafeInteger(item.startMs) ||
               !Number.isSafeInteger(item.endMs) ||
               !Number.isSafeInteger(item.timestampMs) ||

@@ -93,7 +93,7 @@ def load_scene_word_captions(path: Path, *, clip_seconds: float,
                       end - group[0][1] > MAX_CAPTION_SPAN_MS):
             flush()
         group.append((word, start, end))
-        if re.search(r"[.!?][\\\"'’)]*$", word):
+        if word.rstrip('"\'’)]').endswith(('.', '!', '?')):
             flush()
     flush()
     if not captions:
