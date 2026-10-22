@@ -82,7 +82,9 @@ def test_complete_display_string_is_preserved_with_correct_offsets():
 def test_safe_pango_markup_does_not_inject_tags():
     value = "<span foreground='red'>x + 2</span> = 5 & 7"
     markup = markup_for_math(value, mode="math")
-    assert "&lt;span" in markup
+    # The '<' token is independently wrapped and escaped, so markup
+    # must contain the entity but not a forged embedded tag.
+    assert "&lt;" in markup
     assert "&amp;" in markup
     assert "<span foreground='red'>" not in markup
     assert "foreground=" in markup
