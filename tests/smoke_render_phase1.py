@@ -29,9 +29,9 @@ source = ast.parse(embedded)
 function_nodes = [
     node for node in source.body
     if isinstance(node, ast.FunctionDef)
-    and node.name in {"TXT", "computed_concept_visual"}
+    and node.name in {"TXT", "MATH", "computed_concept_visual"}
 ]
-if len(function_nodes) != 2:
+if len(function_nodes) != 3:
     raise RuntimeError("production Manim text/graph helpers missing")
 globals_for_helpers = dict(vars(manim))
 globals_for_helpers.update({
