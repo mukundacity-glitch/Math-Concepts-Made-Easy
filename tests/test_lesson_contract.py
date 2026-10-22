@@ -119,6 +119,8 @@ def test_lesson_qa_rejects_tampered_answers_even_when_scenes_cover_narration(dem
         "lesson_id": 999,
         "key_formula": "x+3=7",
         "scenes": [scene(1, "worked_example"), scene(2, "practice")],
+        "concept_id": demo["concept_id"],
+        "prerequisite_ids": demo["prerequisite_ids"],
         "educational_content": demo["educational_content"],
     }
     passed = build_coverage_report(script, check_history=False)
