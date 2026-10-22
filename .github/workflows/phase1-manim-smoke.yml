@@ -1,0 +1,55 @@
+# Render-level verification only: never publishes or changes production progress.
+name: Phase 1 Mathematical Render Smoke
+
+on:
+  pull_request:
+    paths:
+      - "pipeline/math_models.py"
+      - "pipeline/cell4_animation.py"
+      - "tests/smoke_render_phase1.py"
+      - "tests/inspect_phase1_frames.py"
+      - ".github/workflows/phase1-manim-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  computed-manim-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install real Manim rendering dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg libcairo2-dev libpango1.0-dev pkg-config
+          python -m pip install 'manim>=0.18,<0.20' 'sympy>=1.12' pillow numpy pytest
+      - name: Render opt-in quadratic with real production helper
+        run: |
+          python -m manim -ql --disable_caching --media_dir build/phase1-smoke \
+            -o phase1_quadratic_smoke.mp4 tests/smoke_render_phase1.py Phase1QuadraticSmoke
+          mkdir -p build/phase1-quality
+          VIDEO="$(find build/phase1-smoke -name phase1_quadratic_smoke.mp4 -type f | head -n 1)"
+          test -s "$VIDEO"
+          echo "Render: $VIDEO"
+          ffprobe -v error -show_entries format=duration:stream=codec_name,width,height -of json "$VIDEO" > build/phase1-quality/media.json
+          ffmpeg -nostdin -v error -y -ss 0.20 -i "$VIDEO" -frames:v 1 build/phase1-quality/before.png
+          ffmpeg -nostdin -v error -y -ss 3.30 -i "$VIDEO" -frames:v 1 build/phase1-quality/after.png
+          python tests/inspect_phase1_frames.py \
+            --before build/phase1-quality/before.png \
+            --after build/phase1-quality/after.png \
+            --report build/phase1-quality/frame-review.json
+      - name: Upload independently inspectable rendered evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1-quadratic-render-evidence
+          retention-days: 14
+          path: |
+            build/phase1-smoke/videos/**/*.mp4
+            build/phase1-quality/*.png
+            build/phase1-quality/*.json

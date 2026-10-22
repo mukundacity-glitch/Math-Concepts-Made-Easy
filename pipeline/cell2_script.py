@@ -308,6 +308,8 @@ def build_script(config) -> dict:
             "expected_duration",
         ):
             scene[key] = manifest_scene[key]
+        if "mathematical_model" in manifest_scene:
+            scene["mathematical_model"] = manifest_scene["mathematical_model"]
         scenes.append(scene)
         print(f"   ✅ Scene {scene['scene_id']:02d} [{step:10s}]  "
               f"{wc:>4} words  ~{est_secs:>6.1f}s  "
