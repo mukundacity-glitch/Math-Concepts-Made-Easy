@@ -310,6 +310,8 @@ def build_script(config) -> dict:
             scene[key] = manifest_scene[key]
         if "mathematical_model" in manifest_scene:
             scene["mathematical_model"] = manifest_scene["mathematical_model"]
+        if "premium_items" in manifest_scene:
+            scene["premium_items"] = manifest_scene["premium_items"]
         scenes.append(scene)
         print(f"   ✅ Scene {scene['scene_id']:02d} [{step:10s}]  "
               f"{wc:>4} words  ~{est_secs:>6.1f}s  "
@@ -356,6 +358,7 @@ def build_script(config) -> dict:
             "concept_id": lesson["concept_id"],
             "prerequisite_ids": lesson["prerequisite_ids"],
             "educational_content": lesson["educational_content"],
+            "premium_visual_version": "3.0",
         } if "educational_content" in lesson else {}),
 
         # ── Asset paths ───────────────────────────────────────
