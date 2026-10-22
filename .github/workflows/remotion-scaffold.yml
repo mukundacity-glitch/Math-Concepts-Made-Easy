@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   lesson-layout:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
       run:
@@ -78,10 +78,16 @@ jobs:
             --frame=90 --props=build/phase4-step3-input/lesson-props.json --log=error
           npx remotion still src/index.ts PremiumLesson build/preview/connected-example.png \
             --frame=150 --props=build/phase4-step3-input/lesson-props.json --log=error
+      - name: Render original channel emblem on scaffold diagnostics
+        run: |
+          npx remotion still src/index.ts ScaffoldDiagnostics build/preview/diagnostics.png \
+            --frame=15 --log=error
       - name: Verify correct source media displayed in chapter order
         run: node --test tests/inspect-bridge-previews.mjs
       - name: Verify caption appears only during original word boundaries
         run: node --test tests/inspect-caption-previews.mjs
+      - name: Check real top-left channel logo in every current Remotion slide
+        run: node --test tests/inspect-brand-previews.mjs
       - name: Archive educational composition frames (no publishing)
         if: always()
         uses: actions/upload-artifact@v4

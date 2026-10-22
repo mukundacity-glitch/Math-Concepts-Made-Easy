@@ -1,4 +1,5 @@
 import {AbsoluteFill} from 'remotion';
+import {BrandLogo} from '../components/BrandLogo';
 
 /**
  * Intentional one-second build health check; NOT a lesson video.
@@ -15,6 +16,9 @@ export const ScaffoldDiagnostics = () => (
       textAlign: 'center',
     }}
   >
+    <div style={{position: 'absolute', top: 64, left: 96}}>
+      <BrandLogo size={72}/>
+    </div>
     <div style={{fontSize: 64, fontWeight: 700}}>
       REMOTION SCAFFOLD READY
     </div>

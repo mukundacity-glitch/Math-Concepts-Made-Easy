@@ -112,3 +112,24 @@ lesson demo, production rollout, or a duplicate publishing path.
 - **NEXT Step 5 — Add Shorts composition.**
 - Step 6 — Run one full demo lesson through the hybrid pipeline.
 - Only then consider production rollout.
+
+
+## Persistent channel logo — applies to all lesson slides
+
+The source-of-truth asset is committed at
+`remotion/public/branding/math-concepts-made-easy-logo.webp` (256×256, alpha,
+SHA-256 `466db2f838a17ef9978ccf79bd0459622bf20704904e0f2db0c52d28fe9c61f0`).
+It is derived from the channel logo supplied by the owner and is **not** a
+generated replacement. Keep this Git-tracked asset permanently; do not store
+it in `remotion/build`, `output`, `state`, or ignored media directories.
+
+The same file is loaded by `BrandHeader` in every Remotion title,
+chapter and outro slide, and by the Manim `make_header` for all eight
+post-opening scenes. Manim's opening title uses the same asset directly.
+`ScaffoldDiagnostics` also shows the canonical logo.
+
+Manim must use `Group` when combining this raster `ImageMobject` with
+text / shapes (not `VGroup`, which requires VMobjects). The current daily
+publishing workflow and past uploaded lessons remain untouched. The new logo
+takes effect on subsequent renders only; Phase 4 Step 5 Shorts must reuse the
+same `BrandLogo` component instead of inventing another asset.

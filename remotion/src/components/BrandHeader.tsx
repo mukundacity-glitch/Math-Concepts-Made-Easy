@@ -1,4 +1,5 @@
 import type {CSSProperties} from 'react';
+import {BrandLogo} from './BrandLogo';
 import {theme} from '../design/theme';
 
 type Props = {
@@ -27,13 +28,10 @@ export const BrandHeader = ({series, level, chapterLabel}: Props) => (
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 48,
-    minHeight: 40,
+    minHeight: 72,
   }}>
     <div style={{display: 'flex', alignItems: 'center', minWidth: 0, gap: 20}}>
-      <div aria-hidden="true" style={{
-        width: 13, height: 36, borderRadius: 5,
-        background: theme.accent, boxShadow: '0 0 26px rgba(250,204,21,.24)',
-      }}/>
+      <BrandLogo size={72}/>
       <span style={{...labelStyle, color: theme.text}}>{series.toUpperCase()}</span>
     </div>
     <div style={{...labelStyle, textAlign: 'right', fontSize: 18, maxWidth: 650}}>

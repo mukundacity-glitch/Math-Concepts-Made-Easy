@@ -110,6 +110,9 @@ SCRIPT_PATH  = Path(r"__SCRIPT_PATH__")
 LESSON_AUDIO = Path(r"__AUDIO_DIR__")
 LOGO_PATH    = Path(r"__LOGO_PATH__")
 BANNER_PATH  = Path(r"__BANNER_PATH__")
+# Canonical, version-controlled brand art shared with Remotion.
+BRAND_LOGO_PATH = (Path(r"__REPO_ROOT__") / "remotion" / "public" /
+                   "branding" / "math-concepts-made-easy-logo.webp")
 
 with open(SCRIPT_PATH, "r", encoding="utf-8") as f:
     SCRIPT_DATA = json.load(f)
@@ -1024,6 +1027,18 @@ def setup_bg(scene_obj):
 # DESIGN SYSTEM — HEADER
 # ═════════════════════════════════════════════════════════════
 
+def brand_logo(height=0.62):
+    """Use the single committed image, never an improvised M monogram."""
+    if not BRAND_LOGO_PATH.is_file():
+        raise FileNotFoundError("Required Math Concepts Made Easy logo missing: " +
+                                str(BRAND_LOGO_PATH))
+    # Manim 0.19 Cairo uses a legacy Pillow RGBA scratch array, rejected
+    # by Pillow 12. Apply narrow compatibility only before raster display.
+    from pipeline.manim_image_compat import ensure_manim_image_pillow_compat
+    ensure_manim_image_pillow_compat()
+    return ImageMobject(str(BRAND_LOGO_PATH)).set_height(height)
+
+
 def make_header(lesson_title="", day=1):
     """Premium top bar: brand block · bold lesson title · DAY badge."""
     hcy = (HEADER_TOP + HEADER_BOT) / 2
@@ -1039,11 +1054,7 @@ def make_header(lesson_title="", day=1):
         fill_color=mc(C_GOLD), fill_opacity=1.0, stroke_width=0,
     ).move_to(np.array([0.0, HEADER_BOT + 0.025, 0.0]))
 
-    logo_circ = Circle(radius=0.30, fill_color=mc(C_GOLD),
-                       fill_opacity=1.0, stroke_width=0)
-    logo_m = TXT("M", size=24, color=C_NAVY1, bold=True)
-    logo_m.move_to(logo_circ.get_center())
-    logo_grp = VGroup(logo_circ, logo_m)
+    logo_grp = brand_logo(height=0.63)
     logo_grp.move_to(np.array([-6.35, hcy + 0.06, 0.0]))
 
     ch_name = TXT(CHANNEL, size=17, color=C_WHITE, bold=True)
@@ -1063,8 +1074,9 @@ def make_header(lesson_title="", day=1):
     day_txt = TXT("DAY " + str(day), size=19, color=C_WHITE, bold=True)
     day_txt.move_to(day_bg.get_center())
 
-    grp = VGroup(bg_bar, accent, logo_grp, ch_name, tagline_txt,
-                 title_mob, day_bg, day_txt)
+    # ImageMobject is not a VMobject: Group, never VGroup, is required.
+    grp = Group(bg_bar, accent, logo_grp, ch_name, tagline_txt,
+                title_mob, day_bg, day_txt)
     grp.set_z_index(80)
     return grp
 
@@ -1201,17 +1213,13 @@ class Scene01_Opening(MovingCameraScene):
             self.add(sm)
 
         # Branding block (top-left)
-        logo_circ = Circle(radius=0.42, fill_color=mc(C_GOLD),
-                           fill_opacity=1.0, stroke_width=0)
-        logo_m = TXT("M", size=32, color=C_NAVY1, bold=True)
-        logo_m.move_to(logo_circ.get_center())
-        logo_grp = VGroup(logo_circ, logo_m)
+        logo_grp = brand_logo(height=0.86)
 
         ch_line1 = TXT("Math Concept", size=26, color=C_WHITE, bold=True)
         ch_line2 = TXT("Made Easy",   size=26, color=C_GOLD,  bold=True)
         ch_stack = VGroup(ch_line1, ch_line2).arrange(
             DOWN, buff=0.05, aligned_edge=LEFT)
-        brand_row = VGroup(logo_grp, ch_stack).arrange(
+        brand_row = Group(logo_grp, ch_stack).arrange(
             RIGHT, buff=0.20, aligned_edge=UP)
         brand_row.move_to(np.array([-4.75, 3.10, 0]))
 
@@ -2084,6 +2092,10 @@ class Scene09_Summary(Scene):
 
         setup_bg(self)
         self.add(make_footer("summary"))
+        # Summary deliberately has no standard header: keep the same
+        # permanent channel emblem in the upper-left on this ninth slide.
+        self.add(brand_logo(height=0.72).move_to(
+            np.array([-6.35, 3.53, 0.0])))
 
         banner_bg = Rectangle(
             width=FW, height=0.85,
