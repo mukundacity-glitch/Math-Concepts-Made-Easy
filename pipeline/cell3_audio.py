@@ -124,6 +124,9 @@ async def _stream_edge_tts(
                 text, VOICE,
                 rate=profile["rate"],
                 pitch=profile["pitch"],
+                # Current edge-tts versions default to SentenceBoundary.
+                # Premium scenes need actual per-word offsets for accuracy.
+                boundary="WordBoundary",
             )
             word_list  = []
 
