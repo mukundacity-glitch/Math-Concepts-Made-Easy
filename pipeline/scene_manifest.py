@@ -6,7 +6,7 @@ and quality assurance.  It deliberately contains no lesson-specific code.
 
 from __future__ import annotations
 
-from pipeline.math_models import build_computed_model
+from pipeline.verified_visual_models import build_verified_visual_model
 from pipeline.premium_animation import build_premium_visual_plan, attach_premium_stage
 from pipeline.mathtext import split_sentences
 from pipeline.visual_actions import build_visual_spec
@@ -34,7 +34,7 @@ def build_scene_manifest(lesson: dict, narrations: dict, plan: dict) -> dict:
     premium_plan = build_premium_visual_plan(lesson)
     # Only an explicit, validated mathematical model enables computed rendering.
     # Existing curriculum remains on the unchanged compatibility path.
-    math_model = (build_computed_model(lesson["math_model"])
+    math_model = (build_verified_visual_model(lesson["math_model"])
                   if "math_model" in lesson else None)
     stage_by_step = {
         item["renderer_step"]: item["stage"] for item in plan["selected_stages"]
