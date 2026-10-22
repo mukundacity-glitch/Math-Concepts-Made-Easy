@@ -1,11 +1,6 @@
 {
   "lessons": [
     {
-      "day": 22,
-      "hook_variant": "mystery",
-      "outro_variant": "one_line_recap"
-    },
-    {
       "day": 23,
       "hook_variant": "visual_puzzle",
       "outro_variant": "exam_tip"
@@ -99,6 +94,11 @@
       "day": 41,
       "hook_variant": "pattern_spotting",
       "outro_variant": "practice_prompt"
+    },
+    {
+      "day": 42,
+      "hook_variant": "student_challenge",
+      "outro_variant": "teach_it_back"
     }
   ]
 }
