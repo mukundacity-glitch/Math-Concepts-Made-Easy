@@ -313,14 +313,14 @@ def reveal(scene_obj, nar, mobj, spoken=None, run_time=0.55, anim=None, lead=0.3
 # ═════════════════════════════════════════════════════════════
 
 def TXT(s, size=28, color=None, bold=False, max_w=None, wrap=None,
-        line_spacing=0.95):
+        line_spacing=0.95, math_mode="auto")
     """Shared semantic formatter for all scene equations and prose.
 
     Prose keeps its design color, whereas variables, numbers, operators,
     exponents and relations always use the same high-contrast palette.
     """
     return semantic_text(
-        s, size=size, base_color=color or C_WHITE, mode="auto",
+        s, size=size, base_color=color or C_WHITE, mode=math_mode,
         bold=bold, max_width=max_w, wrap=wrap, font=FONT,
         line_spacing=line_spacing,
     )
@@ -1465,7 +1465,7 @@ def computed_concept_visual(model):
             marks.add(Dot(axes.c2p(rx, 0), radius=0.07,
                           color=mc(C_GGREEN)))
     # The actual mathematical function is traced (not a static formula slide).
-    label = TXT(model["equation"], size=18, color=C_WHITE, max_w=4.3)
+    label = MATH(model["equation"], size=18, color=C_WHITE, max_w=4.3)
     label.next_to(axes, DOWN, buff=0.18)
     return VGroup(axes, curve, marks, label)
 
@@ -1537,7 +1537,8 @@ class Scene03_Concept(Scene):
         for b in beats:
             t = nar.when_spoken(b)
             wait_until(self, t, lead=0.30)
-            m = TXT(b, size=22, color=C_WHITE, wrap=40, max_w=6.0)
+            m = TXT(b, size=22, color=C_WHITE, wrap=40, max_w=6.0,
+                    math_mode="auto")
             if m.height > 1.8:
                 m.scale_to_fit_height(1.8)
             live_ideas.append(m)
@@ -1732,9 +1733,10 @@ def build_board_rows(plain_lines, max_w=11.6):
             head_clean = re.sub(r"(?i)^ex\s*\d+\s*:\s*", "", head)
             parts.append(number_chip(ex_no))
             parts.append(TXT(head_clean, size=29, color=C_WHITE, bold=True,
-                             max_w=max_w - 2.2))
+                             max_w=max_w - 2.2, math_mode="auto"))
         else:
-            parts.append(TXT(head, size=26, color=C_GOLD, max_w=max_w - 2.2))
+            parts.append(TXT(head, size=26, color=C_GOLD, max_w=max_w - 2.2,
+                             math_mode="auto"))
         if verdict:
             parts.append(verdict_pill(verdict))
         row = VGroup(*parts).arrange(RIGHT, buff=0.30)
@@ -2012,7 +2014,7 @@ class Scene08_Practice(Scene):
         for i, l in enumerate(q_lines):
             m = TXT(l, size=30 if i == 0 else 27,
                     color=C_WHITE if i == 0 else C_GOLD,
-                    bold=(i == 0), max_w=11.6)
+                    bold=(i == 0), max_w=11.6, math_mode="auto")
             q_mobs.append(m)
         q_grp = VGroup(*q_mobs).arrange(DOWN, buff=0.18)
         if q_grp.height > 1.3:
