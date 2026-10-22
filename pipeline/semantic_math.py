@@ -70,6 +70,9 @@ class MathSpan:
 def is_mathematical(value: object) -> bool:
     """Detect meaningful expressions, leaving ordinary titles/prose intact."""
     s = latex_to_plain(value)
+    # ISO date strings on opening/title slides must not become subtractions.
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", s):
+        return False
     return bool(
         _RELATION.search(s) or _MATH_OPERATOR.search(s)
         or _COEFFICIENT.search(s) or _POWER.search(s)
