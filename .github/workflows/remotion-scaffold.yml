@@ -19,6 +19,10 @@ jobs:
         working-directory: remotion
     steps:
       - uses: actions/checkout@v4
+      - name: Install FFmpeg and FFprobe for actual media-contract checks
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
