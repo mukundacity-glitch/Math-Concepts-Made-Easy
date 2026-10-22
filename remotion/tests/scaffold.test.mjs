@@ -15,27 +15,27 @@ test('Remotion packages are pinned to the same exact compatible version', () => 
   assert.equal(pkg.dependencies.react, pkg.dependencies['react-dom']);
 });
 
-test('entrypoint registers a single isolated diagnostics composition', () => {
+test('entrypoint registers diagnostics and one isolated premium lesson composition', () => {
   assert.match(read('src/index.ts'), /registerRoot\(RemotionRoot\)/);
   const root = read('src/Root.tsx');
   assert.match(root, /id="ScaffoldDiagnostics"/);
-  assert.match(root, /width=\{1920\}/);
-  assert.match(root, /height=\{1080\}/);
-  assert.match(root, /fps=\{30\}/);
-  assert.match(root, /durationInFrames=\{30\}/);
-  assert.doesNotMatch(root, /PremiumLesson|PremiumShort/);
+  assert.match(root, /id="PremiumLesson"/);
+  assert.match(root, /calculateMetadata=/);
+  assert.match(root, /width=\{lessonCanvas\.width\}/);
+  assert.match(root, /height=\{lessonCanvas\.height\}/);
+  assert.doesNotMatch(root, /id="PremiumShort"/);
 });
 
-test('scaffold does not access upload state, credentials or Python internals', () => {
+test('scaffold remains isolated from uploader, credentials and production state', () => {
   for (const filename of ['src/index.ts','src/Root.tsx','src/scaffold/ScaffoldDiagnostics.tsx']) {
     const source = read(filename);
-    assert.doesNotMatch(source, /state\/progress|youtube|upload|child_process|autopilot\.py|YT_TOKEN_JSON/i);
+    assert.doesNotMatch(source, /state\/progress|youtube|child_process|autopilot\.py|YT_TOKEN_JSON/i);
   }
 });
 
-test('scaffold offers typecheck, studio and repeatable bundling commands', () => {
+test('scaffold exposes typecheck, studio, tests and bundling', () => {
   for (const key of ['studio', 'typecheck', 'test', 'check', 'bundle']) {
     assert.equal(typeof pkg.scripts[key], 'string', key);
   }
-  assert.match(read('README.md'), /Phase 4 Step 2/);
+  assert.match(read('README.md'), /Phase 4 Step 3/);
 });

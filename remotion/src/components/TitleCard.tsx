@@ -3,9 +3,10 @@ import type {PremiumLessonProps} from '../lesson/types';
 import {BrandHeader} from './BrandHeader';
 import {theme} from '../design/theme';
 
-export const TitleCard = ({series, title, tagline, level}: PremiumLessonProps) => {
+export const TitleCard = ({series, title, tagline, level, introFrames}: PremiumLessonProps) => {
   const frame = useCurrentFrame();
-  const {fps, durationInFrames} = useVideoConfig();
+  const {fps} = useVideoConfig();
+  const durationInFrames = introFrames;
   const opacity = Math.min(
     interpolate(frame, [0, Math.min(20, durationInFrames / 3)], [0, 1],
                 {extrapolateRight: 'clamp'}),

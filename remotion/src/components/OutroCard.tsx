@@ -1,4 +1,4 @@
-import {AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, interpolate, useCurrentFrame} from 'remotion';
 import {BrandHeader} from './BrandHeader';
 import {theme} from '../design/theme';
 
@@ -6,11 +6,12 @@ type Props = {
   readonly series: string;
   readonly level: string;
   readonly title: string;
+  readonly outroFrames: number;
 };
 
-export const OutroCard = ({series, level, title}: Props) => {
+export const OutroCard = ({series, level, title, outroFrames}: Props) => {
   const frame = useCurrentFrame();
-  const {durationInFrames} = useVideoConfig();
+  const durationInFrames = outroFrames;
   const opacity = interpolate(frame, [0, Math.min(17, durationInFrames / 2)],
                               [0, 1], {extrapolateRight: 'clamp'});
   return (

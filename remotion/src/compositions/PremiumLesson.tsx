@@ -23,7 +23,8 @@ export const PremiumLesson = (props: PremiumLessonProps) => {
           {segment.kind === 'intro' ? (
             <TitleCard {...props}/>
           ) : segment.kind === 'outro' ? (
-            <OutroCard series={props.series} level={props.level} title={props.title}/>
+            <OutroCard series={props.series} level={props.level} title={props.title}
+                       outroFrames={props.outroFrames}/>
           ) : (
             <SceneFrame series={props.series} level={props.level}
                         lessonTitle={props.title} chapter={segment.chapter}
