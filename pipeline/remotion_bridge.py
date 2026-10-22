@@ -11,7 +11,7 @@ From repository root:
     --audio-dir output/audio/lesson_043
 
 Use the returned --props JSON for Remotion Studio/CLI after a local export.
-Caption overlays, Shorts and full hybrid demo are later phases.
+Shorts and full hybrid demo are later phases. Captions are opt-in when original word boundaries exist.
 """
 from __future__ import annotations
 
@@ -25,6 +25,8 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+
+from pipeline.remotion_captions import load_scene_word_captions
 
 FPS = 30
 MAX_CHAPTERS = 40
@@ -85,6 +87,7 @@ def export_lesson_package(
     output_props: Path | None = None,
     intro_frames: int = 60,
     outro_frames: int = 60,
+    require_captions: bool = False,
 ) -> dict:
     """Inspect ALL inputs before writing; fail closed on missing/short media."""
     intro_frames = _positive_frames(intro_frames, "intro_frames")
@@ -146,6 +149,11 @@ def export_lesson_package(
         frames = math.floor(min(video_secs, declared) * FPS + 0.00001)
         if frames < 45 or audio_secs > frames / FPS + 0.04:
             raise ValueError(f"scene {sid}: frame-quantized clip would cut narrated audio")
+        words_path = audio_dir / f"scene_{sid:02d}.words.json"
+        captions = load_scene_word_captions(
+            words_path, clip_seconds=frames / FPS, audio_seconds=audio_secs,
+        )
+        caption_digest = _sha256(words_path) if captions is not None else None
         digests = (_sha256(source_video), _sha256(source_audio))
         assets.append({
             "id": f"scene-{sid:02d}", "scene_id": sid, "step": step,
@@ -153,7 +161,14 @@ def export_lesson_package(
             "durationSeconds": frames / FPS,
             "sourceVideo": source_video, "sourceAudio": source_audio,
             "videoSha256": digests[0], "audioSha256": digests[1],
+            "captions": captions, "captionsSha256": caption_digest,
         })
+
+    have_captions = [item["captions"] is not None for item in assets]
+    if any(have_captions) and not all(have_captions):
+        raise ValueError("partial caption coverage: each scene requires original word timings")
+    if require_captions and not all(have_captions):
+        raise ValueError("original word timings are required for every scene")
 
     # Deterministic, content-addressed package identity. A later edit to one
     # video or voice file cannot silently reuse the older video/voice pair.
@@ -161,7 +176,7 @@ def export_lesson_package(
     identity.update(str(lesson_id).encode())
     for a in assets:
         identity.update((str(a["scene_id"]) + a["videoSha256"] +
-                         a["audioSha256"]).encode())
+                         a["audioSha256"] + (a["captionsSha256"] or "")).encode())
     package_id = f"lesson-{lesson_id:03d}-{identity.hexdigest()[:14]}"
     public_dir = remotion_dir / "public" / "manim" / package_id
     props = {
@@ -185,6 +200,9 @@ def export_lesson_package(
                 "videoSha256": item["videoSha256"],
                 "audioSha256": item["audioSha256"],
                 "durationSeconds": item["durationSeconds"],
+                **({"captions": item["captions"],
+                    "captionsSha256": item["captionsSha256"]}
+                   if item["captions"] is not None else {}),
             },
         })
     total_frames = intro_frames + outro_frames + sum(
@@ -226,7 +244,8 @@ def export_lesson_package(
             "publicAssets": str(public_dir), "chapterCount": len(assets),
             "durationInFrames": total_frames, "fps": FPS,
             "mathPixelsTranscoded": False,
-            "originalCell3VoicePreserved": True}
+            "originalCell3VoicePreserved": True,
+            "captionCoverage": "original_word_boundaries" if all(have_captions) else "unavailable"}
 
 
 def main() -> None:
@@ -239,12 +258,15 @@ def main() -> None:
     parser.add_argument("--output-props", type=Path, default=None)
     parser.add_argument("--intro-frames", type=int, default=60)
     parser.add_argument("--outro-frames", type=int, default=60)
+    parser.add_argument("--require-captions", action="store_true",
+                        help="Fail if any scene lacks real word-boundary timing")
     args = parser.parse_args()
     result = export_lesson_package(
         timed_script=args.script, renders_dir=args.renders_dir,
         audio_dir=args.audio_dir, remotion_dir=args.remotion_dir,
         output_props=args.output_props,
         intro_frames=args.intro_frames, outro_frames=args.outro_frames,
+        require_captions=args.require_captions,
     )
     print(json.dumps(result, indent=2))
 
