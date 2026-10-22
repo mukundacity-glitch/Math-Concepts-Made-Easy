@@ -30,7 +30,8 @@ async def synthesize(scene_id: int, stage: dict) -> dict:
         try:
             words = []
             communication = edge_tts.Communicate(
-                text=stage["narration"], voice=voice, rate="+20%"
+                text=stage["narration"], voice=voice, rate="+20%",
+                boundary="WordBoundary",
             )
             with audio_file.open("wb") as outfile:
                 async for chunk in communication.stream():
