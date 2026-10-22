@@ -87,7 +87,7 @@ test('unbounded or invalid user content is rejected before React composition', (
   assert.throws(() => api.getLessonDurationInFrames(duplicate), /URL-safe/);
 });
 
-test('composition uses validated data only, no faux mathematical media', () => {
+test('composition uses verified original mathematical media, never generated answers', () => {
   const shell = read('src/compositions/PremiumLesson.tsx');
   const stage = read('src/components/SceneFrame.tsx');
   assert.match(shell, /buildLessonTimeline\(props\)/);

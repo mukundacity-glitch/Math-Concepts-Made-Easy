@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: "22"
       - name: Install isolated Remotion dependencies
-        run: npm install --no-audit --no-fund
+        run: npm install --no-audit --no-fund\n      - name: Install preview PNG inspector\n        run: npm install --no-save --no-audit --no-fund sharp
       - name: Verify strict TypeScript and pure composition tests
         run: npm run check
       - name: Bundle diagnostic and premium lesson compositions
@@ -40,6 +40,23 @@ jobs:
           npx remotion still src/index.ts PremiumLesson build/preview/outro.png --frame=505 --log=error
       - name: Reject missing, tiny, incorrect, or duplicated render frames
         run: node --test tests/inspect-previews.mjs
+      - name: Build two synthetic media transport fixtures (not a finished lesson)
+        working-directory: .
+        run: |
+          python tests/make_remotion_bridge_fixture.py
+          python -m pipeline.remotion_bridge \\
+            --script remotion/build/phase4-step3-input/lesson_888_script_timed.json \\
+            --renders-dir remotion/build/phase4-step3-input/renders \\
+            --audio-dir remotion/build/phase4-step3-input/audio \\
+            --output-props remotion/build/phase4-step3-input/lesson-props.json
+      - name: Render two connected Manim transport panels
+        run: |
+          npx remotion still src/index.ts PremiumLesson build/preview/connected-concept.png \\
+            --frame=90 --props=build/phase4-step3-input/lesson-props.json --log=error
+          npx remotion still src/index.ts PremiumLesson build/preview/connected-example.png \\
+            --frame=150 --props=build/phase4-step3-input/lesson-props.json --log=error
+      - name: Verify correct source media displayed in chapter order
+        run: node --test tests/inspect-bridge-previews.mjs
       - name: Archive educational composition frames (no publishing)
         if: always()
         uses: actions/upload-artifact@v4
