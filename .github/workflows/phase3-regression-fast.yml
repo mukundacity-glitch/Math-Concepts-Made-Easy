@@ -1,0 +1,76 @@
+# Independent non-publishing regression: no apt packages or live Edge-TTS network.
+name: Phase 3 Premium Manim No-Regression
+
+on:
+  pull_request:
+    paths:
+      - "pipeline/semantic_math.py"
+      - "pipeline/cell4_animation.py"
+      - "pipeline/premium_manim_helpers.py"
+      - "tests/smoke_render_semantic_contexts.py"
+      - "tests/smoke_render_phase3.py"
+      - "tests/inspect_phase3_frames.py"
+      - "tests/inspect_semantic_math_frame.py"
+      - ".github/workflows/phase3-regression-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-premium-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: manimcommunity/manim:v0.19.2
+      options: --user root
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify pinned renderer and Python test dependencies
+        run: |
+          python -m manim --version
+          python -m pip install --no-input -q 'sympy>=1.12' pytest numpy pillow
+      - name: Verify equation color roles across actual four-scene Manim board
+        run: |
+          mkdir -p build/regression-evidence
+          python -m manim -ql -s --disable_caching \
+            --media_dir build/regression-scenes tests/smoke_render_semantic_contexts.py SemanticFourSceneContextsSmoke
+          FRAME="$(find build/regression-scenes -name 'SemanticFourSceneContextsSmoke*.png' -type f | head -n 1)"
+          test -s "$FRAME"
+          cp "$FRAME" build/regression-evidence/four-scene-preview.png
+          python tests/inspect_semantic_math_frame.py \
+            "$FRAME" build/regression-evidence/four-scene-colors.json
+      - name: Render every premium worked and practice item with unchanged scene contracts
+        run: |
+          mkdir -p build/phase3-smoke/audio build/phase3-smoke/evidence
+          ffmpeg -nostdin -v error -y -f lavfi -i anullsrc=channel_layout=mono:sample_rate=24000 \
+            -t 0.5 build/phase3-smoke/audio/scene_06.mp3
+          cp build/phase3-smoke/audio/scene_06.mp3 build/phase3-smoke/audio/scene_08.mp3
+          python -m manim -ql --disable_caching \
+            --media_dir build/regression-scenes tests/smoke_render_phase3.py PremiumWorkedExampleSmoke
+          python -m manim -ql --disable_caching \
+            --media_dir build/regression-scenes tests/smoke_render_phase3.py PremiumPracticeSmoke
+          for NAME in PremiumWorkedExampleSmoke PremiumPracticeSmoke; do
+            VIDEO="$(find build/regression-scenes -name "$NAME.mp4" -type f | head -n 1)"
+            test -s "$VIDEO"
+            ffprobe -v error -show_entries format=duration:stream=width,height \
+              -of json "$VIDEO" > "build/phase3-smoke/evidence/$NAME.json"
+            ffmpeg -nostdin -v error -y -sseof -2 -i "$VIDEO" -frames:v 1 \
+              "build/phase3-smoke/evidence/$NAME.png"
+          done
+          python tests/inspect_phase3_frames.py build/phase3-smoke/evidence
+          cp build/phase3-smoke/evidence/* build/regression-evidence/
+      - name: Upload mathematical animation regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase3-no-regression-evidence
+          retention-days: 14
+          path: |
+            build/regression-evidence/
+            build/regression-scenes/videos/**/*.mp4
