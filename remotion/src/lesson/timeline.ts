@@ -27,7 +27,12 @@ export const validateLessonProps = (props: PremiumLessonProps): void => {
       props.chapters.length > MAX_CHAPTERS) {
     throw new Error('lesson needs 1–' + MAX_CHAPTERS + ' chapters');
   }
+  const packaged = props.chapters.some((chapter) => chapter.media !== undefined);
+  if (packaged && props.chapters.some((chapter) => chapter.media === undefined)) {
+    throw new Error('all chapters must have verified Manim media when one is attached');
+  }
   const ids = new Set<string>();
+  const mediaIds = new Set<number>();
   for (const chapter of props.chapters as LessonChapter[]) {
     requireText(chapter.id, 'chapter.id', 64);
     if (!/^[A-Za-z0-9_-]+$/.test(chapter.id) || ids.has(chapter.id)) {
@@ -40,6 +45,35 @@ export const validateLessonProps = (props: PremiumLessonProps): void => {
       throw new Error('unsupported chapter stage: ' + chapter.stage);
     }
     requireFrames(chapter.durationInFrames, 'chapter.durationInFrames', 45);
+    if (chapter.media) {
+      const media = chapter.media;
+      if (media.kind !== 'manim_scene' || !Number.isSafeInteger(media.sceneId) ||
+          media.sceneId < 1 || media.sceneId > 99 ||
+          mediaIds.has(media.sceneId)) {
+        throw new Error('Manim scene identities must be unique integers in 1–99');
+      }
+      mediaIds.add(media.sceneId);
+      const prefix = 'manim/[A-Za-z0-9_-]+/scene_' +
+        String(media.sceneId).padStart(2, '0');
+      for (const [name, value, suffix] of [
+        ['video', media.videoSrc, '_video\\.mp4'],
+        ['audio', media.audioSrc, '_audio\\.mp3'],
+      ] as const) {
+        if (typeof value !== 'string' ||
+            !new RegExp('^' + prefix + suffix + '$').test(value)) {
+          throw new Error('unsafe or inconsistent Manim ' + name + ' asset path');
+        }
+      }
+      if (!/^[0-9a-f]{64}$/.test(media.videoSha256) ||
+          !/^[0-9a-f]{64}$/.test(media.audioSha256)) {
+        throw new Error('Manim media requires verified content digests');
+      }
+      if (!Number.isFinite(media.durationSeconds) || media.durationSeconds <= 0 ||
+          Math.abs(media.durationSeconds -
+                   chapter.durationInFrames / 30) > (1 / 30 + 0.0001)) {
+        throw new Error('Manim video/audio duration disagrees with chapter frame timing');
+      }
+    }
   }
   const total = props.introFrames + props.outroFrames +
     props.chapters.reduce((sum, chapter) => sum + chapter.durationInFrames, 0);

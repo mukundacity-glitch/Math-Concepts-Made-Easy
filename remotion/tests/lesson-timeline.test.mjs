@@ -87,18 +87,20 @@ test('unbounded or invalid user content is rejected before React composition', (
   assert.throws(() => api.getLessonDurationInFrames(duplicate), /URL-safe/);
 });
 
-test('composition uses validated data only, no faux mathematical media', () => {
+test('composition uses verified original math media, not recomputed equations', () => {
   const shell = read('src/compositions/PremiumLesson.tsx');
   const stage = read('src/components/SceneFrame.tsx');
   assert.match(shell, /buildLessonTimeline\(props\)/);
   assert.match(shell, /<Sequence/);
-  assert.match(stage, /data-visual-slot="manim-pending"/);
-  assert.doesNotMatch(shell + stage, /<Video\b|<Audio\b|OffthreadVideo|caption.*Track/i);
+  assert.match(stage, /data-visual-slot=\{chapter\.media/);
+  assert.match(stage, /staticFile\(chapter\.media\.videoSrc\)/);
+  assert.match(stage, /staticFile\(chapter\.media\.audioSrc\)/);
+  assert.doesNotMatch(shell + stage, /<CaptionTrack|<BasicCaptions|PremiumShort/);
 });
 
-test('no social shorts, uploader or captions are introduced by Step 2', () => {
+test('no social shorts, uploader or caption overlays are introduced in Step 3', () => {
   const root = read('src/Root.tsx');
   const shell = read('src/compositions/PremiumLesson.tsx');
   assert.doesNotMatch(root + shell, /PremiumShort|YouTube|from ['"].*uploader/i);
-  assert.match(read('README.md'), /Step 3 — Connect Manim outputs into Remotion timeline/);
+  assert.match(read('README.md'), /Step 4 — Add caption overlays/);
 });
