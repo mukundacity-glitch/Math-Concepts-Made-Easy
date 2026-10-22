@@ -43,18 +43,30 @@
 10. Enforce structural and exact-math regression tests, plus real-Manim
     render-frame smoke checks.
 
-## Truthfulness about test audio
+## Narrated video acceptance
 
-The Phase 3 Manim smoke has **synthetic timestamps and silent placeholder
-MP3 files** so it can run deterministically and cheaply in GitHub Actions.
-It tests whether all 25 visual transformations are possible and whether
-representative MP4 frames actually show mathematical content. It is NOT
-evidence that synthetic timestamps match a real human or TTS voice.
+Two complementary test modes are included in the existing GitHub Actions
+Manim regression suite:
 
-Actual production uses the same original Cell-3 Edge-TTS pipeline. A premium
-lesson stops rather than publishes if required word-boundary events are
-missing. A complete sampled premium *spoken* lesson still needs a separate
-end-to-end validation before opting a live curriculum day into this format.
+1. **Deterministic visual smoke:** synthetic word timestamps with silent
+   placeholder MP3s verify readable Manim animation of **all 10 worked
+   examples and 15 practice solutions**, including every vector morph.
+2. **Actual narrated 25-question smoke:** an independent test calls
+   Edge-TTS using the same Ryan voice family as production, saves real
+   emitted WordBoundary timestamps, verifies every worked/practice
+   question/step/answer cue, then renders full Manim worked and practice
+   clips against the generated speech. MP4s must contain an audio stream.
+   The pipeline FAILS when speech generation or cue verification fails.
+
+This is a real *component-level* narrated sample, not a fully composed
+nine-stage published lesson with YouTube metadata. The default legacy
+Cell-3/Cell-4 production workflow remains the sole publisher.
+
+A separate strict audio gate in `pipeline/premium_audio_qa.py` runs in
+both Cell-3 TTS processing and the Manim renderer, rejecting missing
+timestamps and unreadable/out-of-order cues for opted-in premium lessons.
+This catches the otherwise dangerous silent fallback from Edge-TTS to
+un-timed gTTS before rendering or publication.
 
 ## Acceptance tests and constraints
 
