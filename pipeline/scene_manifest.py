@@ -6,6 +6,7 @@ and quality assurance.  It deliberately contains no lesson-specific code.
 
 from __future__ import annotations
 
+from pipeline.math_models import build_computed_model
 from pipeline.mathtext import split_sentences
 from pipeline.visual_actions import build_visual_spec
 
@@ -29,6 +30,10 @@ def estimate_duration(text: str, words_per_minute: int = 125) -> float:
 
 def build_scene_manifest(lesson: dict, narrations: dict, plan: dict) -> dict:
     scenes = []
+    # Only an explicit, validated mathematical model enables computed rendering.
+    # Existing curriculum remains on the unchanged compatibility path.
+    math_model = (build_computed_model(lesson["math_model"])
+                  if "math_model" in lesson else None)
     stage_by_step = {
         item["renderer_step"]: item["stage"] for item in plan["selected_stages"]
     }
@@ -40,7 +45,7 @@ def build_scene_manifest(lesson: dict, narrations: dict, plan: dict) -> dict:
         expected = estimate_duration(narration)
         objects, actions = build_visual_spec(step, beats, lesson, expected)
         label, purpose, animation_type, transition = STEP_META[step]
-        scenes.append({
+        scene = {
             "scene_id": scene_id,
             "stage": stage_by_step[step],
             "step": step,
@@ -57,7 +62,24 @@ def build_scene_manifest(lesson: dict, narrations: dict, plan: dict) -> dict:
             "timing_markers": [action["timing_marker"] for action in actions],
             "transition_style": transition,
             "animation_type": animation_type,
-        })
+        }
+        if step == "concept" and math_model is not None:
+            scene["mathematical_model"] = math_model
+            scene["objects"].append({
+                "object_id": "concept_computed_curve",
+                "type": "computed_curve",
+                "source": "mathematical_model",
+            })
+            scene["actions"].append({
+                "action_id": "concept_computed_curve_plot",
+                "action": "plot_curve",
+                "target": "concept_computed_curve",
+                "narration_sentence_index": 0,
+                "timing_marker": {"sentence_index": 0, "start_ratio": 0.0},
+                "mathematical_operation": "trace_computed_function",
+            })
+            scene["timing_markers"].append(scene["actions"][-1]["timing_marker"])
+        scenes.append(scene)
     return {
         "schema_version": "1.0",
         "lesson_id": int(lesson.get("day", lesson.get("id"))),
