@@ -60,7 +60,7 @@ jobs:
         run: |
           python -m manim -ql -s --disable_caching \
             --media_dir build/semantic-colors tests/smoke_render_phase1.py SemanticMathColorsSmoke
-          FRAME="$(find build/semantic-colors -type f -name 'SemanticMathColorsSmoke.png' | head -n 1)"
+          FRAME="$(find build/semantic-colors -type f -name 'SemanticMathColorsSmoke*.png' | head -n 1)"
           test -s "$FRAME"
           python tests/inspect_semantic_math_frame.py "$FRAME" build/phase1-quality/math-colors.json
           cp "$FRAME" build/phase1-quality/math-colors.png
