@@ -109,7 +109,7 @@ def test_palette_roles_are_distinct_and_readable_on_navy():
 def test_any_palette_override_must_be_known_and_hex():
     with pytest.raises(ValueError, match="invalid semantic"):
         markup_for_math("x+2", mode="math", palette={"x": "red"})
-    with pytest.raises(ValueError, match="invalid semantic"):
+    with pytest.raises(ValueError, match="six-digit hex"):
         markup_for_math("x+2", mode="math", palette={"variable": "red"})
 
 
