@@ -84,6 +84,12 @@ jobs:
             --media_dir build/phase3-smoke/media tests/smoke_render_phase3.py PremiumWorkedExampleSmoke
           python -m manim -ql --disable_caching \
             --media_dir build/phase3-smoke/media tests/smoke_render_phase3.py PremiumPracticeSmoke
+          python -m manim -ql --disable_caching \\
+            --media_dir build/phase3-smoke/media tests/smoke_render_phase3.py VerifiedGeometrySmoke
+          GEOMETRY="$(find build/phase3-smoke/media -name 'VerifiedGeometrySmoke.mp4' -type f | head -n 1)"
+          test -s "$GEOMETRY"
+          ffmpeg -nostdin -v error -y -sseof -2 -i "$GEOMETRY" -frames:v 1 \\
+            build/phase3-smoke/evidence/VerifiedGeometrySmoke.png
           find build/phase3-smoke/media -name '*.mp4' -type f -size +1k -print
           WORKED="$(find build/phase3-smoke/media -name 'PremiumWorkedExampleSmoke.mp4' -type f | head -n 1)"
           PRACTICE="$(find build/phase3-smoke/media -name 'PremiumPracticeSmoke.mp4' -type f | head -n 1)"
