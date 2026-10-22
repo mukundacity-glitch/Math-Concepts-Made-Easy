@@ -71,6 +71,49 @@ formula writing and transformation, diagrams, triangles, circles, fractions,
 number lines, coordinates, graphs, tables, substitution, simplification,
 wrong/correct comparison, pauses, reveals, highlights, and camera focus.
 
+## Phase 1: computed mathematical visuals (opt-in)
+
+The repository now supports a **validated quadratic-function scene model**
+through `pipeline/math_models.py`. This feature is opt-in: no existing
+curriculum lesson changes its animation until it supplies explicit coefficients.
+
+Example lesson field:
+
+```json
+"math_model": {
+  "kind": "quadratic_function",
+  "coefficients": {"a": 1, "b": -3, "c": 2},
+  "domain": [-2, 4],
+  "samples": 65
+}
+```
+
+The model computes the parabola, vertex, real zeros, axis of symmetry,
+y-intercept and curve samples using exact arithmetic where possible.
+Manim plots those computed values in the existing concept scene instead
+of a generic formula-only fallback. The scene QA rejects inconsistent
+model coordinates. Unsupported mathematical model types are rejected.
+
+### Real Manim render regression
+
+A separate `Phase 1 Mathematical Render Smoke` GitHub workflow tests the
+**actual production quadratic helper**, extracts two rendered frames, and
+fails on empty/non-mathematical output. It does not publish videos or
+change lesson progress. Preview MP4, frames and JSON findings are saved
+as a workflow artifact. To reproduce locally after installing Manim,
+FFmpeg, and project dependencies:
+
+```bash
+python -m pytest -q
+python -m manim -ql --disable_caching --media_dir build/phase1-smoke \\
+  -o phase1_quadratic_smoke.mp4 tests/smoke_render_phase1.py Phase1QuadraticSmoke
+```
+
+This is a component-level validation, **not** proof that every Grade 9–12
+topic has a computed visual or that a complete published lesson has passed
+premium render inspection. The existing daily YouTube workflow stays the
+sole scheduled publisher.
+
 ## Automatic posting
 
 `.github/workflows/daily-video.yml` is enabled by its cron schedule. It uses two
