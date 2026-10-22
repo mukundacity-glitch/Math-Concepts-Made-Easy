@@ -102,6 +102,7 @@ from pathlib import Path
 # ── Repo imports (shared LaTeX → text/speech translation) ─────
 sys.path.insert(0, r"__REPO_ROOT__")
 from pipeline.mathtext import latex_to_plain, normalize_word, split_sentences
+from pipeline.premium_manim_helpers import render_premium_board
 
 # ── Data loading ──────────────────────────────────────────────
 SCRIPT_PATH  = Path(r"__SCRIPT_PATH__")
@@ -1752,6 +1753,13 @@ class Scene06_WorkedExample(Scene):
         nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 6))
 
+        if sd.get("premium_items"):
+            setup_bg(self)
+            self.add(make_header(SCRIPT_DATA.get("title", ""), LESSON_ID),
+                     make_footer("worked_example"))
+            render_premium_board(self, "worked_example", sd, nar, LESSON_AUDIO)
+            return
+
         lesson_title = SCRIPT_DATA.get("title", "")
         setup_bg(self)
         self.add(make_header(lesson_title, LESSON_ID),
@@ -1976,6 +1984,13 @@ class Scene08_Practice(Scene):
         sd  = get_scene_by_step("practice")
         nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 8))
+
+        if sd.get("premium_items"):
+            setup_bg(self)
+            self.add(make_header(SCRIPT_DATA.get("title", ""), LESSON_ID),
+                     make_footer("practice"))
+            render_premium_board(self, "practice", sd, nar, LESSON_AUDIO)
+            return
 
         lesson_title = SCRIPT_DATA.get("title", "")
         setup_bg(self)
