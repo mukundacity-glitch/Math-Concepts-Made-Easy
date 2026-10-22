@@ -11,6 +11,8 @@ on:
       - "pipeline/geometry_models.py"
       - "pipeline/verified_visual_models.py"
       - "pipeline/premium_manim_helpers.py"
+      - "tests/smoke_render_semantic_contexts.py"
+      - "tests/test_semantic_scene_integration.py"
       - "pipeline/premium_animation.py"
       - "pipeline/premium_audio_qa.py"
       - "tests/phase3_real_tts_smoke.py"
@@ -64,6 +66,14 @@ jobs:
           test -s "$FRAME"
           python tests/inspect_semantic_math_frame.py "$FRAME" build/phase1-quality/math-colors.json
           cp "$FRAME" build/phase1-quality/math-colors.png
+      - name: Render four scene contexts with semantic role colors and vector morph
+        run: |
+          python -m manim -ql -s --disable_caching \
+            --media_dir build/four-context-colors tests/smoke_render_semantic_contexts.py SemanticFourSceneContextsSmoke
+          FRAME="$(find build/four-context-colors -type f -name 'SemanticFourSceneContextsSmoke*.png' | head -n 1)"
+          test -s "$FRAME"
+          python tests/inspect_semantic_math_frame.py "$FRAME" build/phase1-quality/four-context-color-qa.json
+          cp "$FRAME" build/phase1-quality/four-context-preview.png
       - name: Full 10-worked and 15-practice render smoke
         run: |
           mkdir -p build/phase3-smoke/audio build/phase3-smoke/evidence

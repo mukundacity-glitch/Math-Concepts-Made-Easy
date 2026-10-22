@@ -172,4 +172,37 @@ def semantic_text(
         result.scale_to_fit_width(max_width)
     if max_height and result.height > max_height:
         result.scale_to_fit_height(max_height)
+    # Attach a render-time role certificate to each actual equation mobject.
+    # Transformations can now reject monochrome/prose objects or drift in the
+    # shared mathematical palette, without inspecting individual glyphs.
+    is_math = mode == "math" or (mode == "auto" and is_mathematical(s))
+    spans = tokenize_math(s, mode="math" if is_math else "prose")
+    result.semantic_math_roles = tuple(sorted({
+        token.role for token in spans if token.role != "text"
+    }))
+    result.semantic_math_colors = {
+        role: MATH_PALETTE[role] for role in result.semantic_math_roles
+    }
+    result.semantic_math_display = s
     return result
+
+
+def semantic_equation_transform(scene, source, destination, *, run_time=0.24):
+    """Vector-morph two role-colored math states without losing their colors.
+
+    Both mobjects must have been created through `semantic_text(mode="math")`.
+    The actual hues are read from the one shared palette, not lesson-specific
+    text replacements. Existing sound/timestamp scheduling stays in the caller.
+    """
+    from manim import TransformMatchingShapes
+    if not 0 < float(run_time) <= 15:
+        raise ValueError("invalid mathematical transform duration")
+    for obj in (source, destination):
+        roles = getattr(obj, "semantic_math_roles", ())
+        colors = getattr(obj, "semantic_math_colors", {})
+        if not roles or not colors:
+            raise ValueError("mathematical morph requires semantically colored expressions")
+        if any(colors.get(role) != MATH_PALETTE.get(role) for role in roles):
+            raise ValueError("mathematical morph detected inconsistent role colors")
+    scene.play(TransformMatchingShapes(source, destination), run_time=run_time)
+    return destination

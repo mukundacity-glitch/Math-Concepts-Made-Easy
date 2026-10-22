@@ -11,7 +11,7 @@ import textwrap
 
 from pipeline.mathtext import latex_to_plain, normalize_word
 from pipeline.premium_audio_qa import validate_premium_word_alignment
-from pipeline.semantic_math import semantic_text
+from pipeline.semantic_math import semantic_text, semantic_equation_transform
 
 
 def _anchor_time(narrator, phrase: str) -> float:
@@ -54,7 +54,7 @@ def _text(value, size, color, *, max_width=11.4, max_height=None,
 def render_premium_board(scene, stage: str, sd: dict, nar, audio_dir: Path) -> None:
     from manim import (
         Create, DOWN, FadeIn, FadeOut, GREEN, LEFT, RIGHT, RoundedRectangle,
-        SurroundingRectangle, Text, TransformMatchingShapes, UP, VGroup, WHITE,
+        SurroundingRectangle, Text, UP, VGroup, WHITE,
     )
     if stage not in ("worked_example", "practice"):
         raise ValueError(f"unsupported premium board stage: {stage}")
@@ -95,7 +95,8 @@ def render_premium_board(scene, stage: str, sd: dict, nar, audio_dir: Path) -> N
                          20, border, bold=True, max_width=9, math_mode="prose")
         progress.move_to(board.get_top() + DOWN * 0.87)
         question = _text(item["prompt"], 27, WHITE, max_width=11.6,
-                         max_height=1.15, wrap=67, bold=True)
+                         max_height=1.15, wrap=67, bold=True,
+                         math_mode="auto")
         question.move_to(board.get_center() + UP * 1.05)
         scene.play(FadeIn(progress), FadeIn(question, shift=RIGHT * 0.12),
                    run_time=0.24)
@@ -106,7 +107,8 @@ def render_premium_board(scene, stage: str, sd: dict, nar, audio_dir: Path) -> N
             cue_time = _anchor_time(nar, step["anchor"])
             _wait_for(scene, cue_time)
             explanation = _text(step["explanation"], 24, pale,
-                                max_width=11.5, max_height=0.85, wrap=72)
+                                max_width=11.5, max_height=0.85, wrap=72,
+                                math_mode="auto")
             explanation.move_to(board.get_center() + DOWN * 0.05)
             math = _text(step["math"], 38, cyan, max_width=11.2,
                          max_height=0.9, wrap=60, bold=True, math_mode="math")
@@ -122,8 +124,10 @@ def render_premium_board(scene, stage: str, sd: dict, nar, audio_dir: Path) -> N
                 # A real mathematical transformation retains the equation as
                 # one persistent visual object instead of flashing slides.
                 scene.play(*animations, run_time=0.15)
-                scene.play(TransformMatchingShapes(previous_math, math),
-                           run_time=0.24)
+                # Reuse the same verified colors for matching mathematical
+                # symbols across worked and practice step transformations.
+                semantic_equation_transform(scene, previous_math, math,
+                                            run_time=0.24)
                 previous_math = math
             previous_explanation = explanation
         answer_time = _anchor_time(nar, item["answer_anchor"])
