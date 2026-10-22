@@ -75,3 +75,30 @@ class Phase1QuadraticSmoke(Scene):
         # Exact same Create animation used by the opt-in concept scene.
         self.play(Create(diagram), run_time=2.7)
         self.wait(0.5)
+
+
+
+class SemanticMathColorsSmoke(Scene):
+    """Actual Pango render: variable/number/operator/equality/power roles."""
+
+    def construct(self):
+        from pipeline.semantic_math import semantic_text
+        self.camera.background_color = "#081B33"
+        title = Text("THE SAME COLORS IN EVERY EQUATION",
+                     font="DejaVu Sans", font_size=29, color="#E5E7EB")
+        title.to_edge(UP, buff=0.42)
+        expressions = [
+            "x + 2 = 5",
+            "2x + 3x = 5x",
+            "x² + 4x + 4 = 0",
+            "a² + b² = c²",
+            "(x + 3)(x - 2) = 0",
+        ]
+        board = VGroup(*[
+            semantic_text(item, size=40, mode="math", max_width=10.9,
+                          bold=True)
+            for item in expressions
+        ]).arrange(DOWN, buff=0.24)
+        board.move_to(DOWN * 0.12)
+        self.add(title, board)
+        self.wait(1.2)
