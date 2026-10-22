@@ -2,7 +2,7 @@ import {Composition} from 'remotion';
 import {ScaffoldDiagnostics} from './scaffold/ScaffoldDiagnostics';
 
 // Phase 4, Step 1: only an isolated smoke composition is registered.
-// Step 2 will introduce PremiumLesson. No live uploader imports Remotion.
+// The actual educational composition is deliberately reserved for Step 2.
 export const RemotionRoot = () => (
   <Composition
     id="ScaffoldDiagnostics"
