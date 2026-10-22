@@ -40,7 +40,7 @@ _TOKEN = re.compile(
     r"(?P<space>\s+)"
     r"|(?P<exponent>\^(?:\{[^{}]{1,32}\}|[-+]?\d+|[A-Za-z])|[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]+)"
     r"|(?P<number>\d+(?:\.\d+)?)"
-    r"|(?P<word>[^\W\d_]+(?:_[A-Za-z0-9]+)?)"
+    r"|(?P<word>[A-Za-zΑ-Ωα-ω]+(?:_[A-Za-z0-9]+)?)"
     r"|(?P<relation>[=≠≤≥≈≡<>∝⇔→])"
     r"|(?P<operator>[+\-−±×÷*/·])"
     r"|(?P<group>[()\[\]{}])"
