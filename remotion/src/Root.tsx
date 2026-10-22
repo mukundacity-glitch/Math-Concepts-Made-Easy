@@ -5,7 +5,7 @@ import {demoLesson} from './lesson/demoLesson';
 import {getLessonDurationInFrames} from './lesson/timeline';
 import {lessonCanvas} from './design/theme';
 
-// This registry is isolated from Python production and YouTube publishing.
+// This registry remains strictly isolated from Python production stages.
 // Step 2 adds only the lesson SHELL; Manim media remains for Step 3.
 export const RemotionRoot = () => (
   <>
