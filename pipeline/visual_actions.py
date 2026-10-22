@@ -17,7 +17,7 @@ ACTION_REGISTRY = {
         "draw_table", "fill_table_cell", "transform_equation",
         "substitute_value", "simplify_expression", "box_final_answer",
         "show_wrong", "show_correct", "show_pause", "reveal", "show_mistake",
-        "show_real_life", "animate_cut", "compare_models",
+        "show_real_life", "animate_cut", "compare_models", "show_question",
     )
 }
 
