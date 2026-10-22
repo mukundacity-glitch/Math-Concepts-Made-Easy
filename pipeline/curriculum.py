@@ -8,6 +8,8 @@ adding a new grade or subject means adding another JSON file here.
 import json
 from pathlib import Path
 
+from pipeline.curriculum_dependencies import validate_curriculum_dependencies
+
 CURRICULUM_DIR = Path(__file__).resolve().parents[1] / "curriculum"
 
 
@@ -25,6 +27,9 @@ def load_curriculum() -> list:
     dupes = sorted({d for d in days if days.count(d) > 1})
     if dupes:
         raise SystemExit(f"🛑 Duplicate day numbers in curriculum: {dupes}")
+    # Enforce an acyclic teaching order for any opt-in prerequisite IDs.
+    # Historical entries without prerequisite_ids remain unchanged.
+    validate_curriculum_dependencies(lessons)
     return lessons
 
 

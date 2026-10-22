@@ -1,0 +1,566 @@
+{
+  "day": 999,
+  "grade": 9,
+  "subject": "Algebra",
+  "topic": "Linear equations, evaluating and expanding expressions",
+  "concept_id": "g9.premium-algebra-contract-demo",
+  "prerequisite_ids": [
+    "day-001"
+  ],
+  "educational_content": {
+    "schema_version": "2.0",
+    "learning_objectives": [
+      "Solve linear equations using identical operations on both sides.",
+      "Evaluate expressions by substitution and justify equivalent expansions.",
+      "Check worked answers independently with exact arithmetic."
+    ],
+    "answer_delivery": {
+      "mode": "companion",
+      "resource_id": "examples/premium_algebra_answers.md"
+    },
+    "worked_examples": [
+      {
+        "id": "W01",
+        "prompt": "Solve 2*x+1=3 and verify the same operation on both sides.",
+        "difficulty": "foundation",
+        "format": "algebra",
+        "check": {
+          "kind": "linear_equation",
+          "input": "2*x+1=3"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 1 from both sides to isolate the x terms.",
+            "math": "2*x=2"
+          },
+          {
+            "explanation": "Divide each side by 2.",
+            "math": "x=1"
+          }
+        ],
+        "answer": "1"
+      },
+      {
+        "id": "W02",
+        "prompt": "A quantity is multiplied by 3 and then increased by 2, giving 8. Find the original quantity.",
+        "difficulty": "intermediate",
+        "format": "word_problem",
+        "check": {
+          "kind": "linear_equation",
+          "input": "3*x+2=8"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 2 from both sides to isolate the x terms.",
+            "math": "3*x=6"
+          },
+          {
+            "explanation": "Divide each side by 3.",
+            "math": "x=2"
+          }
+        ],
+        "answer": "2"
+      },
+      {
+        "id": "W03",
+        "prompt": "A balance shows 4 identical x-blocks and 3 unit weights equal to 15 units. Find x.",
+        "difficulty": "advanced",
+        "format": "visual",
+        "check": {
+          "kind": "linear_equation",
+          "input": "4*x+3=15"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 3 from both sides to isolate the x terms.",
+            "math": "4*x=12"
+          },
+          {
+            "explanation": "Divide each side by 4.",
+            "math": "x=3"
+          }
+        ],
+        "answer": "3"
+      },
+      {
+        "id": "W04",
+        "prompt": "Solve 5*x+4=24 and verify the same operation on both sides.",
+        "difficulty": "foundation",
+        "format": "exam",
+        "check": {
+          "kind": "linear_equation",
+          "input": "5*x+4=24"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 4 from both sides to isolate the x terms.",
+            "math": "5*x=20"
+          },
+          {
+            "explanation": "Divide each side by 5.",
+            "math": "x=4"
+          }
+        ],
+        "answer": "4"
+      },
+      {
+        "id": "W05",
+        "prompt": "Solve 6*x+5=35 and verify the same operation on both sides.",
+        "difficulty": "intermediate",
+        "format": "graphical",
+        "check": {
+          "kind": "linear_equation",
+          "input": "6*x+5=35"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 5 from both sides to isolate the x terms.",
+            "math": "6*x=30"
+          },
+          {
+            "explanation": "Divide each side by 6.",
+            "math": "x=5"
+          }
+        ],
+        "answer": "5"
+      },
+      {
+        "id": "W06",
+        "prompt": "Solve 2*x+6=18 and verify the same operation on both sides.",
+        "difficulty": "advanced",
+        "format": "algebra",
+        "check": {
+          "kind": "linear_equation",
+          "input": "2*x+6=18"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 6 from both sides to isolate the x terms.",
+            "math": "2*x=12"
+          },
+          {
+            "explanation": "Divide each side by 2.",
+            "math": "x=6"
+          }
+        ],
+        "answer": "6"
+      },
+      {
+        "id": "W07",
+        "prompt": "Evaluate (4*x+8)*2 when x=2; show substitution.",
+        "difficulty": "foundation",
+        "format": "word_problem",
+        "check": {
+          "kind": "evaluate",
+          "input": "(4*x+8)*2",
+          "substitutions": {
+            "x": "2"
+          }
+        },
+        "steps": [
+          {
+            "explanation": "Substitute 2 for x; simplify the quantity in parentheses.",
+            "math": "16*2"
+          },
+          {
+            "explanation": "Multiply the remaining values.",
+            "math": "32"
+          }
+        ],
+        "answer": "32"
+      },
+      {
+        "id": "W08",
+        "prompt": "Evaluate (5*x+9)*3 when x=3; show substitution.",
+        "difficulty": "intermediate",
+        "format": "visual",
+        "check": {
+          "kind": "evaluate",
+          "input": "(5*x+9)*3",
+          "substitutions": {
+            "x": "3"
+          }
+        },
+        "steps": [
+          {
+            "explanation": "Substitute 3 for x; simplify the quantity in parentheses.",
+            "math": "24*3"
+          },
+          {
+            "explanation": "Multiply the remaining values.",
+            "math": "72"
+          }
+        ],
+        "answer": "72"
+      },
+      {
+        "id": "W09",
+        "prompt": "Expand 5*(x+11) using the distributive property.",
+        "difficulty": "advanced",
+        "format": "exam",
+        "check": {
+          "kind": "equivalent_expression",
+          "input": "5*(x+11)"
+        },
+        "steps": [
+          {
+            "explanation": "Distribute 5 across both terms inside the parentheses.",
+            "math": "5*x+5*11"
+          },
+          {
+            "explanation": "Multiply the constants and collect terms.",
+            "math": "5*x+55"
+          }
+        ],
+        "answer": "5*x+55"
+      },
+      {
+        "id": "W10",
+        "prompt": "Expand 6*(x+12) using the distributive property.",
+        "difficulty": "foundation",
+        "format": "graphical",
+        "check": {
+          "kind": "equivalent_expression",
+          "input": "6*(x+12)"
+        },
+        "steps": [
+          {
+            "explanation": "Distribute 6 across both terms inside the parentheses.",
+            "math": "6*x+6*12"
+          },
+          {
+            "explanation": "Multiply the constants and collect terms.",
+            "math": "6*x+72"
+          }
+        ],
+        "answer": "6*x+72"
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "P01",
+        "prompt": "Solve 2*x+17=23 and verify the same operation on both sides.",
+        "difficulty": "foundation",
+        "format": "algebra",
+        "check": {
+          "kind": "linear_equation",
+          "input": "2*x+17=23"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 17 from both sides to isolate the x terms.",
+            "math": "2*x=6"
+          },
+          {
+            "explanation": "Divide each side by 2.",
+            "math": "x=3"
+          }
+        ],
+        "answer": "3"
+      },
+      {
+        "id": "P02",
+        "prompt": "A quantity is multiplied by 3 and then increased by 18, giving 30. Find the original quantity.",
+        "difficulty": "intermediate",
+        "format": "word_problem",
+        "check": {
+          "kind": "linear_equation",
+          "input": "3*x+18=30"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 18 from both sides to isolate the x terms.",
+            "math": "3*x=12"
+          },
+          {
+            "explanation": "Divide each side by 3.",
+            "math": "x=4"
+          }
+        ],
+        "answer": "4"
+      },
+      {
+        "id": "P03",
+        "prompt": "A balance shows 4 identical x-blocks and 19 unit weights equal to 39 units. Find x.",
+        "difficulty": "advanced",
+        "format": "visual",
+        "check": {
+          "kind": "linear_equation",
+          "input": "4*x+19=39"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 19 from both sides to isolate the x terms.",
+            "math": "4*x=20"
+          },
+          {
+            "explanation": "Divide each side by 4.",
+            "math": "x=5"
+          }
+        ],
+        "answer": "5"
+      },
+      {
+        "id": "P04",
+        "prompt": "Solve 5*x+20=50 and verify the same operation on both sides.",
+        "difficulty": "foundation",
+        "format": "exam",
+        "check": {
+          "kind": "linear_equation",
+          "input": "5*x+20=50"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 20 from both sides to isolate the x terms.",
+            "math": "5*x=30"
+          },
+          {
+            "explanation": "Divide each side by 5.",
+            "math": "x=6"
+          }
+        ],
+        "answer": "6"
+      },
+      {
+        "id": "P05",
+        "prompt": "Solve 6*x+21=63 and verify the same operation on both sides.",
+        "difficulty": "intermediate",
+        "format": "graphical",
+        "check": {
+          "kind": "linear_equation",
+          "input": "6*x+21=63"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 21 from both sides to isolate the x terms.",
+            "math": "6*x=42"
+          },
+          {
+            "explanation": "Divide each side by 6.",
+            "math": "x=7"
+          }
+        ],
+        "answer": "7"
+      },
+      {
+        "id": "P06",
+        "prompt": "Solve 2*x+22=38 and verify the same operation on both sides.",
+        "difficulty": "advanced",
+        "format": "algebra",
+        "check": {
+          "kind": "linear_equation",
+          "input": "2*x+22=38"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 22 from both sides to isolate the x terms.",
+            "math": "2*x=16"
+          },
+          {
+            "explanation": "Divide each side by 2.",
+            "math": "x=8"
+          }
+        ],
+        "answer": "8"
+      },
+      {
+        "id": "P07",
+        "prompt": "A quantity is multiplied by 3 and then increased by 23, giving 50. Find the original quantity.",
+        "difficulty": "foundation",
+        "format": "word_problem",
+        "check": {
+          "kind": "linear_equation",
+          "input": "3*x+23=50"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 23 from both sides to isolate the x terms.",
+            "math": "3*x=27"
+          },
+          {
+            "explanation": "Divide each side by 3.",
+            "math": "x=9"
+          }
+        ],
+        "answer": "9"
+      },
+      {
+        "id": "P08",
+        "prompt": "A balance shows 4 identical x-blocks and 24 unit weights equal to 36 units. Find x.",
+        "difficulty": "intermediate",
+        "format": "visual",
+        "check": {
+          "kind": "linear_equation",
+          "input": "4*x+24=36"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 24 from both sides to isolate the x terms.",
+            "math": "4*x=12"
+          },
+          {
+            "explanation": "Divide each side by 4.",
+            "math": "x=3"
+          }
+        ],
+        "answer": "3"
+      },
+      {
+        "id": "P09",
+        "prompt": "Solve 5*x+25=45 and verify the same operation on both sides.",
+        "difficulty": "advanced",
+        "format": "exam",
+        "check": {
+          "kind": "linear_equation",
+          "input": "5*x+25=45"
+        },
+        "steps": [
+          {
+            "explanation": "Subtract 25 from both sides to isolate the x terms.",
+            "math": "5*x=20"
+          },
+          {
+            "explanation": "Divide each side by 5.",
+            "math": "x=4"
+          }
+        ],
+        "answer": "4"
+      },
+      {
+        "id": "P10",
+        "prompt": "Evaluate (3*x+11)*2 when x=5; show substitution.",
+        "difficulty": "foundation",
+        "format": "graphical",
+        "check": {
+          "kind": "evaluate",
+          "input": "(3*x+11)*2",
+          "substitutions": {
+            "x": "5"
+          }
+        },
+        "steps": [
+          {
+            "explanation": "Substitute 5 for x; simplify the quantity in parentheses.",
+            "math": "26*2"
+          },
+          {
+            "explanation": "Multiply the remaining values.",
+            "math": "52"
+          }
+        ],
+        "answer": "52"
+      },
+      {
+        "id": "P11",
+        "prompt": "Evaluate (4*x+12)*3 when x=1; show substitution.",
+        "difficulty": "intermediate",
+        "format": "algebra",
+        "check": {
+          "kind": "evaluate",
+          "input": "(4*x+12)*3",
+          "substitutions": {
+            "x": "1"
+          }
+        },
+        "steps": [
+          {
+            "explanation": "Substitute 1 for x; simplify the quantity in parentheses.",
+            "math": "16*3"
+          },
+          {
+            "explanation": "Multiply the remaining values.",
+            "math": "48"
+          }
+        ],
+        "answer": "48"
+      },
+      {
+        "id": "P12",
+        "prompt": "Evaluate (5*x+13)*4 when x=2; show substitution.",
+        "difficulty": "advanced",
+        "format": "word_problem",
+        "check": {
+          "kind": "evaluate",
+          "input": "(5*x+13)*4",
+          "substitutions": {
+            "x": "2"
+          }
+        },
+        "steps": [
+          {
+            "explanation": "Substitute 2 for x; simplify the quantity in parentheses.",
+            "math": "23*4"
+          },
+          {
+            "explanation": "Multiply the remaining values.",
+            "math": "92"
+          }
+        ],
+        "answer": "92"
+      },
+      {
+        "id": "P13",
+        "prompt": "Expand 4*(x+15) using the distributive property.",
+        "difficulty": "foundation",
+        "format": "visual",
+        "check": {
+          "kind": "equivalent_expression",
+          "input": "4*(x+15)"
+        },
+        "steps": [
+          {
+            "explanation": "Distribute 4 across both terms inside the parentheses.",
+            "math": "4*x+4*15"
+          },
+          {
+            "explanation": "Multiply the constants and collect terms.",
+            "math": "4*x+60"
+          }
+        ],
+        "answer": "4*x+60"
+      },
+      {
+        "id": "P14",
+        "prompt": "Expand 5*(x+16) using the distributive property.",
+        "difficulty": "intermediate",
+        "format": "exam",
+        "check": {
+          "kind": "equivalent_expression",
+          "input": "5*(x+16)"
+        },
+        "steps": [
+          {
+            "explanation": "Distribute 5 across both terms inside the parentheses.",
+            "math": "5*x+5*16"
+          },
+          {
+            "explanation": "Multiply the constants and collect terms.",
+            "math": "5*x+80"
+          }
+        ],
+        "answer": "5*x+80"
+      },
+      {
+        "id": "P15",
+        "prompt": "Expand 6*(x+17) using the distributive property.",
+        "difficulty": "advanced",
+        "format": "graphical",
+        "check": {
+          "kind": "equivalent_expression",
+          "input": "6*(x+17)"
+        },
+        "steps": [
+          {
+            "explanation": "Distribute 6 across both terms inside the parentheses.",
+            "math": "6*x+6*17"
+          },
+          {
+            "explanation": "Multiply the constants and collect terms.",
+            "math": "6*x+102"
+          }
+        ],
+        "answer": "6*x+102"
+      }
+    ]
+  }
+}

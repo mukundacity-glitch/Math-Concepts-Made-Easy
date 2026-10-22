@@ -7,6 +7,7 @@ from pathlib import Path
 
 from pipeline.creative_history import recent_variants
 from pipeline.math_models import validate_computed_model
+from pipeline.lesson_contract import validate_premium_lesson
 from pipeline.visual_actions import validate_registered_actions
 
 
@@ -54,6 +55,16 @@ def build_coverage_report(script: dict, check_history: bool = True) -> dict:
             errors.append(
                 f"scene {scene_id}: narration/render estimate mismatch "
                 f"({actual:.1f}s vs {expected:.1f}s)")
+
+    if "educational_content" in script:
+        try:
+            premium_report = validate_premium_lesson(script)
+        except ValueError as exc:
+            errors.append(f"premium lesson contract failed: {exc}")
+        else:
+            # This certifies data/math only, not full visual delivery in Manim.
+            if premium_report["verified_solutions"] < 25:
+                errors.append("premium lesson has insufficient verified solutions")
 
     formula = script.get("key_formula", "")
     if not _balanced_latex(formula):
