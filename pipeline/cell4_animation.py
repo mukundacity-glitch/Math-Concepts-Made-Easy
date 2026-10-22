@@ -1897,6 +1897,23 @@ class Scene07_Mistakes(Scene):
 # lands exactly when the voice reaches it; verdicts as pills.
 # ═════════════════════════════════════════════════════════════
 
+def practice_question_count(plain_lines):
+    """Keep the final board line available as a solution when one exists."""
+    if len(plain_lines) <= 1:
+        return len(plain_lines)
+    q_count = 1
+    for index, line in enumerate(plain_lines[:-1]):
+        if line.rstrip().endswith("?"):
+            q_count = index + 1
+            break
+    if (q_count + 1 < len(plain_lines)
+            and not _VERDICT_RE.search(plain_lines[q_count])
+            and len(plain_lines[q_count]) < 60
+            and "→" not in plain_lines[q_count]):
+        q_count += 1
+    return q_count
+
+
 class Scene08_Practice(Scene):
     def construct(self):
         sd  = get_scene_by_step("practice")
@@ -1913,18 +1930,7 @@ class Scene08_Practice(Scene):
             plain_lines  = ["Solve today's problem with the formula."]
             spoken_lines = [""]
 
-        # First line(s) up to the one ending in '?' form the question
-        q_count = 1
-        for i, l in enumerate(plain_lines):
-            if l.rstrip().endswith("?"):
-                q_count = i + 1
-                break
-        # include a following enumeration line (e.g. the list of numbers)
-        if (q_count < len(plain_lines)
-                and not _VERDICT_RE.search(plain_lines[q_count])
-                and len(plain_lines[q_count]) < 60
-                and "→" not in plain_lines[q_count]):
-            q_count += 1
+        q_count = practice_question_count(plain_lines)
         q_lines, sol_lines = plain_lines[:q_count], plain_lines[q_count:]
         q_spoken, sol_spoken = spoken_lines[:q_count], spoken_lines[q_count:]
 
@@ -1950,14 +1956,15 @@ class Scene08_Practice(Scene):
         sol_hdr.move_to(sol_card.get_top() + DOWN * (sol_hdr.height / 2 + 0.07))
 
         rows = build_board_rows(sol_lines, max_w=11.6)
-        sol_grp = VGroup(*[r for r, _ in rows])
-        sol_grp.arrange(DOWN, aligned_edge=LEFT, buff=0.22)
-        if sol_grp.height > 2.2:
-            sol_grp.scale_to_fit_height(2.2)
-        if sol_grp.width > 11.6:
-            sol_grp.scale_to_fit_width(11.6)
-        sol_grp.move_to(sol_card.get_center() + DOWN * 0.20)
-        sol_grp.align_to(sol_card.get_left() + RIGHT * 0.45, LEFT)
+        if rows:
+            sol_grp = VGroup(*[r for r, _ in rows])
+            sol_grp.arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+            if sol_grp.height > 2.2:
+                sol_grp.scale_to_fit_height(2.2)
+            if sol_grp.width > 11.6:
+                sol_grp.scale_to_fit_width(11.6)
+            sol_grp.move_to(sol_card.get_center() + DOWN * 0.20)
+            sol_grp.align_to(sol_card.get_left() + RIGHT * 0.45, LEFT)
 
         # ── Animate on the narration beat ─────────────────────
         self.play(FadeIn(pill, shift=DOWN * 0.08), run_time=0.5)
@@ -1978,7 +1985,8 @@ class Scene08_Practice(Scene):
         self.play(FadeOut(pause_pill), run_time=0.3)
 
         wait_until(self, nar.when_spoken("let us solve it together"), lead=0.25)
-        self.play(FadeIn(sol_card), FadeIn(sol_hdr), run_time=0.5)
+        if rows:
+            self.play(FadeIn(sol_card), FadeIn(sol_hdr), run_time=0.5)
         for (row, is_q), spoken in zip(rows, sol_spoken):
             t = nar.when_spoken(spoken) if spoken else None
             wait_until(self, t, lead=0.30)
