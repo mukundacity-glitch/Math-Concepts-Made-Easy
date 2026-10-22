@@ -145,3 +145,53 @@ def render_premium_board(scene, stage: str, sd: dict, nar, audio_dir: Path) -> N
     remaining = nar.duration - float(scene.renderer.time) - 0.05
     if remaining > 0.01:
         scene.wait(remaining)
+
+
+def computed_geometry_visual(model: dict):
+    """Draw true computed triangle/circle metrics, not decorative motifs."""
+    from manim import (
+        Circle, DashedLine, Dot, DOWN, LEFT, Line, Polygon, RIGHT, Square,
+        Text, UP, VGroup,
+    )
+    if not isinstance(model, dict):
+        return None
+    kind = model.get("kind")
+    cyan, gold, green = "#22D3EE", "#FACC15", "#22C55E"
+    if kind == "right_triangle":
+        a, b = model["legs"]["a"], model["legs"]["b"]
+        scale = 3.1 / max(a, b)
+        origin = LEFT * 1.45 + DOWN * 1.20
+        pa = origin + RIGHT * a * scale
+        pb = origin + UP * b * scale
+        shape = Polygon(origin, pa, pb, stroke_color=cyan, stroke_width=4,
+                        fill_color=cyan, fill_opacity=0.12)
+        marker = Square(side_length=min(0.34, a * scale / 4, b * scale / 4),
+                        stroke_color=gold, stroke_width=2)
+        marker.move_to(origin + RIGHT * marker.width/2 + UP * marker.height/2)
+        la = Text(f"a = {a:g}", font_size=22, color=gold)
+        lb = Text(f"b = {b:g}", font_size=22, color=gold)
+        lc = Text(f"c = {model['hypotenuse']:.3g}", font_size=22, color=green)
+        la.move_to((origin + pa) / 2 + DOWN*0.36)
+        lb.move_to((origin + pb) / 2 + LEFT*0.57)
+        lc.move_to((pa + pb) / 2 + RIGHT*0.48 + UP*0.19)
+        group = VGroup(shape, marker, la, lb, lc)
+        return group
+    if kind == "circle":
+        radius = float(model["radius"])
+        display_r = 1.38
+        shape = Circle(radius=display_r, stroke_color=cyan, stroke_width=4,
+                       fill_color=cyan, fill_opacity=0.09)
+        spoke = Line(shape.get_center(), shape.get_center() + RIGHT*display_r,
+                     color=gold, stroke_width=4)
+        marker = Dot(spoke.get_end(), color=gold, radius=0.055)
+        labels = [
+            Text(f"r = {radius:g}", font_size=23, color=gold),
+            Text(f"Area = {model['area']:.3g}", font_size=23, color=green),
+            Text(f"Circumference = {model['circumference']:.3g}",
+                 font_size=22, color=green),
+        ]
+        labels[0].next_to(spoke, UP, buff=0.1)
+        labels[1].next_to(shape, DOWN, buff=0.32)
+        labels[2].next_to(labels[1], DOWN, buff=0.13)
+        return VGroup(shape, spoke, marker, *labels)
+    return None
