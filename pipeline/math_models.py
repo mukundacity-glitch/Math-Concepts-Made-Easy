@@ -88,7 +88,7 @@ def build_computed_model(spec: dict) -> dict:
 
     return {
         "kind": "quadratic_function",
-        "equation": f"y = ({a})x² + ({b})x + ({c})",
+        "equation": _format_quadratic(a, b, c),
         "coefficients": {"a": float(a), "b": float(b), "c": float(c)},
         "exact_coefficients": {"a": str(a), "b": str(b), "c": str(c)},
         "domain": [float(xmin), float(xmax)],
@@ -100,6 +100,22 @@ def build_computed_model(spec: dict) -> dict:
         "discriminant": float(discr),
         "y_bounds": [low, high],
     }
+
+
+def _format_quadratic(a: Rational, b: Rational, c: Rational) -> str:
+    """Readable exact notation: never display a negative as '+ (-3)x'."""
+    terms = []
+    for coefficient, symbol in ((a, "x²"), (b, "x"), (c, "")):
+        if coefficient == 0:
+            continue
+        magnitude = abs(coefficient)
+        fragment = (symbol if magnitude == 1 and symbol
+                    else f"{magnitude}{symbol}")
+        if not terms:
+            terms.append(("-" if coefficient < 0 else "") + fragment)
+        else:
+            terms.append((" - " if coefficient < 0 else " + ") + fragment)
+    return "y = " + "".join(terms)
 
 
 def _to_real(value: object) -> float:
