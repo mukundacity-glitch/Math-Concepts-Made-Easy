@@ -34,7 +34,7 @@ jobs:
       - name: Verify pinned renderer and Python test dependencies
         run: |
           python -m manim --version
-          python -m pip install --no-input -q 'sympy>=1.12' pytest numpy pillow
+          python -m pip install --no-input -q 'sympy>=1.12' pytest numpy pillow 'edge-tts>=7.0,<9'
       - name: Verify equation color roles across actual four-scene Manim board
         run: |
           mkdir -p build/regression-evidence
@@ -65,6 +65,24 @@ jobs:
           done
           python tests/inspect_phase3_frames.py build/phase3-smoke/evidence
           cp build/phase3-smoke/evidence/* build/regression-evidence/
+      - name: Verify 25 real spoken solutions and their audible rendered Manim scenes
+        run: |
+          python tests/phase3_real_tts_smoke.py
+          python -m manim -ql --disable_caching \
+            --media_dir build/real-narrated-regression tests/smoke_render_phase3.py PremiumWorkedRealSpeechSmoke
+          python -m manim -ql --disable_caching \
+            --media_dir build/real-narrated-regression tests/smoke_render_phase3.py PremiumPracticeRealSpeechSmoke
+          for NAME in PremiumWorkedRealSpeechSmoke PremiumPracticeRealSpeechSmoke; do
+            VIDEO="$(find build/real-narrated-regression -name "$NAME.mp4" -type f | head -n 1)"
+            test -s "$VIDEO"
+            ffprobe -v error -show_entries format=duration:stream=codec_type \
+              -of json "$VIDEO" > "build/regression-evidence/$NAME.json"
+            grep -q '"codec_type": "audio"' "build/regression-evidence/$NAME.json"
+            ffmpeg -nostdin -v error -y -sseof -3 -i "$VIDEO" -frames:v 1 \
+              "build/regression-evidence/$NAME.png"
+          done
+          cp build/phase3-smoke/real_audio/audio-verification.json \
+            build/regression-evidence/real-voice-verification.json
       - name: Upload mathematical animation regression evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -74,3 +92,4 @@ jobs:
           path: |
             build/regression-evidence/
             build/regression-scenes/videos/**/*.mp4
+            build/real-narrated-regression/videos/**/*.mp4
