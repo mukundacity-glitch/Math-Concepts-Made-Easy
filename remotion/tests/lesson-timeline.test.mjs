@@ -98,9 +98,11 @@ test('composition uses verified original math media, not recomputed equations', 
   assert.doesNotMatch(shell + stage, /<CaptionTrack|<BasicCaptions|PremiumShort/);
 });
 
-test('no Shorts or publishing paths are introduced in Step 4', () => {
+test('Shorts is registered separately without coupling the landscape lesson to publishing', () => {
   const root = read('src/Root.tsx');
   const shell = read('src/compositions/PremiumLesson.tsx');
-  assert.doesNotMatch(root + shell, /PremiumShort|YouTube|from ['"].*uploader/i);
+  assert.match(root, /id="PremiumShort"/);
+  assert.doesNotMatch(shell, /PremiumShort/);
+  assert.doesNotMatch(root + shell, /YouTube|from ['"].*uploader/i);
   assert.match(read('README.md'), /Step 5 — Add Shorts composition/);
 });

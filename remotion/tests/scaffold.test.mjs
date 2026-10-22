@@ -23,7 +23,7 @@ test('entrypoint registers diagnostics and one isolated premium lesson compositi
   assert.match(root, /calculateMetadata=/);
   assert.match(root, /width=\{lessonCanvas\.width\}/);
   assert.match(root, /height=\{lessonCanvas\.height\}/);
-  assert.doesNotMatch(root, /id="PremiumShort"/);
+  assert.match(root, /id="PremiumShort"/);
 });
 
 test('scaffold remains isolated from uploader, credentials and production state', () => {
@@ -37,5 +37,5 @@ test('scaffold exposes typecheck, studio, tests and bundling', () => {
   for (const key of ['studio', 'typecheck', 'test', 'check', 'bundle']) {
     assert.equal(typeof pkg.scripts[key], 'string', key);
   }
-  assert.match(read('README.md'), /Phase 4.*Step 4/);
+  assert.match(read('README.md'), /Phase 4.*Step 5/);
 });
