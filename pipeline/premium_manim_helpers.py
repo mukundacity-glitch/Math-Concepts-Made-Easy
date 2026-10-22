@@ -41,7 +41,7 @@ def _wait_for(scene, when: float, lead: float = 0.20) -> None:
 
 def _text(value, size, color, *, max_width=11.4, max_height=None, wrap=62, bold=False):
     from manim import Text
-    readable = latex_to_plain(value)
+    readable = latex_to_plain(value).replace("*", "×")
     readable = textwrap.fill(readable, width=wrap, break_long_words=False,
                              break_on_hyphens=False)
     obj = Text(readable or " ", font="DejaVu Sans", font_size=size,
