@@ -46,7 +46,7 @@ def main() -> None:
             {"word": f"scene{sid}.", "start": 0.95, "end": 1.40},
         ]
         (AUDIO / f"scene_{sid:02d}.words.json").write_text(
-            json.dumps(words, indent=2) + "\\n", encoding="utf-8",
+            json.dumps(words, indent=2) + chr(10), encoding="utf-8",
         )
         scenes.append({
             "scene_id": sid,
