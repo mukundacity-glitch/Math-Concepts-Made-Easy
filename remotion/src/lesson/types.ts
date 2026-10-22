@@ -1,11 +1,26 @@
 export type LessonStage = 'concept' | 'worked_example' | 'practice' | 'recap' | 'other';
 
+/** A prepared Manim video and its original TTS soundtrack.
+ * Paths are remotion/public/ relative: never user-controlled remote URLs.
+ * Video is deliberately muted in the compositor so audio is not doubled.
+ */
+export type ManimSceneMedia = {
+  readonly kind: 'manim_scene';
+  readonly sceneId: number;
+  readonly videoSrc: string;
+  readonly audioSrc: string;
+  readonly videoSha256: string;
+  readonly audioSha256: string;
+  readonly durationSeconds: number;
+};
+
 export type LessonChapter = {
   readonly id: string;
   readonly stage: LessonStage;
   readonly title: string;
   readonly learningGoal: string;
   readonly durationInFrames: number;
+  readonly media?: ManimSceneMedia;
 };
 
 export type PremiumLessonProps = {

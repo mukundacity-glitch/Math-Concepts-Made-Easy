@@ -1,4 +1,5 @@
-import {AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+import {Audio, Video} from '@remotion/media';
 import {BrandHeader} from './BrandHeader';
 import type {LessonChapter} from '../lesson/types';
 import {theme} from '../design/theme';
@@ -22,7 +23,7 @@ type Props = {
 
 export const SceneFrame = ({series, level, chapter, index, count, lessonTitle}: Props) => {
   const frame = useCurrentFrame();
-  const {durationInFrames} = useVideoConfig();
+  const {durationInFrames, fps} = useVideoConfig();
   const reveal = interpolate(frame, [0, Math.min(12, durationInFrames / 3)],
                              [0, 1], {extrapolateRight: 'clamp'});
   const progress = (index + 1) / count;
@@ -55,8 +56,8 @@ export const SceneFrame = ({series, level, chapter, index, count, lessonTitle}: 
         right: theme.horizontalSafe, bottom: 134,
         display: 'flex', gap: 28, opacity: reveal,
       }}>
-        {/* Empty, bounded canvas. Actual Manim frames belong to Step 3. */}
-        <div data-visual-slot="manim-pending" style={{
+        {/* Step 3: render verified Manim pixels; neutral placeholder only when no package is supplied. */}
+        <div data-visual-slot={chapter.media ? "manim-connected" : "manim-pending"} style={{
           position: 'relative', flex: 1, minWidth: 0, borderRadius: 28,
           border: '2px solid ' + theme.stroke,
           background: 'radial-gradient(ellipse at 50% 38%, #16395B, ' +
@@ -65,6 +66,23 @@ export const SceneFrame = ({series, level, chapter, index, count, lessonTitle}: 
           justifyContent: 'center',
           boxShadow: '0 24px 60px ' + theme.shadow,
         }}>
+          {chapter.media ? (
+            <>
+              {/* The original Manim scene remains pixel-for-pixel intact,
+                  with no re-typeset math, fake operators or recomputed graphs. */}
+              <Video
+                src={staticFile(chapter.media.videoSrc)}
+                muted
+                premountFor={fps}
+                objectFit="contain"
+                style={{position: 'absolute', inset: 0, width: '100%',
+                        height: '100%', background: theme.deep}}
+              />
+              {/* A separate original Cell-3 soundtrack avoids double audio
+                  when a Manim MP4 already embeds its own audio stream. */}
+              <Audio src={staticFile(chapter.media.audioSrc)} premountFor={fps}/>
+            </>
+          ) : (
           <div style={{
             width: '86%', height: '72%', border: '2px dashed ' + theme.stroke,
             borderRadius: 21, display: 'flex', alignItems: 'center',
@@ -82,6 +100,7 @@ export const SceneFrame = ({series, level, chapter, index, count, lessonTitle}: 
               No mathematical explanation is fabricated by this layout.
             </div>
           </div>
+          )}
         </div>
         <aside style={{
           width: 338, flexShrink: 0, background: theme.surfaceRaised,
