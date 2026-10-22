@@ -18,6 +18,7 @@ from pipeline.constants import (
 from pipeline.curriculum import MASTER_CURRICULUM, get_lesson
 from pipeline.lesson_plan import plan_lesson
 from pipeline.lesson_contract import validate_premium_lesson, premium_projection
+from pipeline.premium_animation import premium_narration
 
 ensure_output_folders()
 DAY_NUMBER = get_day_number()
@@ -356,6 +357,12 @@ def write_narrations(lesson: dict, teaser: str, heading: str, plan: dict,
         f"New lessons every day on Math Concepts Made Easy. "
         f"Thank you for learning with me — see you tomorrow."
     )
+    # Schema-2 lessons get 25 *individually spoken* question sequences.
+    # Legacy narration and already-published lessons stay unchanged.
+    if "educational_content" in lesson:
+        worked_example = premium_narration(lesson, "worked_example")
+        practice = premium_narration(lesson, "practice")
+
     def block(text):
         text = " ".join(str(text).split())
         return {"full": text, "beats": split_sentences(text)}
