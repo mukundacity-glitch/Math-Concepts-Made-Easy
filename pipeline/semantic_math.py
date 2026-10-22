@@ -52,7 +52,7 @@ _TOKEN = re.compile(
 # 'DAY 43', or punctuation as math.
 _MATH_OPERATOR = re.compile(
     r"(?:\d\s*[+\-−×÷*/^]\s*(?:\d|[A-Za-z(]))"
-    r"|(?:\b[A-Za-z]\s*[+\-−×÷*/^]\s*(?:\d|\b[A-Za-z]\b|\())"
+    r"|(?:\b[A-Za-z]\s*[+\-−×÷*/^]\s*(?:[-+]\s*)?(?:\d|\b[A-Za-z]\b|\())"
 )
 _COEFFICIENT = re.compile(r"\d\s*[A-Za-z](?![A-Za-z])")
 _POWER = re.compile(r"(?:[A-Za-z0-9\)])(?:[⁰¹²³⁴⁵⁶⁷⁸⁹]|\^\{?\d)")
