@@ -1,0 +1,74 @@
+name: Phase 4 Step 6 — Real Hybrid Lesson Demo
+
+on:
+  pull_request:
+    paths:
+      - "examples/phase4_hybrid_demo.json"
+      - "tests/run_phase4_hybrid_demo.py"
+      - "tests/verify_phase4_hybrid_demo.py"
+      - "tests/test_phase4_hybrid_demo.py"
+      - ".github/workflows/phase4-hybrid-demo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  complete-real-lesson:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      MCME_OUTPUT_DIR: ${{ github.workspace }}/build/phase4-demo/output
+      LESSON_DAY: "999"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install real Manim and narration runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg libcairo2-dev libpango1.0-dev pkg-config
+          python -m pip install 'manim==0.19.0' 'sympy>=1.12' 'edge-tts>=7.0,<9' nest_asyncio gTTS pytest
+      - name: Verify and prepare all 25 problems through production script builder
+        run: |
+          python -m pytest -q
+          python tests/run_phase4_hybrid_demo.py prepare
+      - name: Generate all nine real narration tracks and original word timestamps
+        run: python tests/run_phase4_hybrid_demo.py audio
+      - name: Render all nine original production Manim scenes at 1080p30
+        run: python tests/run_phase4_hybrid_demo.py manim
+      - name: Bridge original media with complete caption coverage
+        run: python tests/run_phase4_hybrid_demo.py bridge
+      - name: Install and verify isolated Remotion compositions
+        working-directory: remotion
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npx remotion browser ensure
+      - name: Render complete landscape lesson and selected complete formula Short
+        working-directory: remotion
+        run: |
+          npx remotion render src/index.ts PremiumLesson build/phase4-demo/Phase4_Complete_Hybrid_Lesson.mp4 --props=build/phase4-demo/lesson.json --codec=h264 --crf=22 --concurrency=2 --log=error
+          npx remotion render src/index.ts PremiumShort build/phase4-demo/Phase4_Formula_Short.mp4 --props=build/phase4-demo/short.json --codec=h264 --crf=22 --concurrency=2 --log=error
+      - name: Verify final streams, narration alignment, original hashes and review frames
+        run: python tests/verify_phase4_hybrid_demo.py
+      - name: Confirm production state and publishing remain unchanged
+        if: always()
+        run: python tests/run_phase4_hybrid_demo.py protect
+      - name: Retain real demo, narration timing and verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase4-step6-real-hybrid-lesson
+          retention-days: 14
+          path: |
+            build/phase4-demo/evidence/**
+            build/phase4-demo/output/scripts/*.json
+            build/phase4-demo/output/audio/lesson_999/*.words.json
+            remotion/build/phase4-demo/*.mp4
+            remotion/build/phase4-demo/*.json

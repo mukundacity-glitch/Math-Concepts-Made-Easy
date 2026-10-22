@@ -221,7 +221,8 @@ def sync_to_audio(scene_obj, scene_id):
         if s.get("scene_id") == scene_id:
             target = float(s.get("duration_seconds", 20.0))
             break
-    remaining = target - scene_time(scene_obj) - 0.1
+    # The bridge requires the declared scene duration, including its tail buffer.
+    remaining = target - scene_time(scene_obj)
     if remaining > 0.05:
         scene_obj.wait(remaining)
 

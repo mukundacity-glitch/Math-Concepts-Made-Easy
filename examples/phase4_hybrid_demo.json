@@ -1,0 +1,29 @@
+{
+  "source": "examples/premium_algebra_lesson.json",
+  "subtopic": "Preserving equality, substituting values, and distributing multiplication",
+  "global_track": "Grade 9 Algebra",
+  "class_level": "Grade 9",
+  "board": "Global",
+  "concept_cluster": "Algebraic reasoning",
+  "lesson_goal": "solve linear equations, evaluate expressions, and verify equivalent expansions",
+  "prerequisite": "integer arithmetic and the meaning of an unknown variable",
+  "key_formula": "2*x + 1 = 3",
+  "formula_spoken": "two times x plus one equals three",
+  "real_world_hook": "Two identical boxes and one loose counter balance three counters. How many counters are inside each box? Remove one counter from each side. The two boxes now balance two counters, so each box contains one counter.",
+  "concept_intuition": "An equation states that two expressions have the same value. The expression two times x plus one has value three when x is one. Subtract one from both sides to get two times x equals two. Divide both sides by two to find x equals one. Substitution checks a value; distribution gives an equivalent expression.",
+  "common_mistake": "Subtracting one from only the left side changes the balance. The wrong equation is two times x equals three. The correct equation after subtracting one from both sides is two times x equals two, giving x equals one. Check in the original equation: two times one plus one equals three.",
+  "visual_hints": "Use the actual lesson formula and verified worked states. Keep operators, variables, and numbers in their semantic colors.",
+  "board_examples": {
+    "formula": "2*x + 1 = 3",
+    "worked_example": ["2*x + 1 = 3", "2*x = 2", "x = 1"],
+    "practice": ["2*x + 17 = 23", "2*x = 6", "x = 3"]
+  },
+  "visual_type": "board_write",
+  "video_type": "concept",
+  "estimated_minutes": 20,
+  "seo_title": "Algebra: equations, substitution and expansion — hybrid demo",
+  "thumbnail_angle": "Keep both sides equal",
+  "playlist": "Algebra",
+  "status": "active",
+  "exam_tags": ["General High School"]
+}
