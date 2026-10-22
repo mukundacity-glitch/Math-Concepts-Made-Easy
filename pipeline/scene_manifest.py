@@ -67,18 +67,27 @@ def build_scene_manifest(lesson: dict, narrations: dict, plan: dict) -> dict:
         }
         if step == "concept" and math_model is not None:
             scene["mathematical_model"] = math_model
+            # The semantic visual action must match the *actual* computed
+            # mathematical object. A triangle is never mislabelled as a curve.
+            kind_action = {
+                "quadratic_function": ("computed_curve", "plot_curve", "trace_computed_function"),
+                "right_triangle": ("computed_triangle", "draw_triangle", "draw_computed_triangle"),
+                "circle": ("computed_circle", "draw_circle", "draw_computed_circle"),
+            }
+            object_type, action_name, operation = kind_action[math_model["kind"]]
+            object_id = f"concept_{object_type}"
             scene["objects"].append({
-                "object_id": "concept_computed_curve",
-                "type": "computed_curve",
+                "object_id": object_id,
+                "type": object_type,
                 "source": "mathematical_model",
             })
             scene["actions"].append({
-                "action_id": "concept_computed_curve_plot",
-                "action": "plot_curve",
-                "target": "concept_computed_curve",
+                "action_id": f"{object_id}_create",
+                "action": action_name,
+                "target": object_id,
                 "narration_sentence_index": 0,
                 "timing_marker": {"sentence_index": 0, "start_ratio": 0.0},
-                "mathematical_operation": "trace_computed_function",
+                "mathematical_operation": operation,
             })
             scene["timing_markers"].append(scene["actions"][-1]["timing_marker"])
         if premium_plan is not None:
