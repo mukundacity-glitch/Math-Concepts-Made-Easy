@@ -103,6 +103,7 @@ from pathlib import Path
 sys.path.insert(0, r"__REPO_ROOT__")
 from pipeline.mathtext import latex_to_plain, normalize_word, split_sentences
 from pipeline.premium_manim_helpers import render_premium_board, computed_geometry_visual
+from pipeline.semantic_math import semantic_text
 
 # ── Data loading ──────────────────────────────────────────────
 SCRIPT_PATH  = Path(r"__SCRIPT_PATH__")
@@ -313,33 +314,27 @@ def reveal(scene_obj, nar, mobj, spoken=None, run_time=0.55, anim=None, lead=0.3
 
 def TXT(s, size=28, color=None, bold=False, max_w=None, wrap=None,
         line_spacing=0.95):
-    """Clean prose Text. Always passes through latex_to_plain first."""
-    s = latex_to_plain(s)
-    if not s:
-        s = " "
-    if wrap:
-        s = "\n".join(textwrap.wrap(s, wrap)) or " "
-    try:
-        t = Text(s, font_size=size, color=mc(color or C_WHITE), font=FONT,
-                 weight="BOLD" if bold else "NORMAL", line_spacing=line_spacing)
-    except Exception:
-        t = Text(s.encode("ascii", "ignore").decode() or " ",
-                 font_size=size, color=mc(color or C_WHITE), font=FONT)
-    if max_w and t.width > max_w:
-        t.scale_to_fit_width(max_w)
-    return t
+    """Shared semantic formatter for all scene equations and prose.
 
+    Prose keeps its design color, whereas variables, numbers, operators,
+    exponents and relations always use the same high-contrast palette.
+    """
+    return semantic_text(
+        s, size=size, base_color=color or C_WHITE, mode="auto",
+        bold=bold, max_width=max_w, wrap=wrap, font=FONT,
+        line_spacing=line_spacing,
+    )
 
 def MATH(s, size=48, color=None, max_w=None):
-    """Compiled math. Falls back to clean unicode text — NEVER raw LaTeX."""
-    raw = str(s)
-    try:
-        m = MathTex(raw, font_size=size, color=mc(color or C_WHITE))
-    except Exception:
-        m = TXT(raw, size=max(18, int(size * 0.55)), color=color or C_WHITE)
-    if max_w and m.width > max_w:
-        m.scale_to_fit_width(max_w)
-    return m
+    """Always render formula notation through the semantic math factory.
+
+    Unicode display conversion avoids monochrome MathTex fallbacks; the
+    independent exact SymPy verification remains unchanged upstream.
+    """
+    return semantic_text(
+        s, size=size, base_color=color or C_WHITE, mode="math",
+        bold=True, max_width=max_w, font=FONT,
+    )
 
 
 # ═════════════════════════════════════════════════════════════

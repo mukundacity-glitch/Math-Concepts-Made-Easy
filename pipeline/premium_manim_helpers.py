@@ -11,6 +11,7 @@ import textwrap
 
 from pipeline.mathtext import latex_to_plain, normalize_word
 from pipeline.premium_audio_qa import validate_premium_word_alignment
+from pipeline.semantic_math import semantic_text
 
 
 def _anchor_time(narrator, phrase: str) -> float:
@@ -40,18 +41,14 @@ def _wait_for(scene, when: float, lead: float = 0.20) -> None:
         )
 
 
-def _text(value, size, color, *, max_width=11.4, max_height=None, wrap=62, bold=False):
-    from manim import Text
-    readable = latex_to_plain(value).replace("*", "×")
-    readable = textwrap.fill(readable, width=wrap, break_long_words=False,
-                             break_on_hyphens=False)
-    obj = Text(readable or " ", font="DejaVu Sans", font_size=size,
-               weight="BOLD" if bold else "NORMAL", color=color)
-    if obj.width > max_width:
-        obj.scale_to_fit_width(max_width)
-    if max_height is not None and obj.height > max_height:
-        obj.scale_to_fit_height(max_height)
-    return obj
+def _text(value, size, color, *, max_width=11.4, max_height=None,
+          wrap=62, bold=False, math_mode="auto"):
+    # The same semantic factory serves every teaching and graph label;
+    # words are left neutral while variables/operators/numbers stay distinct.
+    return semantic_text(
+        value, size=size, base_color=color, mode=math_mode,
+        max_width=max_width, max_height=max_height, wrap=wrap, bold=bold,
+    )
 
 
 def render_premium_board(scene, stage: str, sd: dict, nar, audio_dir: Path) -> None:
@@ -95,7 +92,7 @@ def render_premium_board(scene, stage: str, sd: dict, nar, audio_dir: Path) -> N
         if len(previous):
             scene.play(FadeOut(previous), run_time=0.14)
         progress = _text(f"{index} / {len(items)}    {item['difficulty'].upper()}",
-                         20, border, bold=True, max_width=9)
+                         20, border, bold=True, max_width=9, math_mode="prose")
         progress.move_to(board.get_top() + DOWN * 0.87)
         question = _text(item["prompt"], 27, WHITE, max_width=11.6,
                          max_height=1.15, wrap=67, bold=True)
@@ -112,7 +109,7 @@ def render_premium_board(scene, stage: str, sd: dict, nar, audio_dir: Path) -> N
                                 max_width=11.5, max_height=0.85, wrap=72)
             explanation.move_to(board.get_center() + DOWN * 0.05)
             math = _text(step["math"], 38, cyan, max_width=11.2,
-                         max_height=0.9, wrap=60, bold=True)
+                         max_height=0.9, wrap=60, bold=True, math_mode="math")
             math.move_to(board.get_center() + DOWN * 1.08)
             animations = [FadeIn(explanation)]
             if previous_explanation is not None:
@@ -132,7 +129,8 @@ def render_premium_board(scene, stage: str, sd: dict, nar, audio_dir: Path) -> N
         answer_time = _anchor_time(nar, item["answer_anchor"])
         _wait_for(scene, answer_time)
         answer = _text(f"Verified answer: {item['answer']}", 26, green,
-                       max_width=10.6, max_height=0.55, wrap=66, bold=True)
+                       max_width=10.6, max_height=0.55, wrap=66, bold=True,
+                       math_mode="math")
         answer.move_to(board.get_bottom() + UP * 0.43)
         frame = SurroundingRectangle(answer, color=green, buff=0.11,
                                       stroke_width=1.7)
@@ -174,9 +172,9 @@ def computed_geometry_visual(model: dict):
         marker = Square(side_length=min(0.34, a * scale / 4, b * scale / 4),
                         stroke_color=gold, stroke_width=2)
         marker.move_to(origin + RIGHT * marker.width/2 + UP * marker.height/2)
-        la = Text(f"a = {a:g}", font_size=22, color=gold)
-        lb = Text(f"b = {b:g}", font_size=22, color=gold)
-        lc = Text(f"c = {model['hypotenuse']:.3g}", font_size=22, color=green)
+        la = semantic_text(f"a = {a:g}", size=22, base_color=gold, mode="math")
+        lb = semantic_text(f"b = {b:g}", size=22, base_color=gold, mode="math")
+        lc = semantic_text(f"c = {model['hypotenuse']:.3g}", size=22, base_color=green, mode="math")
         la.move_to((origin + pa) / 2 + DOWN*0.36)
         lb.move_to((origin + pb) / 2 + LEFT*0.57)
         lc.move_to((pa + pb) / 2 + RIGHT*0.48 + UP*0.19)
@@ -191,10 +189,10 @@ def computed_geometry_visual(model: dict):
                      color=gold, stroke_width=4)
         marker = Dot(spoke.get_end(), color=gold, radius=0.055)
         labels = [
-            Text(f"r = {radius:g}", font_size=23, color=gold),
-            Text(f"Area = {model['area']:.3g}", font_size=23, color=green),
-            Text(f"Circumference = {model['circumference']:.3g}",
-                 font_size=22, color=green),
+            semantic_text(f"r = {radius:g}", size=23, base_color=gold, mode="math"),
+            semantic_text(f"Area = {model['area']:.3g}", size=23, base_color=green, mode="auto"),
+            semantic_text(f"Circumference = {model['circumference']:.3g}",
+                          size=22, base_color=green, mode="auto"),
         ]
         labels[0].next_to(spoke, UP, buff=0.1)
         labels[1].next_to(shape, DOWN, buff=0.32)
