@@ -21,6 +21,7 @@ def _quadratic(a=1, b=-3, c=2):
 
 def test_quadratic_graph_and_roots_derive_from_coefficients():
     model = build_computed_model(_quadratic())
+    assert model["equation"] == "y = x² - 3x + 2"
     assert model["vertex"]["x"] == pytest.approx(1.5)
     assert model["vertex"]["y"] == pytest.approx(-0.25)
     assert [p["x"] for p in model["x_intercepts"]] == pytest.approx([1, 2])
@@ -119,3 +120,8 @@ def test_legacy_lessons_remain_without_an_opt_in_model():
                  for step in plan["scene_order"]}
     manifest = build_scene_manifest(lesson, narration, plan)
     assert all("mathematical_model" not in s for s in manifest["scenes"])
+
+
+def test_readable_signed_quadratic_equations():
+    assert build_computed_model(_quadratic(-1, 0, 0))["equation"] == "y = -x²"
+    assert build_computed_model(_quadratic("1/2", 1, -3))["equation"] == "y = 1/2x² + x - 3"
