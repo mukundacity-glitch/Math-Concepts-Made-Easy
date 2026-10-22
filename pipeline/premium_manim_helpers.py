@@ -10,6 +10,7 @@ from pathlib import Path
 import textwrap
 
 from pipeline.mathtext import latex_to_plain, normalize_word
+from pipeline.premium_audio_qa import validate_premium_word_alignment
 
 
 def _anchor_time(narrator, phrase: str) -> float:
@@ -69,6 +70,11 @@ def render_premium_board(scene, stage: str, sd: dict, nar, audio_dir: Path) -> N
         raise ValueError(f"{stage} renderer received fewer than {min_count} items")
     if not nar.words:
         raise ValueError("premium Manim scene requires timestamped narration")
+    # Validate once more inside Manim, not only during Cell 3. This prevents
+    # rendering against replaced/partially corrupted word boundary artifacts.
+    validate_premium_word_alignment(
+        {"premium_items": items, "duration_seconds": nar.duration}, nar.words
+    )
 
     gold, cyan, pale, green = "#FACC15", "#22D3EE", "#E5E7EB", "#22C55E"
     border = cyan if stage == "worked_example" else "#F59E0B"
