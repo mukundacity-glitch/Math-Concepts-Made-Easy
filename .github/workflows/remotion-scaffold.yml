@@ -1,0 +1,32 @@
+name: Phase 4 Remotion Scaffold Check
+
+on:
+  pull_request:
+    paths:
+      - "remotion/**"
+      - ".github/workflows/remotion-scaffold.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scaffold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: remotion
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install isolated Remotion dependencies
+        run: npm install --no-audit --no-fund
+      - name: Check scaffold TypeScript and boundary tests
+        run: npm run check
+      - name: Bundle isolated diagnostic composition
+        run: npm run bundle
+      - name: Ensure diagnostics compile to a local bundle
+        run: test -s build/scaffold/index.html
