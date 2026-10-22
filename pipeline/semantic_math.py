@@ -106,6 +106,17 @@ def tokenize_math(value: object, *, mode: MathMode = "auto") -> list[MathSpan]:
     return spans
 
 
+def _hex_color(color: object, description: str) -> str:
+    """Accept both theme hex values and ManimColor objects from scenes."""
+    if not isinstance(color, str) and hasattr(color, "to_hex"):
+        color = color.to_hex()
+    if not isinstance(color, str) or not re.fullmatch(
+        r"#[0-9A-Fa-f]{6}", color
+    ):
+        raise ValueError(f"{description} must be a six-digit hex color")
+    return color
+
+
 def markup_for_math(
     value: object, *, mode: MathMode = "auto", base_color: str | None = None,
     palette: dict | None = None,
@@ -118,12 +129,10 @@ def markup_for_math(
     colors = dict(MATH_PALETTE)
     if palette:
         for role, color in palette.items():
-            if role not in colors or not re.fullmatch(r"#[0-9A-Fa-f]{6}", str(color)):
+            if role not in colors:
                 raise ValueError(f"invalid semantic role color for {role}")
-            colors[role] = color
-    neutral = base_color or colors["text"]
-    if not re.fullmatch(r"#[0-9A-Fa-f]{6}", neutral):
-        raise ValueError("base semantic text color must be six-digit hex")
+            colors[role] = _hex_color(color, f"semantic role color for {role}")
+    neutral = _hex_color(base_color or colors["text"], "base semantic text color")
     output = []
     for span in tokenize_math(value, mode=mode):
         fg = neutral if span.role == "text" else colors[span.role]
