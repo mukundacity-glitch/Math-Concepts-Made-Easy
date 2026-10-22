@@ -1032,6 +1032,10 @@ def brand_logo(height=0.62):
     if not BRAND_LOGO_PATH.is_file():
         raise FileNotFoundError("Required Math Concepts Made Easy logo missing: " +
                                 str(BRAND_LOGO_PATH))
+    # Manim 0.19 Cairo uses a legacy Pillow RGBA scratch array, rejected
+    # by Pillow 12. Apply narrow compatibility only before raster display.
+    from pipeline.manim_image_compat import ensure_manim_image_pillow_compat
+    ensure_manim_image_pillow_compat()
     return ImageMobject(str(BRAND_LOGO_PATH)).set_height(height)
 
 
