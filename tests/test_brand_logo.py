@@ -42,7 +42,8 @@ def test_all_nine_production_manim_scenes_include_actual_raster_logo():
             node.func.id for node in ast.walk(body)
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
         ]
-        expected = "brand_logo" if scene.name == "Scene01_Opening" else "make_header"
+        expected = ("brand_logo" if scene.name in ("Scene01_Opening", "Scene09_Summary")
+                    else "make_header")
         assert expected in symbols, scene.name
     assert "ImageMobject(str(BRAND_LOGO_PATH))" in embedded
     assert "Group(bg_bar, accent, logo_grp" in embedded
