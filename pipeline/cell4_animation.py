@@ -2088,6 +2088,10 @@ class Scene09_Summary(Scene):
 
         setup_bg(self)
         self.add(make_footer("summary"))
+        # Summary deliberately has no standard header: keep the same
+        # permanent channel emblem in the upper-left on this ninth slide.
+        self.add(brand_logo(height=0.72).move_to(
+            np.array([-6.35, 3.53, 0.0])))
 
         banner_bg = Rectangle(
             width=FW, height=0.85,
