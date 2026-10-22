@@ -5,6 +5,9 @@ on:
   pull_request:
     paths:
       - "pipeline/math_models.py"
+      - "pipeline/semantic_math.py"
+      - "tests/test_semantic_math.py"
+      - "tests/inspect_semantic_math_frame.py"
       - "pipeline/geometry_models.py"
       - "pipeline/verified_visual_models.py"
       - "pipeline/premium_manim_helpers.py"
@@ -53,6 +56,14 @@ jobs:
             --before build/phase1-quality/before.png \
             --after build/phase1-quality/after.png \
             --report build/phase1-quality/frame-review.json
+      - name: Verify six semantic math colors in an actual Manim frame
+        run: |
+          python -m manim -ql -s --disable_caching \
+            --media_dir build/semantic-colors tests/smoke_render_phase1.py SemanticMathColorsSmoke
+          FRAME="$(find build/semantic-colors -type f -name 'SemanticMathColorsSmoke.png' | head -n 1)"
+          test -s "$FRAME"
+          python -m tests.inspect_semantic_math_frame "$FRAME" build/phase1-quality/math-colors.json
+          cp "$FRAME" build/phase1-quality/math-colors.png
       - name: Full 10-worked and 15-practice render smoke
         run: |
           mkdir -p build/phase3-smoke/audio build/phase3-smoke/evidence
