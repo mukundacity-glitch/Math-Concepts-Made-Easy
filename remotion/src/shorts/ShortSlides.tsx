@@ -36,9 +36,9 @@ const ShortText = ({text, width, height, fontSize, weight = 750, lineHeight = 1.
 
 const ShortBrandHeader = ({series}: {readonly series: string}) => (
   <header style={{position: 'absolute', top: layout.headerTop, left: layout.left,
-    width: layout.width, display: 'flex', alignItems: 'center', gap: 24, color: theme.text}}>
+    width: layout.width, display: 'flex', alignItems: 'flex-start', gap: 24, color: theme.text}}>
     <BrandLogo size={80}/>
-    <ShortText text={series} width={650} height={80} fontSize={28} weight={800}/>
+    <ShortText text={series} width={650} height={120} fontSize={28} weight={800}/>
   </header>
 );
 

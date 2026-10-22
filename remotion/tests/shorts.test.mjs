@@ -107,6 +107,7 @@ test('long titles, goals, and original caption pages fit without losing characte
   const measure = (text, size) => [...text].length * size;
   for (const [text, width, height, fontSize, lineHeight] of [
     ['W'.repeat(160), 840, 600, 84, 1.12],
+    ['W'.repeat(100), 650, 120, 28, 1.2],
     ['Wide mathematical idea '.repeat(6).slice(0, 140), 840, 190, 64, 1.12],
     ['W'.repeat(260), 840, 242, 40, 1.25],
     ['Original caption words '.repeat(6).slice(0, 125), 774, 162, 44, 1.2],
