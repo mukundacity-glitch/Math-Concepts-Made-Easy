@@ -156,3 +156,16 @@ def test_roles_unchanged_across_equation_transformations():
         assert any(s.role == "relation" for s in spans)
         assert any(s.role == "number" for s in spans)
         assert all(s.role != "text" for s in spans if s.text.strip())
+
+
+
+def test_theme_manim_color_objects_can_be_used_as_neutral_colors():
+    class FakeManimColor:
+        def to_hex(self):
+            return "#ABCD12"
+
+    markup = markup_for_math(
+        "x + 2 = 5", mode="math", base_color=FakeManimColor()
+    )
+    assert 'foreground="#ABCD12"' in markup
+    assert f'foreground="{MATH_PALETTE["operator"]}"' in markup
