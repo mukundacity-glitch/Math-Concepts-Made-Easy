@@ -169,7 +169,7 @@ def test_geometry_route_participates_in_declarative_scene_plan(lesson):
     script = script_for(lesson)
     scene = next(s for s in script["scenes"] if s["step"] == "concept")
     assert scene["mathematical_model"]["hypotenuse"] == 5
-    assert any(a.get("mathematical_operation") == "trace_computed_function"
+    assert any(a.get("mathematical_operation") == "draw_computed_triangle"
                for a in scene["actions"])
     qa = build_coverage_report(script, check_history=False)
     assert qa["passed"], qa["errors"]
