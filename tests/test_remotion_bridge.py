@@ -153,3 +153,81 @@ def test_export_never_edits_timed_script_or_source_media(two_scenes):
         ]
     ]
     assert before == after
+
+
+def _with_real_words(two_scenes):
+    for sid in (1, 2):
+        data = [
+            {"word": "Observe", "start": 0.22, "end": 0.5},
+            {"word": "the", "start": 0.52, "end": 0.68},
+            {"word": f"scene{sid}.", "start": 0.73, "end": 1.31},
+        ]
+        (two_scenes[2] / f"scene_{sid:02d}.words.json").write_text(
+            json.dumps(data, indent=2), encoding="utf-8",
+        )
+
+
+def test_captioned_bridge_preserves_original_words_and_timing(two_scenes):
+    _with_real_words(two_scenes)
+    result = export_lesson_package(
+        two_scenes[0], two_scenes[1], two_scenes[2], two_scenes[3],
+        require_captions=True,
+    )
+    props = json.loads(Path(result["propsPath"]).read_text())
+    assert result["captionCoverage"] == "original_word_boundaries"
+    assert result["durationInFrames"] == 240
+    for sid, chapter in enumerate(props["chapters"], 1):
+        media = chapter["media"]
+        assert len(media["captions"]) == 1
+        c = media["captions"][0]
+        assert c == {
+            "text": f"Observe the scene{sid}.",
+            "startMs": 220, "endMs": 1310, "timestampMs": 220,
+            "confidence": None, "pageBreakAfter": True,
+        }
+        assert media["captionsSha256"] == hashlib.sha256(
+            (two_scenes[2] / f"scene_{sid:02d}.words.json").read_bytes()
+        ).hexdigest()
+        assert "captionsSha256" not in chapter
+        assert "caption" not in chapter["title"].lower()
+
+
+def test_captioned_source_changes_package_identity(two_scenes):
+    _with_real_words(two_scenes)
+    first, _ = _export(two_scenes)
+    words_path = two_scenes[2] / "scene_01.words.json"
+    words = json.loads(words_path.read_text())
+    words[0]["word"] = "Notice"
+    words_path.write_text(json.dumps(words))
+    second, props = _export(two_scenes)
+    assert first["packageId"] != second["packageId"]
+    assert props["chapters"][0]["media"]["captions"][0]["text"].startswith("Notice")
+
+
+def test_missing_partial_timing_fails_without_staging(two_scenes):
+    _with_real_words(two_scenes)
+    (two_scenes[2] / "scene_02.words.json").unlink()
+    with pytest.raises(ValueError, match="partial caption"):
+        _export(two_scenes)
+    assert not (two_scenes[3] / "public").exists()
+
+
+def test_original_gtts_fallback_can_preserve_media_without_invented_captions(two_scenes):
+    result, props = _export(two_scenes)
+    assert result["captionCoverage"] == "unavailable"
+    assert all("captions" not in c["media"] for c in props["chapters"])
+    with pytest.raises(ValueError, match="word timings are required"):
+        export_lesson_package(
+            two_scenes[0], two_scenes[1], two_scenes[2], two_scenes[3],
+            require_captions=True,
+        )
+
+
+def test_out_of_bounds_edge_word_cannot_be_rendered_as_fake_caption(two_scenes):
+    _with_real_words(two_scenes)
+    file = two_scenes[2] / "scene_01.words.json"
+    words = json.loads(file.read_text())
+    words[-1]["end"] = 4.0
+    file.write_text(json.dumps(words))
+    with pytest.raises(ValueError, match="beyond playable"):
+        _export(two_scenes)

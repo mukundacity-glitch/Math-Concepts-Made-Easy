@@ -31,6 +31,12 @@ export const validateLessonProps = (props: PremiumLessonProps): void => {
   if (packaged && props.chapters.some((chapter) => chapter.media === undefined)) {
     throw new Error('all chapters must have verified Manim media when one is attached');
   }
+  // Mixing captioned and uncaptioned chapters would silently omit learning
+  // accessibility coverage. Existing no-caption Step 3 packages still work.
+  const anyCaptions = props.chapters.some((c) => c.media?.captions !== undefined);
+  if (anyCaptions && props.chapters.some((c) => c.media?.captions === undefined)) {
+    throw new Error('partially captioned lesson is not allowed');
+  }
   const ids = new Set<string>();
   const mediaIds = new Set<number>();
   for (const chapter of props.chapters as LessonChapter[]) {
@@ -67,6 +73,33 @@ export const validateLessonProps = (props: PremiumLessonProps): void => {
       if (!/^[0-9a-f]{64}$/.test(media.videoSha256) ||
           !/^[0-9a-f]{64}$/.test(media.audioSha256)) {
         throw new Error('Manim media requires verified content digests');
+      }
+      const hasPages = media.captions !== undefined;
+      if (hasPages !== (media.captionsSha256 !== undefined)) {
+        throw new Error('caption data and source digest must be paired');
+      }
+      if (hasPages) {
+        if (!/^[0-9a-f]{64}$/.test(media.captionsSha256!) ||
+            !Array.isArray(media.captions) || !media.captions.length ||
+            media.captions.length > 2500) {
+          throw new Error('invalid original word-timed caption proof');
+        }
+        let previousEnd = 0;
+        for (const item of media.captions) {
+          if (typeof item.text !== 'string' || !item.text.trim() ||
+              item.text.length > 125 || [...item.text].some((ch) =>
+                ch.charCodeAt(0) < 32 || ch.charCodeAt(0) === 127) ||
+              !Number.isSafeInteger(item.startMs) ||
+              !Number.isSafeInteger(item.endMs) ||
+              !Number.isSafeInteger(item.timestampMs) ||
+              item.startMs < previousEnd || item.endMs <= item.startMs ||
+              item.endMs > chapter.durationInFrames / 30 * 1000 + 40 ||
+              item.timestampMs! < item.startMs || item.timestampMs! > item.endMs ||
+              item.confidence !== null || item.pageBreakAfter !== true) {
+            throw new Error('invalid or out-of-order caption word timing');
+          }
+          previousEnd = item.endMs;
+        }
       }
       if (!Number.isFinite(media.durationSeconds) || media.durationSeconds <= 0 ||
           Math.abs(media.durationSeconds -

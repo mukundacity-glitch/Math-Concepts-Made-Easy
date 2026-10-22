@@ -3,6 +3,7 @@ import {Audio, Video} from '@remotion/media';
 import {BrandHeader} from './BrandHeader';
 import type {LessonChapter} from '../lesson/types';
 import {theme} from '../design/theme';
+import {CaptionLane} from './CaptionLane';
 
 const stageLabels = {
   concept: 'THE CONCEPT',
@@ -27,6 +28,7 @@ export const SceneFrame = ({series, level, chapter, index, count, lessonTitle}: 
   const reveal = interpolate(frame, [0, Math.min(12, durationInFrames / 3)],
                              [0, 1], {extrapolateRight: 'clamp'});
   const progress = (index + 1) / count;
+  const hasCaptions = Boolean(chapter.media?.captions?.length);
   return (
     <AbsoluteFill style={{
       background: 'linear-gradient(118deg, ' + theme.canvas + ', ' + theme.deep + ')',
@@ -53,7 +55,7 @@ export const SceneFrame = ({series, level, chapter, index, count, lessonTitle}: 
 
       <div style={{
         position: 'absolute', top: 236, left: theme.horizontalSafe,
-        right: theme.horizontalSafe, bottom: 134,
+        right: theme.horizontalSafe, bottom: hasCaptions ? 258 : 134,
         display: 'flex', gap: 28, opacity: reveal,
       }}>
         {/* Step 3: render verified Manim pixels; neutral placeholder only when no package is supplied. */}
@@ -121,6 +123,10 @@ export const SceneFrame = ({series, level, chapter, index, count, lessonTitle}: 
           </div>
         </aside>
       </div>
+      {/* Dedicated space beneath the media, never drawn on top of equations. */}
+      {chapter.media?.captions && (
+        <CaptionLane captions={chapter.media.captions} frame={frame} fps={fps}/>
+      )}
       <div style={{
         position: 'absolute', left: theme.horizontalSafe, right: theme.horizontalSafe,
         bottom: 69, display: 'flex', alignItems: 'center', gap: 34,

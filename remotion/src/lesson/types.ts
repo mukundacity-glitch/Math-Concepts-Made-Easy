@@ -1,3 +1,5 @@
+import type {Caption} from '@remotion/captions';
+
 export type LessonStage = 'concept' | 'worked_example' | 'practice' | 'recap' | 'other';
 
 /** A prepared Manim video and its original TTS soundtrack.
@@ -12,6 +14,9 @@ export type ManimSceneMedia = {
   readonly videoSha256: string;
   readonly audioSha256: string;
   readonly durationSeconds: number;
+  /** Original Edge-TTS word timings, grouped into readable scene-local pages. */
+  readonly captions?: readonly Caption[];
+  readonly captionsSha256?: string;
 };
 
 export type LessonChapter = {

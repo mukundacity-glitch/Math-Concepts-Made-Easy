@@ -21,8 +21,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install FFmpeg and FFprobe for actual media-contract checks
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends ffmpeg
+          if ! command -v ffprobe >/dev/null || ! command -v ffmpeg >/dev/null; then
+            timeout 120s sudo apt-get install -y --no-install-recommends ffmpeg || {
+              timeout 90s sudo apt-get update -qq -o Acquire::Retries=0 -o Acquire::http::Timeout=15
+              timeout 120s sudo apt-get install -y --no-install-recommends ffmpeg
+            }
+          fi
+          ffmpeg -version | head -n 1
+          ffprobe -version | head -n 1
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -51,7 +57,7 @@ jobs:
         working-directory: .
         run: |
           python -m pip install -q pytest
-          python -m pytest -q tests/test_remotion_bridge.py
+          python -m pytest -q tests/test_remotion_bridge.py tests/test_remotion_captions.py
       - name: Build two synthetic media transport fixtures (not a finished lesson)
         working-directory: .
         run: |
@@ -60,7 +66,12 @@ jobs:
             --script remotion/build/phase4-step3-input/lesson_888_script_timed.json \
             --renders-dir remotion/build/phase4-step3-input/renders \
             --audio-dir remotion/build/phase4-step3-input/audio \
-            --output-props remotion/build/phase4-step3-input/lesson-props.json
+            --output-props remotion/build/phase4-step3-input/lesson-props.json \
+            --require-captions
+      - name: Render two scene-local captions and a before-speech proof
+        run: |
+          npx remotion still src/index.ts PremiumLesson build/preview/caption-before.png \
+            --frame=64 --props=build/phase4-step3-input/lesson-props.json --log=error
       - name: Render two connected Manim transport panels
         run: |
           npx remotion still src/index.ts PremiumLesson build/preview/connected-concept.png \
@@ -69,10 +80,12 @@ jobs:
             --frame=150 --props=build/phase4-step3-input/lesson-props.json --log=error
       - name: Verify correct source media displayed in chapter order
         run: node --test tests/inspect-bridge-previews.mjs
+      - name: Verify caption appears only during original word boundaries
+        run: node --test tests/inspect-caption-previews.mjs
       - name: Archive educational composition frames (no publishing)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase4-step2-premium-layout-previews
+          name: phase4-step4-caption-timeline-previews
           retention-days: 14
           path: remotion/build/preview/*.png

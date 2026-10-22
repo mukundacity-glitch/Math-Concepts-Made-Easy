@@ -37,5 +37,5 @@ test('scaffold exposes typecheck, studio, tests and bundling', () => {
   for (const key of ['studio', 'typecheck', 'test', 'check', 'bundle']) {
     assert.equal(typeof pkg.scripts[key], 'string', key);
   }
-  assert.match(read('README.md'), /Phase 4.*Step 3/);
+  assert.match(read('README.md'), /Phase 4.*Step 4/);
 });

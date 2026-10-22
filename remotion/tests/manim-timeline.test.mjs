@@ -74,11 +74,46 @@ test('wrong identity, invalid digest or mismatched duration are rejected', () =>
   assert.throws(() => validateLessonProps(wrongDuration), /duration/);
 });
 
-test('video remains silent so separately synchronized Cell-3 audio plays once', () => {
+test('video remains silent while original Cell-3 voice and caption lane remain scene-local', () => {
   const frame = source('src/components/SceneFrame.tsx');
   assert.match(frame, /<Video[\s\S]*?muted[\s\S]*?<Audio/);
   assert.match(frame, /staticFile\(chapter\.media\.videoSrc\)/);
   assert.match(frame, /staticFile\(chapter\.media\.audioSrc\)/);
   assert.match(frame, /objectFit="contain"/);
-  assert.doesNotMatch(frame, /<BasicCaptions|<CaptionTrack/);
+  assert.match(frame, /<CaptionLane/);
+  assert.doesNotMatch(frame, /<PremiumShort/);
+});
+
+
+test('captions have strict source digests and word timing', () => {
+  const valid = base();
+  const item = valid.chapters[0].media;
+  item.captionsSha256 = sha;
+  item.captions = [{
+    text: 'First we identify the variable.',
+    startMs: 220, endMs: 1280, timestampMs: 220,
+    confidence: null, pageBreakAfter: true,
+  }];
+  assert.throws(() => validateLessonProps(valid), /partially captioned/);
+  valid.chapters[1].media.captionsSha256 = sha;
+  valid.chapters[1].media.captions = [
+    {text: 'Now solve the equation.', startMs: 250, endMs: 1300,
+     timestampMs: 250, confidence: null, pageBreakAfter: true},
+  ];
+  assert.doesNotThrow(() => validateLessonProps(valid));
+
+  const overlap = structuredClone(valid);
+  overlap.chapters[0].media.captions.push({
+    text: 'Out of order', startMs: 1000, endMs: 1600,
+    timestampMs: 1000, confidence: null, pageBreakAfter: true,
+  });
+  assert.throws(() => validateLessonProps(overlap), /word timing/);
+
+  const beyond = structuredClone(valid);
+  beyond.chapters[0].media.captions[0].endMs = 9999;
+  assert.throws(() => validateLessonProps(beyond), /word timing/);
+
+  const bad = structuredClone(valid);
+  bad.chapters[0].media.captionsSha256 = 'deadbeef';
+  assert.throws(() => validateLessonProps(bad), /caption proof/);
 });

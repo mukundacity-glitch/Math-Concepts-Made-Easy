@@ -98,9 +98,9 @@ test('composition uses verified original math media, not recomputed equations', 
   assert.doesNotMatch(shell + stage, /<CaptionTrack|<BasicCaptions|PremiumShort/);
 });
 
-test('no social shorts, uploader or caption overlays are introduced in Step 3', () => {
+test('no Shorts or publishing paths are introduced in Step 4', () => {
   const root = read('src/Root.tsx');
   const shell = read('src/compositions/PremiumLesson.tsx');
   assert.doesNotMatch(root + shell, /PremiumShort|YouTube|from ['"].*uploader/i);
-  assert.match(read('README.md'), /Step 4 — Add caption overlays/);
+  assert.match(read('README.md'), /Step 5 — Add Shorts composition/);
 });

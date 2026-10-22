@@ -38,6 +38,16 @@ def main() -> None:
         ffmpeg("-f", "lavfi", "-i",
                f"sine=frequency={tone}:sample_rate=24000:duration=1.55",
                "-c:a", "libmp3lame", "-q:a", "4", str(speech))
+        # Synthetic timestamp proof. These are NOT spoken sentences;
+        # the audio fixture is a sine wave for transport-only QA.
+        words = [
+            {"word": "Caption", "start": 0.25, "end": 0.56},
+            {"word": "bridge", "start": 0.58, "end": 0.91},
+            {"word": f"scene{sid}.", "start": 0.95, "end": 1.40},
+        ]
+        (AUDIO / f"scene_{sid:02d}.words.json").write_text(
+            json.dumps(words, indent=2) + chr(10), encoding="utf-8",
+        )
         scenes.append({
             "scene_id": sid,
             "step": step,
