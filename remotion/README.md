@@ -1,4 +1,4 @@
-# Phase 4 — Step 4: Word-synchronized narration caption overlays
+# Phase 4 — Step 5: Vertical Shorts composition
 
 This step replaces the central teaching panel's placeholder **only when all
 chapters have valid real Manim scene files and original Cell-3 audio**.
@@ -100,8 +100,7 @@ alongside its scene's Manim MP4 and original MP3.
 
 These are optional development previews, not live publishing.
 
-**Not implemented yet:** vertical Shorts, a complete real nine-stage hybrid
-lesson demo, production rollout, or a duplicate publishing path.
+**Not implemented yet:** a complete real nine-stage hybrid lesson demo or production rollout.
 
 ## Approved fixed order
 
@@ -109,8 +108,8 @@ lesson demo, production rollout, or a duplicate publishing path.
 - ✅ Step 2 — Build Remotion lesson composition.
 - ✅ Step 3 — Connect Manim outputs into Remotion timeline.
 - ✅ Step 4 — Add caption overlays.
-- **NEXT Step 5 — Add Shorts composition.**
-- Step 6 — Run one full demo lesson through the hybrid pipeline.
+- ✅ Step 5 — Add Shorts composition.
+- **NEXT Step 6 — Run one full demo lesson through the hybrid pipeline.**
 - Only then consider production rollout.
 
 
@@ -133,3 +132,47 @@ text / shapes (not `VGroup`, which requires VMobjects). The current daily
 publishing workflow and past uploaded lessons remain untouched. The new logo
 takes effect on subsequent renders only; Phase 4 Step 5 Shorts must reuse the
 same `BrandLogo` component instead of inventing another asset.
+
+
+## Step 5 — Preview the separate vertical composition
+
+`PremiumShort` is **1080 × 1920, 30 FPS**. It accepts the same bridge props as
+`PremiumLesson`, plus optional `chapterIds: ["chapter-id"]`. Default props are
+layout-only preview content. Use `--require-captions` when exporting actual media.
+
+- Only complete chapters are selected, always in source order. Video, original
+  narration, caption timestamps and source hashes are unchanged. No automatic
+  trimming, new speech, mathematical re-typesetting, speed changes or cropping.
+- All attached chapters require original word-timed captions. Layout-only
+  previews remain available without a media package.
+- The 180-second **editorial limit** includes intro/outro. Longer selections fail
+  with instructions to select fewer complete chapters; nothing is silently cut.
+- The original landscape animation fits a full 16:9 rectangle, preserving every
+  equation and diagram. That source is smaller on a phone; mobile readability
+  of a real lesson must be reviewed in Step 6 before production.
+- The canonical `BrandLogo` is top-left on opening, chapter and closing slides.
+- Text is measured against actual glyph widths and wrapped without ellipses.
+  Captions occupy a separate lane below the animation and learning focus.
+  Important content reserves 160px on the right and over 200px at the bottom.
+  Platform UI can vary; these are composition margins, not a platform guarantee.
+- Chapter transitions keep the video, one original narration track, and captions
+  in a single frame-relative sequence. Unselected chapter narration never plays.
+
+From `remotion/`, preview prepared media with:
+
+```bash
+npm run studio -- --props=build/bridged/your-lesson.json
+```
+
+Choose **PremiumShort** in Studio. For a subset, copy the exported JSON props
+and add `chapterIds` using actual IDs from its `chapters` array, then pass that
+file to Studio. IDs select complete chapters; the array cannot reorder them.
+The full-length lesson ignores `chapterIds` and keeps its existing behavior.
+
+CI renders opening/chapter/closing stills, two synthetic transport scenes,
+before-speech captions, selected-scene proof and maximum-length metadata.
+The synthetic color panels and sine-wave audio verify transport only and are
+**not** a finished math lesson or the Step 6 demonstration.
+
+This step does not activate Shorts publishing, edit Cell 7, change schedules,
+advance lesson history or modify production state.

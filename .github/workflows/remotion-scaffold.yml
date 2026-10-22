@@ -88,10 +88,25 @@ jobs:
         run: node --test tests/inspect-caption-previews.mjs
       - name: Check real top-left channel logo in every current Remotion slide
         run: node --test tests/inspect-brand-previews.mjs
+      - name: Prepare complete-chapter Shorts selection and long-text layout fixtures
+        run: node tests/prepare-shorts-previews.mjs
+      - name: Render vertical opening, chapter, ending, caption and source-selection proofs
+        run: |
+          npx remotion still src/index.ts PremiumShort build/preview/short-intro.png --frame=25 --log=error
+          npx remotion still src/index.ts PremiumShort build/preview/short-chapter.png --frame=150 --log=error
+          npx remotion still src/index.ts PremiumShort build/preview/short-outro.png --frame=505 --log=error
+          npx remotion still src/index.ts PremiumShort build/preview/short-before.png --frame=64 --props=build/phase4-step3-input/lesson-props.json --log=error
+          npx remotion still src/index.ts PremiumShort build/preview/short-concept.png --frame=90 --props=build/phase4-step3-input/lesson-props.json --log=error
+          npx remotion still src/index.ts PremiumShort build/preview/short-example.png --frame=150 --props=build/phase4-step3-input/lesson-props.json --log=error
+          npx remotion still src/index.ts PremiumShort build/preview/short-selected.png --frame=90 --props=build/phase4-step3-input/short-selected.json --log=error
+          npx remotion still src/index.ts PremiumShort build/preview/short-stress.png --frame=90 --props=build/phase4-step3-input/short-stress.json --log=error
+          npx remotion still src/index.ts PremiumShort build/preview/short-stress-intro.png --frame=25 --props=build/phase4-step3-input/short-stress.json --log=error
+      - name: Verify vertical resolution, logo, source selection, caption timing and safe areas
+        run: node --test tests/inspect-shorts-previews.mjs
       - name: Archive educational composition frames (no publishing)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase4-step4-caption-timeline-previews
+          name: phase4-step5-shorts-and-landscape-previews
           retention-days: 14
           path: remotion/build/preview/*.png

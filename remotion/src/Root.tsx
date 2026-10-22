@@ -4,9 +4,11 @@ import {PremiumLesson} from './compositions/PremiumLesson';
 import {demoLesson} from './lesson/demoLesson';
 import {getLessonDurationInFrames} from './lesson/timeline';
 import {lessonCanvas} from './design/theme';
+import {PremiumShort} from './compositions/PremiumShort';
+import {getShortDurationInFrames, shortsCanvas} from './shorts/timeline';
 
 // This registry remains strictly isolated from Python production stages.
-// Step 2 adds only the lesson SHELL; Manim media remains for Step 3.
+// Landscape and vertical layouts share verified source packages.
 export const RemotionRoot = () => (
   <>
     <Composition
@@ -28,6 +30,16 @@ export const RemotionRoot = () => (
       width={lessonCanvas.width}
       height={lessonCanvas.height}
       durationInFrames={getLessonDurationInFrames(demoLesson)}
+    />
+    <Composition
+      id="PremiumShort"
+      component={PremiumShort}
+      defaultProps={demoLesson}
+      calculateMetadata={({props}) => ({durationInFrames: getShortDurationInFrames(props)})}
+      fps={shortsCanvas.fps}
+      width={shortsCanvas.width}
+      height={shortsCanvas.height}
+      durationInFrames={getShortDurationInFrames(demoLesson)}
     />
   </>
 );
