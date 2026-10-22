@@ -28,6 +28,7 @@ REPO_ROOT = _Path(__file__).resolve().parents[1]
 _sys.path.insert(0, str(REPO_ROOT))
 from pipeline.paths import load_cell1_config
 from pipeline.visual_actions import validate_registered_actions
+from pipeline.math_models import validate_computed_model
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 # ══════════════════════════════════════════════════════════════
@@ -64,6 +65,9 @@ print(f"✅ Timed script loaded → {TIMED_SCRIPT}")
 _action_errors = validate_registered_actions(SCRIPT.get("scenes", []))
 if _action_errors:
     raise SystemExit("🛑 Invalid visual manifest: " + " | ".join(_action_errors))
+for _scene in SCRIPT.get("scenes", []):
+    if "mathematical_model" in _scene:
+        validate_computed_model(_scene["mathematical_model"])
 
 print("🎨 Animation engine: ENGINE_VISUAL_V4 (manifest-driven + narration-synced)")
 print(f"   Lesson  : Day {lesson_id} — {SCRIPT['title']}")
@@ -1423,6 +1427,53 @@ class Scene02_Hook(Scene):
 # actual values, a story illustration, or the formula.
 # ═════════════════════════════════════════════════════════════
 
+def computed_concept_visual(model):
+    """Plot an actual quadratic from validated coefficients, not decorative art.
+
+    Manim constructs axes and a sampled continuous function in data coordinates.
+    Geometry comes from the same exact-coefficient contract as the QA gate.
+    This rendering route is opt-in: legacy scenes keep their existing behavior.
+    """
+    if not isinstance(model, dict) or model.get("kind") != "quadratic_function":
+        return None
+    a, b, c = (float(model["coefficients"][key]) for key in ("a", "b", "c"))
+    xmin, xmax = map(float, model["domain"])
+    low, high = map(float, model["y_bounds"])
+    span = max(0.5, high - low)
+    padding = max(0.5, span * 0.12)
+    y_min, y_max = low - padding, high + padding
+    x_step = max(0.5, (xmax - xmin) / 5.0)
+    y_step = max(0.5, (y_max - y_min) / 5.0)
+    axes = Axes(
+        x_range=[xmin, xmax, x_step],
+        y_range=[y_min, y_max, y_step],
+        x_length=4.35, y_length=3.20,
+        tips=False,
+        axis_config={"color": mc(C_LGRAY), "stroke_width": 2},
+    )
+    curve = axes.plot(lambda x: a*x*x + b*x + c,
+                      x_range=[xmin, xmax], color=mc(C_CYAN),
+                      use_smoothing=True)
+    marks = VGroup()
+    vertex = model["vertex"]
+    vx = float(vertex["x"])
+    if xmin <= vx <= xmax:
+        marks.add(Dot(axes.c2p(vx, float(vertex["y"])),
+                      radius=0.075, color=mc(C_GOLD)))
+        marks.add(DashedLine(axes.c2p(vx, y_min),
+                             axes.c2p(vx, y_max),
+                             color=mc(C_GOLD), stroke_opacity=0.38))
+    for root in model["x_intercepts"]:
+        rx = float(root["x"])
+        if xmin <= rx <= xmax:
+            marks.add(Dot(axes.c2p(rx, 0), radius=0.07,
+                          color=mc(C_GGREEN)))
+    # The actual mathematical function is traced (not a static formula slide).
+    label = TXT(model["equation"], size=18, color=C_WHITE, max_w=4.3)
+    label.next_to(axes, DOWN, buff=0.18)
+    return VGroup(axes, curve, marks, label)
+
+
 class Scene03_Concept(Scene):
     def construct(self):
         sd  = get_scene_by_step("concept")
@@ -1454,7 +1505,10 @@ class Scene03_Concept(Scene):
                        board_plain.get("practice", []))
         vals = fractions_in(all_lines)
 
-        vis = topic_visual(" ".join(beats[:2]) if beats else "")
+        math_model = sd.get("mathematical_model")
+        vis = computed_concept_visual(math_model) if math_model else None
+        if vis is None:
+            vis = topic_visual(" ".join(beats[:2]) if beats else "")
         if vis is None and vals:
             vis = viz_number_line(vals)
         if vis is None:
@@ -1508,7 +1562,10 @@ class Scene03_Concept(Scene):
             anims.append(FadeIn(m, shift=RIGHT * 0.10))
             self.play(*anims, run_time=0.45)
             if not shown_vis:
-                self.play(FadeIn(vis, scale=0.9), run_time=0.55)
+                if math_model:
+                    self.play(Create(vis), run_time=1.20)
+                else:
+                    self.play(FadeIn(vis, scale=0.9), run_time=0.55)
                 shown_vis = True
 
         sync_to_audio(self, sd.get("scene_id", 3))
