@@ -62,7 +62,7 @@ jobs:
             --media_dir build/semantic-colors tests/smoke_render_phase1.py SemanticMathColorsSmoke
           FRAME="$(find build/semantic-colors -type f -name 'SemanticMathColorsSmoke.png' | head -n 1)"
           test -s "$FRAME"
-          python -m tests.inspect_semantic_math_frame "$FRAME" build/phase1-quality/math-colors.json
+          python tests/inspect_semantic_math_frame.py "$FRAME" build/phase1-quality/math-colors.json
           cp "$FRAME" build/phase1-quality/math-colors.png
       - name: Full 10-worked and 15-practice render smoke
         run: |
