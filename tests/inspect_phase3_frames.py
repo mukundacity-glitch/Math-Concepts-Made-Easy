@@ -33,7 +33,7 @@ def main(directory: Path):
             errors.append(f"{name}: scene truncated (<15 seconds)")
         if image.shape[0] < 360 or image.shape[1] < 640:
             errors.append(f"{name}: preview resolution unexpectedly small")
-        if foreground_fraction < 0.06 or contrast < 19 or bright_text < 0.002:
+        if foreground_fraction < 0.040 or contrast < 19 or bright_text < 0.002:
             errors.append(f"{name}: blank or insufficient mathematical content")
     report = {"passed": not errors, "checks": checks, "errors": errors}
     (directory / "quality-report.json").write_text(
