@@ -8,6 +8,7 @@ from pathlib import Path
 from pipeline.creative_history import recent_variants
 from pipeline.math_models import validate_computed_model
 from pipeline.lesson_contract import validate_premium_lesson
+from pipeline.premium_animation import validate_premium_scene_delivery
 from pipeline.visual_actions import validate_registered_actions
 
 
@@ -65,6 +66,15 @@ def build_coverage_report(script: dict, check_history: bool = True) -> dict:
             # This certifies data/math only, not full visual delivery in Manim.
             if premium_report["verified_solutions"] < 25:
                 errors.append("premium lesson has insufficient verified solutions")
+
+    if script.get("premium_visual_version") == "3.0":
+        try:
+            visual_report = validate_premium_scene_delivery(script)
+        except (ValueError, TypeError, KeyError) as exc:
+            errors.append(f"premium narrated video delivery failed: {exc}")
+        else:
+            if visual_report["verified_visual_items"] < 25:
+                errors.append("premium narrated visuals do not cover all 25 items")
 
     formula = script.get("key_formula", "")
     if not _balanced_latex(formula):
