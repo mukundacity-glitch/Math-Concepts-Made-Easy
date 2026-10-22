@@ -1,10 +1,18 @@
 # Render-level verification only: never publishes or changes production progress.
-name: Phase 1 Mathematical Render Smoke
+name: Mathematical Render QA (Phases 1 and 3)
 
 on:
   pull_request:
     paths:
       - "pipeline/math_models.py"
+      - "pipeline/geometry_models.py"
+      - "pipeline/verified_visual_models.py"
+      - "pipeline/premium_manim_helpers.py"
+      - "pipeline/premium_animation.py"
+      - "pipeline/premium_audio_qa.py"
+      - "tests/phase3_real_tts_smoke.py"
+      - "tests/smoke_render_phase3.py"
+      - "tests/inspect_phase3_frames.py"
       - "pipeline/cell4_animation.py"
       - "tests/smoke_render_phase1.py"
       - "tests/inspect_phase1_frames.py"
@@ -15,19 +23,21 @@ permissions:
   contents: read
 
 jobs:
-  computed-manim-preview:
+  premium-visual-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
+    env:
+      PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install real Manim rendering dependencies
+      - name: Install Manim and FFmpeg
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends ffmpeg libcairo2-dev libpango1.0-dev pkg-config
-          python -m pip install 'manim>=0.18,<0.20' 'sympy>=1.12' pillow numpy pytest
+          python -m pip install 'manim>=0.18,<0.20' 'sympy>=1.12' numpy pillow 'edge-tts>=7.0,<9'
       - name: Render opt-in quadratic with real production helper
         run: |
           python -m manim -ql --disable_caching --media_dir build/phase1-smoke \
@@ -43,13 +53,60 @@ jobs:
             --before build/phase1-quality/before.png \
             --after build/phase1-quality/after.png \
             --report build/phase1-quality/frame-review.json
-      - name: Upload independently inspectable rendered evidence
+      - name: Full 10-worked and 15-practice render smoke
+        run: |
+          mkdir -p build/phase3-smoke/audio build/phase3-smoke/evidence
+          ffmpeg -nostdin -loglevel error -y -f lavfi -i anullsrc=channel_layout=mono:sample_rate=24000 \
+            -t 0.5 build/phase3-smoke/audio/scene_06.mp3
+          cp build/phase3-smoke/audio/scene_06.mp3 build/phase3-smoke/audio/scene_08.mp3
+          python -m manim -ql --disable_caching \
+            --media_dir build/phase3-smoke/media tests/smoke_render_phase3.py PremiumWorkedExampleSmoke
+          python -m manim -ql --disable_caching \
+            --media_dir build/phase3-smoke/media tests/smoke_render_phase3.py PremiumPracticeSmoke
+          python -m manim -ql --disable_caching \
+            --media_dir build/phase3-smoke/media tests/smoke_render_phase3.py VerifiedGeometrySmoke
+          GEOMETRY="$(find build/phase3-smoke/media -name 'VerifiedGeometrySmoke.mp4' -type f | head -n 1)"
+          test -s "$GEOMETRY"
+          ffmpeg -nostdin -v error -y -sseof -2 -i "$GEOMETRY" -frames:v 1 \
+            build/phase3-smoke/evidence/VerifiedGeometrySmoke.png
+          find build/phase3-smoke/media -name '*.mp4' -type f -size +1k -print
+          WORKED="$(find build/phase3-smoke/media -name 'PremiumWorkedExampleSmoke.mp4' -type f | head -n 1)"
+          PRACTICE="$(find build/phase3-smoke/media -name 'PremiumPracticeSmoke.mp4' -type f | head -n 1)"
+          test -s "$WORKED" && test -s "$PRACTICE"
+          for SCENE in "$WORKED" "$PRACTICE"; do
+            NAME="$(basename "$SCENE" .mp4)"
+            ffprobe -v error -show_entries format=duration:stream=width,height -of json \
+              "$SCENE" > "build/phase3-smoke/evidence/$NAME.json"
+            ffmpeg -nostdin -v error -y -sseof -2 -i "$SCENE" -frames:v 1 \
+              "build/phase3-smoke/evidence/$NAME.png"
+          done
+          python tests/inspect_phase3_frames.py build/phase3-smoke/evidence
+      - name: Real speech verification and narrated 25-question videos
+        run: |
+          python tests/phase3_real_tts_smoke.py
+          python -m manim -ql --disable_caching \
+            --media_dir build/phase3-smoke/real_media tests/smoke_render_phase3.py PremiumWorkedRealSpeechSmoke
+          python -m manim -ql --disable_caching \
+            --media_dir build/phase3-smoke/real_media tests/smoke_render_phase3.py PremiumPracticeRealSpeechSmoke
+          for NAME in PremiumWorkedRealSpeechSmoke PremiumPracticeRealSpeechSmoke; do
+            VIDEO="$(find build/phase3-smoke/real_media -type f -name "$NAME.mp4" | head -n 1)"
+            test -s "$VIDEO"
+            ffprobe -v error -show_entries format=duration:stream=codec_type \
+              -of json "$VIDEO" > "build/phase3-smoke/evidence/$NAME.json"
+            ffmpeg -nostdin -v error -y -sseof -3 -i "$VIDEO" -frames:v 1 \
+              "build/phase3-smoke/evidence/$NAME.png"
+            grep -q '"codec_type": "audio"' "build/phase3-smoke/evidence/$NAME.json"
+          done
+      - name: Upload auditable frame and video evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase1-quadratic-render-evidence
+          name: phase3-premium-manim-evidence
           retention-days: 14
           path: |
+            build/phase1-quality/*
             build/phase1-smoke/videos/**/*.mp4
-            build/phase1-quality/*.png
-            build/phase1-quality/*.json
+            build/phase3-smoke/real_audio/audio-verification.json
+            build/phase3-smoke/evidence/*
+            build/phase3-smoke/media/videos/smoke_render_phase3/480p15/*Smoke.mp4
+            build/phase3-smoke/real_media/videos/smoke_render_phase3/480p15/*Smoke.mp4

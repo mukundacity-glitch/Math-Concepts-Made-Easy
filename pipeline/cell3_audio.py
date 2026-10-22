@@ -28,6 +28,7 @@ from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 from pipeline.paths import load_cell1_config
 from pipeline.audio_sync import apply_word_timing
+from pipeline.premium_audio_qa import validate_premium_word_alignment
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 # ══════════════════════════════════════════════════════════════
@@ -123,6 +124,9 @@ async def _stream_edge_tts(
                 text, VOICE,
                 rate=profile["rate"],
                 pitch=profile["pitch"],
+                # Current edge-tts versions default to SentenceBoundary.
+                # Premium scenes need actual per-word offsets for accuracy.
+                boundary="WordBoundary",
             )
             word_list  = []
 
@@ -219,6 +223,23 @@ async def process_single_scene(scene: dict) -> dict:
     except (OSError, json.JSONDecodeError):
         words = []
     apply_word_timing(scene, words)
+
+    # Fail before rendering if any premium question/step/answer has no
+    # actual aligned speech cue. Legacy TTS fallback remains unchanged.
+    if scene.get("premium_items") is not None:
+        try:
+            audio_proof = validate_premium_word_alignment(scene, words)
+        except ValueError as exc:
+            print(f"      ❌ premium audio verification failed: {exc}")
+            return {
+                "scene_id": scene_id, "step": step, "success": False,
+                "engine": engine, "duration": 0.0, "pitch_profile": pitch_profile,
+            }
+        print(
+            "      ✅ premium word alignment: "
+            f"{audio_proof['verified_items']} items, "
+            f"{audio_proof['verified_spoken_cues']} spoken cues"
+        )
 
     print(f"      ✅ Scene {scene_id:02d} [{step}] complete. ({duration_with_buffer}s | {engine})")
 

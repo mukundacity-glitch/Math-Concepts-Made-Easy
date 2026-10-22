@@ -28,7 +28,7 @@ REPO_ROOT = _Path(__file__).resolve().parents[1]
 _sys.path.insert(0, str(REPO_ROOT))
 from pipeline.paths import load_cell1_config
 from pipeline.visual_actions import validate_registered_actions
-from pipeline.math_models import validate_computed_model
+from pipeline.verified_visual_models import validate_verified_visual_model
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 # ══════════════════════════════════════════════════════════════
@@ -67,7 +67,7 @@ if _action_errors:
     raise SystemExit("🛑 Invalid visual manifest: " + " | ".join(_action_errors))
 for _scene in SCRIPT.get("scenes", []):
     if "mathematical_model" in _scene:
-        validate_computed_model(_scene["mathematical_model"])
+        validate_verified_visual_model(_scene["mathematical_model"])
 
 print("🎨 Animation engine: ENGINE_VISUAL_V4 (manifest-driven + narration-synced)")
 print(f"   Lesson  : Day {lesson_id} — {SCRIPT['title']}")
@@ -102,6 +102,7 @@ from pathlib import Path
 # ── Repo imports (shared LaTeX → text/speech translation) ─────
 sys.path.insert(0, r"__REPO_ROOT__")
 from pipeline.mathtext import latex_to_plain, normalize_word, split_sentences
+from pipeline.premium_manim_helpers import render_premium_board, computed_geometry_visual
 
 # ── Data loading ──────────────────────────────────────────────
 SCRIPT_PATH  = Path(r"__SCRIPT_PATH__")
@@ -1506,7 +1507,9 @@ class Scene03_Concept(Scene):
         vals = fractions_in(all_lines)
 
         math_model = sd.get("mathematical_model")
-        vis = computed_concept_visual(math_model) if math_model else None
+        vis = (computed_concept_visual(math_model)
+               if math_model and math_model.get("kind") == "quadratic_function"
+               else computed_geometry_visual(math_model) if math_model else None)
         if vis is None:
             vis = topic_visual(" ".join(beats[:2]) if beats else "")
         if vis is None and vals:
@@ -1752,6 +1755,13 @@ class Scene06_WorkedExample(Scene):
         nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 6))
 
+        if sd.get("premium_items"):
+            setup_bg(self)
+            self.add(make_header(SCRIPT_DATA.get("title", ""), LESSON_ID),
+                     make_footer("worked_example"))
+            render_premium_board(self, "worked_example", sd, nar, LESSON_AUDIO)
+            return
+
         lesson_title = SCRIPT_DATA.get("title", "")
         setup_bg(self)
         self.add(make_header(lesson_title, LESSON_ID),
@@ -1976,6 +1986,13 @@ class Scene08_Practice(Scene):
         sd  = get_scene_by_step("practice")
         nar = Narration(sd)
         attach_audio(self, sd.get("scene_id", 8))
+
+        if sd.get("premium_items"):
+            setup_bg(self)
+            self.add(make_header(SCRIPT_DATA.get("title", ""), LESSON_ID),
+                     make_footer("practice"))
+            render_premium_board(self, "practice", sd, nar, LESSON_AUDIO)
+            return
 
         lesson_title = SCRIPT_DATA.get("title", "")
         setup_bg(self)
