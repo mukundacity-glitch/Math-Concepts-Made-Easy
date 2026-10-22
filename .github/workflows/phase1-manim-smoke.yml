@@ -19,6 +19,10 @@ on:
       - "tests/smoke_render_phase3.py"
       - "tests/inspect_phase3_frames.py"
       - "pipeline/cell4_animation.py"
+      - "remotion/public/branding/**"
+      - "tests/test_brand_logo.py"
+      - "tests/smoke_render_brand_logo.py"
+      - "tests/inspect_brand_header.py"
       - "tests/smoke_render_phase1.py"
       - "tests/inspect_phase1_frames.py"
       - ".github/workflows/phase1-manim-smoke.yml"
@@ -74,6 +78,14 @@ jobs:
           test -s "$FRAME"
           python tests/inspect_semantic_math_frame.py "$FRAME" build/phase1-quality/four-context-color-qa.json
           cp "$FRAME" build/phase1-quality/four-context-preview.png
+      - name: Render actual production Manim header with stored image emblem
+        run: |
+          python -m manim -ql -s --disable_caching \
+            --media_dir build/brand-logo-smoke tests/smoke_render_brand_logo.py BrandLogoHeaderSmoke
+          FRAME="$(find build/brand-logo-smoke -type f -name 'BrandLogoHeaderSmoke*.png' | head -n 1)"
+          test -s "$FRAME"
+          python tests/inspect_brand_header.py "$FRAME"
+          cp "$FRAME" build/phase1-quality/brand-logo-header.png
       - name: Full 10-worked and 15-practice render smoke
         run: |
           mkdir -p build/phase3-smoke/audio build/phase3-smoke/evidence
