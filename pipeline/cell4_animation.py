@@ -313,7 +313,7 @@ def reveal(scene_obj, nar, mobj, spoken=None, run_time=0.55, anim=None, lead=0.3
 # ═════════════════════════════════════════════════════════════
 
 def TXT(s, size=28, color=None, bold=False, max_w=None, wrap=None,
-        line_spacing=0.95, math_mode="auto")
+        line_spacing=0.95, math_mode="auto"):
     """Shared semantic formatter for all scene equations and prose.
 
     Prose keeps its design color, whereas variables, numbers, operators,
