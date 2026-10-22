@@ -56,7 +56,7 @@ def build_premium_visual_plan(lesson: dict) -> dict | None:
             item_id = question["id"]
             obj = f"premium_{section}_{item_id}"
             steps = []
-            chunk = [f"{cue}.", f"{question['prompt'].rstrip('.')}."]
+            chunk = [f"{cue}.", f"{_speak(question['prompt']).rstrip('.')}."]
             if stage == "practice":
                 chunk.append("Pause here and solve it independently before following the explanation.")
             for step_index, step in enumerate(question["steps"], 1):
