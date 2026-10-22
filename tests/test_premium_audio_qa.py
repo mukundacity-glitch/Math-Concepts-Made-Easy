@@ -63,3 +63,12 @@ def test_out_of_order_and_out_of_duration_timestamp_fail(prepared):
 
 def test_legacy_audio_does_not_require_premium_fields():
     assert validate_premium_word_alignment({"step": "practice"}, []) is None
+
+
+def test_production_voice_explicitly_requests_word_boundaries():
+    # Modern edge-tts defaults to SentenceBoundary, which produces audio
+    # but never satisfies the premium word-cue math-animation contract.
+    production = (ROOT / "pipeline" / "cell3_audio.py").read_text(encoding="utf-8")
+    probe = (ROOT / "tests" / "phase3_real_tts_smoke.py").read_text(encoding="utf-8")
+    assert 'boundary="WordBoundary"' in production
+    assert 'boundary="WordBoundary"' in probe
