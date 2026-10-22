@@ -110,4 +110,4 @@ jobs:
           retention-days: 14
           path: |
             build/phase3-smoke/evidence/*
-            build/phase3-smoke/media/videos/**/*.mp4
+            build/phase3-smoke/media/videos/smoke_render_phase3/480p15/*Smoke.mp4
