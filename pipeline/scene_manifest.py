@@ -7,6 +7,7 @@ and quality assurance.  It deliberately contains no lesson-specific code.
 from __future__ import annotations
 
 from pipeline.math_models import build_computed_model
+from pipeline.premium_animation import build_premium_visual_plan, attach_premium_stage
 from pipeline.mathtext import split_sentences
 from pipeline.visual_actions import build_visual_spec
 
@@ -30,6 +31,7 @@ def estimate_duration(text: str, words_per_minute: int = 125) -> float:
 
 def build_scene_manifest(lesson: dict, narrations: dict, plan: dict) -> dict:
     scenes = []
+    premium_plan = build_premium_visual_plan(lesson)
     # Only an explicit, validated mathematical model enables computed rendering.
     # Existing curriculum remains on the unchanged compatibility path.
     math_model = (build_computed_model(lesson["math_model"])
@@ -79,6 +81,8 @@ def build_scene_manifest(lesson: dict, narrations: dict, plan: dict) -> dict:
                 "mathematical_operation": "trace_computed_function",
             })
             scene["timing_markers"].append(scene["actions"][-1]["timing_marker"])
+        if premium_plan is not None:
+            attach_premium_stage(scene, premium_plan)
         scenes.append(scene)
     return {
         "schema_version": "1.0",
