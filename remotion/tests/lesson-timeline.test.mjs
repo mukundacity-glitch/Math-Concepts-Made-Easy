@@ -90,11 +90,11 @@ test('unbounded or invalid user content is rejected before React composition', (
 test('composition uses verified original math media, not recomputed equations', () => {
   const shell = read('src/compositions/PremiumLesson.tsx');
   const stage = read('src/components/SceneFrame.tsx');
-  assert.match(shell, /buildLessonTimeline\\(props\\)/);
+  assert.match(shell, /buildLessonTimeline\(props\)/);
   assert.match(shell, /<Sequence/);
-  assert.match(stage, /data-visual-slot=\\{chapter\\.media/);
-  assert.match(stage, /staticFile\\(chapter\\.media\\.videoSrc\\)/);
-  assert.match(stage, /staticFile\\(chapter\\.media\\.audioSrc\\)/);
+  assert.match(stage, /data-visual-slot=\{chapter\.media/);
+  assert.match(stage, /staticFile\(chapter\.media\.videoSrc\)/);
+  assert.match(stage, /staticFile\(chapter\.media\.audioSrc\)/);
   assert.doesNotMatch(shell + stage, /<CaptionTrack|<BasicCaptions|PremiumShort/);
 });
 
