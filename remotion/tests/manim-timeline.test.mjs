@@ -80,5 +80,6 @@ test('video remains silent so separately synchronized Cell-3 audio plays once', 
   assert.match(frame, /staticFile\(chapter\.media\.videoSrc\)/);
   assert.match(frame, /staticFile\(chapter\.media\.audioSrc\)/);
   assert.match(frame, /objectFit="contain"/);
-  assert.doesNotMatch(frame, /<BasicCaptions|<CaptionTrack/);
+  assert.match(frame, /<CaptionLane/);
+  assert.doesNotMatch(frame, /<PremiumShort/);
 });
