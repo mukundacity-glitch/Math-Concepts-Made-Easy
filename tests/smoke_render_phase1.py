@@ -13,6 +13,7 @@ import textwrap
 import manim
 from manim import *
 from pipeline.math_models import build_computed_model, validate_computed_model
+from pipeline.semantic_math import semantic_text
 from pipeline.mathtext import latex_to_plain
 
 ENGINE = Path(__file__).resolve().parents[1] / "pipeline" / "cell4_animation.py"
