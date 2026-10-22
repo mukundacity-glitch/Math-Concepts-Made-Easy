@@ -36,6 +36,7 @@ if len(function_nodes) != 2:
 globals_for_helpers = dict(vars(manim))
 globals_for_helpers.update({
     "latex_to_plain": latex_to_plain,
+    "semantic_text": semantic_text,
     "textwrap": textwrap,
     "FONT": "DejaVu Sans",
     "C_WHITE": "#FFFFFF",
