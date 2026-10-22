@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: "22"
       - name: Install isolated Remotion dependencies
-        run: npm install --no-audit --no-fund\n      - name: Install preview PNG inspector\n        run: npm install --no-save --no-audit --no-fund sharp
+        run: npm install --no-audit --no-fund
       - name: Verify strict TypeScript and pure composition tests
         run: npm run check
       - name: Bundle diagnostic and premium lesson compositions
