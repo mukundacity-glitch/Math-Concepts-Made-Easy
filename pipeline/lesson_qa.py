@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from pipeline.creative_history import recent_variants
+from pipeline.math_models import validate_computed_model
 from pipeline.visual_actions import validate_registered_actions
 
 
@@ -26,6 +27,11 @@ def build_coverage_report(script: dict, check_history: bool = True) -> dict:
     errors.extend(validate_registered_actions(scenes))
     for scene in scenes:
         scene_id = scene.get("scene_id")
+        if "mathematical_model" in scene:
+            try:
+                validate_computed_model(scene["mathematical_model"])
+            except (ValueError, TypeError, KeyError) as exc:
+                errors.append(f"scene {scene_id}: invalid computed mathematics: {exc}")
         narration = str(scene.get("narration", "")).strip()
         beats = scene.get("narration_beats", [])
         actions = scene.get("actions", [])
