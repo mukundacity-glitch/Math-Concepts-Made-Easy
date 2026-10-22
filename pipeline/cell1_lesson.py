@@ -17,6 +17,7 @@ from pipeline.constants import (
 )
 from pipeline.curriculum import MASTER_CURRICULUM, get_lesson
 from pipeline.lesson_plan import plan_lesson
+from pipeline.lesson_contract import validate_premium_lesson, premium_projection
 
 ensure_output_folders()
 DAY_NUMBER = get_day_number()
@@ -125,6 +126,20 @@ def validate_lesson(lesson: dict) -> bool:
         passed = False
     else:
         print(f"   ✅ practice items={len(practice)}")
+
+    # Opt-in premium content cannot pass solely because legacy board lines exist.
+    # No unconverted historical lesson is rewritten or automatically promoted.
+    if "educational_content" in lesson:
+        try:
+            validation = validate_premium_lesson(lesson)
+            print(
+                "   ✅ premium verified content: "
+                f"{validation['worked_examples']} examples, "
+                f"{validation['practice_questions']} practice questions"
+            )
+        except ValueError as exc:
+            print(f"   ❌ premium contract failed: {exc}")
+            passed = False
 
     # Ban leftover placeholder / generic template language in lesson fields
     blob = json.dumps(lesson, ensure_ascii=False).lower()
@@ -461,6 +476,10 @@ curriculum_data = {
     "lesson_plan"     : LESSON_PLAN,
     "scene_narrations": NARRATIONS,
 }
+
+# Preserve the opt-in contract across Cell 1 -> Cell 2 without altering
+# historical curriculum entries or the existing video structure.
+curriculum_data.update(premium_projection(TODAY))
 
 # Format it perfectly as a string
 curriculum_str = pprint.pformat(curriculum_data, sort_dicts=False, width=100)

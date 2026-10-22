@@ -349,6 +349,15 @@ def build_script(config) -> dict:
         "hook_variant"         : manifest["hook_variant"],
         "outro_variant"        : manifest["outro_variant"],
 
+        # Complete math-verified content remains machine-readable downstream.
+        # Existing Manim lesson renderers have not yet been upgraded to display
+        # 10/15 discrete items; those render changes need a separate review.
+        **({
+            "concept_id": lesson["concept_id"],
+            "prerequisite_ids": lesson["prerequisite_ids"],
+            "educational_content": lesson["educational_content"],
+        } if "educational_content" in lesson else {}),
+
         # ── Asset paths ───────────────────────────────────────
         "banner_path"          : str(config.BANNER_PATH),
 
