@@ -1,4 +1,4 @@
-# Phase 4 — Step 3: Connect original Manim media to Remotion
+# Phase 4 — Step 4: Word-synchronized narration caption overlays
 
 This step replaces the central teaching panel's placeholder **only when all
 chapters have valid real Manim scene files and original Cell-3 audio**.
@@ -69,16 +69,46 @@ real Manim lesson visuals or the full hybrid demonstration.**
 The optional bridge never modifies `autopilot.py`, uploads, lesson history,
 `state/progress.json`, the daily GitHub Actions publisher or Cell 5 assembly.
 
-**Not implemented yet:** caption overlays, Shorts compositions, a complete
-real nine-stage hybrid demonstration, release activation, or a duplicate
-publishing path.
+### Step 4 — Caption overlays from existing Cell-3 speech
+
+The bridge now automatically reads each **original**
+`audio/lesson_NNN/scene_XX.words.json` word-boundary file (Edge-TTS source)
+alongside its scene's Manim MP4 and original MP3.
+
+- Captions use Remotion's JSON `Caption` schema:
+  `text`, `startMs`, `endMs`, `timestampMs`, `confidence`,
+  `pageBreakAfter`. Timestamps are **relative to each original scene**,
+  not absolute to the whole lesson. Per-chapter `Sequence` clocks prevent
+  drift when chapter durations differ.
+- Punctuation, length and duration limits group original spoken words
+  into short readable caption pages, without re-transcribing or creating
+  invented mathematical statements.
+- Each caption page appears only during its verified word-time window.
+  The **reserved caption strip below the Manim panel** never overlays
+  equations, diagrams or semantic mathematical colors.
+- Manim video remains muted and original Cell-3 narration plays once.
+- Word-source SHA-256 contributes to the content-addressed package ID.
+  A changed narration transcript therefore cannot reuse stale caption
+  packages.
+- If **all** word-boundary sources are missing or empty (for example
+  an older gTTS fallback), the Step-3 video can still be previewed with
+  captions explicitly unavailable. No speech timing is guessed.
+  A **partially captioned lesson fails** instead of silently omitting
+  captions for individual chapters.
+- To require full caption coverage, add `--require-captions` to the
+  command. Missing original timestamps then abort the export.
+
+These are optional development previews, not live publishing.
+
+**Not implemented yet:** vertical Shorts, a complete real nine-stage hybrid
+lesson demo, production rollout, or a duplicate publishing path.
 
 ## Approved fixed order
 
 - ✅ Step 1 — Start Phase 4 Remotion scaffold.
 - ✅ Step 2 — Build Remotion lesson composition.
 - ✅ Step 3 — Connect Manim outputs into Remotion timeline.
-- **NEXT Step 4 — Add caption overlays.**
-- Step 5 — Add Shorts composition.
+- ✅ Step 4 — Add caption overlays.
+- **NEXT Step 5 — Add Shorts composition.**
 - Step 6 — Run one full demo lesson through the hybrid pipeline.
 - Only then consider production rollout.
