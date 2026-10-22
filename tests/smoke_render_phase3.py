@@ -85,3 +85,47 @@ class VerifiedGeometrySmoke(Scene):
             self.play(Create(heading), Create(diagram), run_time=1.4)
             self.wait(0.45)
             self.play(FadeOut(heading), FadeOut(diagram), run_time=0.3)
+
+
+class RealSpeechClock:
+    """Read true generated Edge WordBoundary events; never interpolate times."""
+    def __init__(self, scene_id: int):
+        import subprocess
+        audio_dir = ROOT / "build" / "phase3-smoke" / "real_audio"
+        audio = audio_dir / f"scene_{scene_id:02d}.mp3"
+        words = audio_dir / f"scene_{scene_id:02d}.words.json"
+        self.words = json.loads(words.read_text())
+        self.duration = float(subprocess.check_output([
+            "ffprobe", "-v", "error", "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1", str(audio)
+        ], text=True).strip()) + 0.65
+        self.cursor = 0
+        self.audio_dir = audio_dir
+        self.audio = audio
+
+    def _find(self, tokens):
+        for index in range(self.cursor, len(self.words) - len(tokens) + 1):
+            if all(self.words[index + offset]["norm"] == token
+                   for offset, token in enumerate(tokens)):
+                return index
+        return None
+
+
+class PremiumWorkedRealSpeechSmoke(Scene):
+    """10 fully voiced computed worked problems using real Edge-TTS timestamps."""
+    def construct(self):
+        stage = PLAN["stages"]["worked_example"]
+        sd = {"scene_id": 6, "premium_items": stage["items"]}
+        voice = RealSpeechClock(6)
+        self.add_sound(str(voice.audio))
+        render_premium_board(self, "worked_example", sd, voice, voice.audio_dir)
+
+
+class PremiumPracticeRealSpeechSmoke(Scene):
+    """15 voiced practice problems and solutions, no synthetic timing."""
+    def construct(self):
+        stage = PLAN["stages"]["practice"]
+        sd = {"scene_id": 8, "premium_items": stage["items"]}
+        voice = RealSpeechClock(8)
+        self.add_sound(str(voice.audio))
+        render_premium_board(self, "practice", sd, voice, voice.audio_dir)
