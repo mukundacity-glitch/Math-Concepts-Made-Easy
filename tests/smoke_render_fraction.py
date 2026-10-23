@@ -10,6 +10,7 @@ class FractionGroupingSmoke(Scene):
             (r'y = \frac{x-5}{2}', 'y = (x-5)/2'),
             (r'z = \frac{a+b}{c+d}', 'z = (a+b)/(c+d)'),
             (r'f(x) = \frac{1}{2x}', 'f(x) = 1/(2x)'),
+            (r'f^{-1}(x) = \frac{x-5}{2}', 'f⁻¹(x) = (x-5)/2'),
         ]
         rows = []
         for source, expected in examples:
