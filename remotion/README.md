@@ -1,4 +1,14 @@
-# Phase 4 — Step 5: Vertical Shorts composition
+# Remotion hybrid production and verification
+
+The daily publisher uses `PremiumLesson` for the full lesson and **NativeShort**
+for the three production Shorts. `NativeShort` has its own 1080 × 1920 layout,
+portrait Manim teaching boards, dedicated narration and a separate caption
+lane. It never opens landscape footage. See the
+[native production guide](../docs/native-shorts-production.md).
+
+The remaining sections document the Phase 4 development bridge and historical
+`PremiumShort` chapter-selection template. That landscape-media template is
+retained for development evidence and is not used for production Shorts.
 
 This step replaces the central teaching panel's placeholder **only when all
 chapters have valid real Manim scene files and original Cell-3 audio**.
@@ -110,7 +120,7 @@ These are optional development previews, not live publishing.
 - ✅ Step 4 — Add caption overlays.
 - ✅ Step 5 — Add Shorts composition.
 - ✅ Step 6 — Full real hybrid lesson and formula Short rendered, verified and visually reviewed.
-- Only then consider production rollout.
+- Production rollout — the daily hybrid publisher uses the separately verified native portrait composition.
 
 
 ## Persistent channel logo — applies to all lesson slides
@@ -176,3 +186,4 @@ The synthetic color panels and sine-wave audio verify transport only and are
 
 This step does not activate Shorts publishing, edit Cell 7, change schedules,
 advance lesson history or modify production state.
+

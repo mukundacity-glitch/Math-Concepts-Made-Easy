@@ -6,7 +6,8 @@ package to YouTube automatically.
 
 ## Current production status
 
-- Every lesson listed in `state/progress.json` under `uploaded` is posted and
+- Every lesson listed in `state/progress.json` under `uploaded` is uploaded and
+  scheduled for release or already published, and
   locked against duplicate uploads.
 - `next_day` is the single lesson eligible for the next production run; it
   advances only after YouTube confirms the upload.
@@ -17,7 +18,12 @@ package to YouTube automatically.
   media validation, and a successful YouTube API upload are required before the
   day counter advances.
 - If upload fails, the counter stays on the same lesson and the next scheduled
-  run retries it.
+  run reuses completed per-asset upload receipts. An ambiguous upload stops for
+  reconciliation rather than inserting a duplicate video.
+- The daily workflow uses the verified **Manim–Remotion hybrid pipeline**.
+  All three Shorts have a separate **native 1080 × 1920** layout; their
+  portrait teaching boards are authored separately from the full lesson.
+  [Native portrait rendering and publishing safeguards](docs/native-shorts-production.md).
 
 The next scheduled run reads its lesson number from `next_day`; no test or
 workflow is tied to a fixed video number.
@@ -25,9 +31,9 @@ workflow is tied to a fixed video number.
 ## Commands
 
 ```bash
-python autopilot.py                 # next open lesson
-python autopilot.py --upload        # render and upload locally
-python autopilot.py --from-stage 5  # resume at Manim rendering
+python autopilot.py --hybrid                 # next open lesson
+python autopilot.py --hybrid --upload        # render and upload locally
+python autopilot.py --hybrid --from-stage 5  # resume at Manim rendering
 pytest -q                           # fast regression suite
 ```
 
@@ -45,12 +51,16 @@ used by automation or for duplicate uploads.
    narration/action sync, LaTeX, and creative repetition.
 5. `pipeline/cell4_animation.py` renders the selected manifest scenes with
    Manim and narration-timed visual reveals.
-6. `pipeline/cell5_assembly.py` assembles the long video.
-7. `pipeline/cell8_subtitles.py` creates SRT and VTT captions.
-8. `pipeline/cell6_thumbnail.py` creates the thumbnail.
-9. `pipeline/cell7_shorts.py` creates HOOK, FORMULA, and MISTAKE Shorts.
-10. `pipeline/media_gate.py` validates final media before the uploader may call
-    YouTube.
+6. `pipeline/hybrid_assembly.py` assembles the full lesson in Remotion and
+   creates SRT/VTT captions from the same frame-quantized timeline.
+7. `pipeline/cell6_thumbnail.py` creates the thumbnail.
+8. `pipeline/native_shorts.py` creates separate portrait HOOK, FORMULA and
+   MISTAKE teaching boards with complete narration and synchronized captions.
+9. `pipeline/media_gate.py` validates final media and native-render receipts
+   before the uploader may call YouTube.
+
+Legacy FFmpeg assembly and landscape-derived Shorts remain development
+commands; the scheduled publisher always passes `--hybrid`.
 
 The planner may select these teaching stages when the lesson content supports
 them: hook, intuition, definition, diagram/model, formula/rule, worked example,
@@ -120,6 +130,9 @@ sole scheduled publisher.
 UTC cron entries plus a New York timezone gate so the local schedule remains
 06:00 through daylight-saving changes. Scheduled runs always use public release
 mode and set the main-video release to 09:00 local time.
+Shorts release at 12:00, 18:00 and 22:00 local time. Missed slots move to the
+next local day. A manual first-day kickoff can schedule the full lesson later
+today if the morning slot has passed. YouTube processing may delay availability.
 
 Required GitHub Actions secrets:
 
@@ -160,3 +173,4 @@ tests/                   manifest, timing, lock, and schedule regressions
 .github/workflows/       CI, daily autopilot, and upload recovery
 legacy/                  immutable posted-video policy
 ```
+

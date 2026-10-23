@@ -41,3 +41,23 @@ Preflight: `Native portrait Shorts verification` renders all three real Day 43
 Shorts without publishing, retains full videos, original audio, word timings,
 and a phone-size frame for every teaching page. A successful preflight and
 review precede production activation. Past uploaded days remain locked.
+
+## Verified rollout evidence — October 23, 2026
+
+- PR #31 merged the native portrait composition and guarded hybrid publisher.
+- Native render run [39942480443](https://github.com/mukundacity-glitch/Math-Concepts-Made-Easy/actions/runs/39942480443)
+  passed on commit `58b4bac379102c05bcb81989f0eca8866d40aa7d`.
+  Its three real Shorts contain 471, 592 and 615 frames (15.7, 19.733 and
+  20.5 seconds). All ten teaching pages were reviewed at 360 × 640; all
+  ten narration samples and source hashes passed verification.
+- [Reviewed native video and phone frames](https://github.com/mukundacity-glitch/Math-Concepts-Made-Easy/actions/runs/39942480443/artifacts/12496457743).
+- PR #32 preserves grouping in full-lesson inline fractions and complete
+  numeric exponents. The real Manim fraction proof and 25 narrated premium
+  solutions passed [run 39944372864](https://github.com/mukundacity-glitch/Math-Concepts-Made-Easy/actions/runs/39944372864).
+  Local verification passed 173 Python tests, 31 Remotion tests, TypeScript
+  compilation and bundling; all 1,071 curriculum mathematical display/speech
+  inputs translated successfully.
+
+The initial Day 43 kickoff was cancelled during dependency installation,
+before any YouTube upload, to include the fraction correction. Day 43 remains
+the first eligible production lesson at rollout; prior uploads 1–42 stay locked.

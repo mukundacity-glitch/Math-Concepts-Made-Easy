@@ -1,7 +1,7 @@
 {
   "name": "@math-concepts-made-easy/remotion",
   "version": "0.1.0",
-  "description": "Isolated Remotion development shell; no production publishing or Manim timeline integration",
+  "description": "Verified Manim–Remotion lesson assembly and native portrait Shorts",
   "private": true,
   "type": "module",
   "scripts": {
@@ -30,3 +30,4 @@
     "sharp": "^0.34.4"
   }
 }
+
