@@ -13,9 +13,10 @@
       "video_id": "P6CVAsf4CNI"
     },
     "FORMULA": {
-      "status": "uploading",
+      "status": "uploaded",
       "publish_at": "2026-10-23T22:00:00Z",
-      "privacy": "public"
+      "privacy": "public",
+      "video_id": "SNESsYY3etw"
     }
   }
 }
