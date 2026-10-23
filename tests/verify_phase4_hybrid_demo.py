@@ -25,12 +25,22 @@ def frame(video: Path, seconds: float, path: Path) -> None:
                     "-i", str(video), "-frames:v", "1", str(path)], check=True)
 
 
-def samples(path: Path, seconds: float) -> np.ndarray:
-    raw = subprocess.check_output([
-        "ffmpeg", "-nostdin", "-v", "error", "-ss", str(seconds), "-i", str(path),
-        "-t", "2", "-vn", "-ac", "1", "-ar", "8000", "-f", "f32le", "pipe:1",
-    ])
-    return np.frombuffer(raw, dtype="<f4")
+def samples(path: Path, seconds: float, *, stereo_channel: str | None = None) -> np.ndarray:
+    """Decode the original mono voice or ONE real output stereo channel.
+
+    FFmpeg's default stereo->mono downmix uses sqrt(1/2) per channel: two
+    identical channels therefore read 1.414x louder than the actual playback
+    channel. That creates a false 'doubled narration' regression failure.
+    Inspect FL/FR individually, not the synthetic downmix.
+    """
+    args = ["ffmpeg", "-nostdin", "-v", "error", "-ss", str(seconds), "-i", str(path),
+            "-t", "2", "-vn"]
+    if stereo_channel is not None:
+        if stereo_channel not in ("FL", "FR"):
+            raise ValueError("invalid output voice channel")
+        args += ["-af", f"pan=mono|c0={stereo_channel}"]
+    args += ["-ac", "1", "-ar", "8000", "-f", "f32le", "pipe:1"]
+    return np.frombuffer(subprocess.check_output(args), dtype="<f4")
 
 
 def check_video(path: Path, width: int, height: int, frames: int) -> dict:
@@ -68,7 +78,10 @@ def main() -> None:
             raise ValueError("missing original scene-local captions")
         # Match decoded final AAC speech against original TTS, allowing codec rounding.
         source = samples(original, .5)
-        rendered = samples(full, starts + .5)
+        rendered = samples(full, starts + .5, stereo_channel="FL")
+        right = samples(full, starts + .5, stereo_channel="FR")
+        if len(rendered) != len(right) or not np.allclose(rendered, right, rtol=0, atol=0.005):
+            raise ValueError(f"scene {sid}: left/right output speech differs")
         length = min(len(source), len(rendered)) - 320
         correlations = []
         gains = []
@@ -79,7 +92,10 @@ def main() -> None:
             gains.append(float(np.sqrt(np.mean(candidate ** 2)) / np.sqrt(np.mean(reference ** 2))))
         best = int(np.nanargmax(correlations))
         if correlations[best] < .92 or not .75 < gains[best] < 1.25:
-            raise ValueError(f"scene {sid}: final narration is shifted, altered or doubled")
+            raise ValueError(
+                f"scene {sid}: real output speech channel is shifted or altered "
+                f"(correlation={correlations[best]:.4f}, gain={gains[best]:.4f})"
+            )
         duration = chapter["durationInFrames"] / 30
         review_time = min(duration - .2, max(2, duration * .45))
         path = EVIDENCE / f"chapter-{sid:02d}-{scene['step']}.png"
