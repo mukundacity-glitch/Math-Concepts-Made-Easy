@@ -1,0 +1,63 @@
+name: Phase 4 Step 6 — Export Evidence Review
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/phase4-demo-review.yml"
+      - "tests/review_phase4_demo.py"
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful real hybrid demo run to review
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  review-exported-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DEMO_RUN_ID: ${{ inputs.run_id || '39898135294' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Wait for and download the exact successful demo artifact
+        run: |
+          python -m py_compile tests/review_phase4_demo.py
+          python tests/review_phase4_demo.py download
+      - name: Install review-only audio and frame tools
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          sudo tee /etc/apt/sources.list.d/ubuntu.sources > /dev/null <<'SOURCES'
+          Types: deb
+          URIs: https://archive.ubuntu.com/ubuntu/
+          Suites: noble noble-updates noble-backports
+          Components: main restricted universe multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb
+          URIs: https://security.ubuntu.com/ubuntu/
+          Suites: noble-security
+          Components: main restricted universe multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+          SOURCES
+          timeout 180s sudo apt-get -o Acquire::Retries=2 -o Acquire::https::Timeout=30 update
+          timeout 600s sudo apt-get -o Acquire::Retries=2 -o Acquire::https::Timeout=30 install -y --no-install-recommends ffmpeg
+          python -m pip install numpy Pillow
+      - name: Verify downloaded hashes and Short speech, expose actual review frames
+        run: python tests/review_phase4_demo.py review
+      - name: Retain complete final demonstration and review evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase4-step6-final-reviewed-evidence
+          retention-days: 90
+          if-no-files-found: error
+          path: build/phase4-export-review/package/**

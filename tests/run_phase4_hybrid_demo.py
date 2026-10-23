@@ -62,6 +62,16 @@ def production_functions(path: str, names: set[str], globals_: dict) -> dict:
     return globals_
 
 
+def snapshot() -> None:
+    baseline = EVIDENCE / "production-before.json"
+    current = {path: digest(ROOT / path) for path in PROTECTED}
+    if baseline.exists():
+        if read_json(baseline) != current:
+            raise ValueError("protected production files changed since baseline capture")
+        return
+    write_json(baseline, current)
+
+
 def prepare() -> None:
     from pipeline.constants import PITCH_PROFILES, SCENE_ANIMATION_MAP, SCENE_PITCH_MAP
     from pipeline.lesson_contract import validate_premium_lesson
@@ -69,8 +79,8 @@ def prepare() -> None:
     from pipeline.mathtext import latex_to_speech, split_sentences
     from pipeline.premium_animation import premium_narration
 
-    EVIDENCE.mkdir(parents=True, exist_ok=True)
-    write_json(EVIDENCE / "production-before.json", {p: digest(ROOT / p) for p in PROTECTED})
+    # Preserve the pre-install baseline instead of hiding earlier modifications.
+    snapshot()
     fixture = read_json(ROOT / "examples/phase4_hybrid_demo.json")
     lesson = read_json(ROOT / fixture.pop("source"))
     lesson.update(fixture)
@@ -204,5 +214,6 @@ def protect() -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["prepare", "audio", "manim", "bridge", "protect"])
+    parser.add_argument("command", choices=["snapshot", "prepare", "audio", "manim", "bridge", "protect"])
     globals()[parser.parse_args().command]()
+
