@@ -150,7 +150,8 @@ def render_premium_board(scene, stage: str, sd: dict, nar, audio_dir: Path) -> N
         raise ValueError("premium visual renderer omitted or repeated question IDs")
     if float(scene.renderer.time) > nar.duration + 1.2:
         raise ValueError("premium visual animations overrun narrated scene length")
-    remaining = nar.duration - float(scene.renderer.time) - 0.05
+    # Keep the declared tail through the last encoded frame for the media bridge.
+    remaining = nar.duration - float(scene.renderer.time)
     if remaining > 0.01:
         scene.wait(remaining)
 

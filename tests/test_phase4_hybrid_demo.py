@@ -39,3 +39,16 @@ def test_production_hold_covers_declared_tail_without_negative_wait():
     scene.renderer.time = 10.8
     scope["sync_to_audio"](scene, 1)
     assert waits == []
+
+
+def test_premium_board_tail_covers_declared_duration_at_frame_boundary():
+    tree = ast.parse((ROOT / "pipeline/premium_manim_helpers.py").read_text())
+    function = next(node for node in tree.body if isinstance(node, ast.FunctionDef)
+                    and node.name == "render_premium_board")
+    # Execute the actual final hold branch without needing the drawing runtime.
+    tail = function.body[-2:]
+    waits = []
+    scope = {"nar": SimpleNamespace(duration=10.653),
+             "scene": SimpleNamespace(renderer=SimpleNamespace(time=10.0), wait=waits.append)}
+    exec(compile(ast.Module(body=tail, type_ignores=[]), "<premium-tail>", "exec"), scope)
+    assert abs(waits[0] - .653) < 1e-8

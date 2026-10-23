@@ -160,6 +160,7 @@ def manim() -> None:
     })
     renders = OUTPUT / "renders/lesson_999"
     renders.mkdir(parents=True, exist_ok=True)
+    media_reports = []
     for scene in script["scenes"]:
         classname = values["SCENE_CLASS_MAP"][scene["step"]]
         run(sys.executable, "-m", "manim", "--resolution", "1920,1080", "--fps", "30",
@@ -169,6 +170,11 @@ def manim() -> None:
         if len(candidates) != 1:
             raise ValueError("Manim did not produce exactly one output for " + classname)
         shutil.copyfile(candidates[0], renders / f"scene_{scene['scene_id']:02d}_{scene['step']}.mp4")
+        media_reports.append({"sceneId": scene["scene_id"], "step": scene["step"],
+            "declaredSeconds": scene["duration_seconds"], "probe": json.loads(subprocess.check_output([
+                "ffprobe", "-v", "error", "-show_streams", "-show_format", "-of", "json", str(candidates[0]),
+            ], text=True))})
+        write_json(EVIDENCE / "source-media-probes.json", media_reports)
 
 
 def bridge() -> None:
