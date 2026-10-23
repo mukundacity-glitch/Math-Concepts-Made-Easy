@@ -35,15 +35,12 @@ jobs:
           npm run check
           npx remotion browser ensure
       - name: Generate three authentic native portrait Shorts for Day 43
+        env:
+          LESSON_DAY: '43'
         run: |
           python -m pytest -q
-          python - <<'PY'
-          from pathlib import Path
-          from pipeline.curriculum import get_lesson
-          from pipeline.native_shorts import build
-          build(get_lesson(43), Path('output/final_videos').resolve(),
-                Path('output/native-shorts').resolve(), 'en-US-RyanNeural')
-          PY
+          python -m pipeline.cell1_lesson
+          python -m pipeline.native_shorts
       - name: Verify every final stream and extract phone review frames
         run: python tests/verify_native_shorts.py
       - uses: actions/upload-artifact@v4

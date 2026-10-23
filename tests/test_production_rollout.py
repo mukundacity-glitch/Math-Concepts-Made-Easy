@@ -1,5 +1,6 @@
 """Publishing retry safety and portrait content completeness."""
 import json
+from types import SimpleNamespace
 from datetime import datetime, time, timezone
 
 import pytest
@@ -22,6 +23,23 @@ def test_inverse_and_fraction_narration_preserve_meaning():
     assert 'f inverse' in speech
     assert 'power' not in speech
     assert 'the quantity x minus 5 divided by 2' in speech
+
+
+def test_native_entry_point_accepts_the_actual_cell1_config(tmp_path, monkeypatch):
+    from pipeline import native_shorts, paths
+    lesson = get_lesson(43)
+    projected = {**lesson, 'id': lesson.pop('day'), 'title': lesson.pop('topic')}
+    projected.pop('day', None)
+    projected.pop('topic', None)
+    cfg = SimpleNamespace(CURRICULUM=[projected], FINAL_DIR=tmp_path,
+                          TTS_CONFIG={'voice': 'en-GB-RyanNeural'})
+    monkeypatch.setattr(paths, 'load_cell1_config', lambda: cfg)
+    calls = []
+    monkeypatch.setattr(native_shorts, 'build', lambda *args: calls.append(args))
+    native_shorts.main()
+    assert calls[0][0]['day'] == 43
+    assert calls[0][0]['topic'] == 'Inverse Functions'
+    assert calls[0][3] == 'en-GB-RyanNeural'
 
 
 def test_partial_upload_retry_reuses_returned_video_id(tmp_path, monkeypatch):

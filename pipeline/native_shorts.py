@@ -231,7 +231,8 @@ def build(lesson: dict, final_dir: Path, work: Path, voice: str) -> list[Path]:
 def main():
     from pipeline.paths import BASE_DIR, load_cell1_config
     config = load_cell1_config()
-    build(config.CURRICULUM[0], config.FINAL_DIR,
+    lesson = config.CURRICULUM[0]
+    build({**lesson, "day": lesson["id"], "topic": lesson["title"]}, config.FINAL_DIR,
           BASE_DIR / "native-shorts", config.TTS_CONFIG["voice"])
 
 
