@@ -49,7 +49,8 @@ normalization at −18 LUFS, a −1.5 dBTP ceiling, and stereo 48kHz PCM24
 intermediates. A measured static gain correction handles short-clip gating
 variation without changing timing; it fails if the approved peak ceiling would
 be exceeded. No echo, reverb, music, or duplicate narration is added. Native
-portrait Shorts reuse the same Ryan profiles and mastering.
+portrait Shorts reuse the same Ryan profiles and PCM masters. Keeping PCM
+until final AAC encoding avoids MP3 priming delays in spoken-word alignment.
 
 ## Commands
 

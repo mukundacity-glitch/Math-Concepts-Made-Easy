@@ -146,8 +146,8 @@ async def narrate(text: str, audio: Path, words: Path, voice: str, scene: str = 
     identifier = 'native-' + hashlib.sha256((scene + text).encode()).hexdigest()[:16]
     beat = {'id': identifier, 'scene': scene, 'speech': text, 'holdSeconds': .4}
     receipt = await synthesize(beat, asyncio.Semaphore(1), build_dir=cache, public_dir=public_cache)
-    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(public_cache / (identifier + '.wav')),
-                    '-c:a', 'libmp3lame', '-b:a', '192k', '-ar', '48000', '-ac', '2', str(audio)], check=True)
+    # Keep the approved PCM master: MP3 encoder priming shifts word cues by 23ms.
+    shutil.copyfile(public_cache / (identifier + '.wav'), audio)
     words.write_text(json.dumps([{'word': word['text'], 'start': word['start'], 'end': word['end']}
                                 for word in receipt['words']]), encoding='utf8')
 
@@ -166,7 +166,7 @@ def build(lesson: dict, final_dir: Path, work: Path, voice: str) -> list[Path]:
         public.mkdir(parents=True, exist_ok=True)
         pages = []
         for index, page in enumerate(plan["pages"]):
-            audio = public / f"page-{index}.mp3"
+            audio = public / f"page-{index}.wav"
             words = work / f"{key}-{index}.words.json"
             asyncio.run(narrate(page["speech"], audio, words, voice, "algebra" if page["kind"] == "math" else "machine"))
             seconds, _ = _probe(audio, "audio")

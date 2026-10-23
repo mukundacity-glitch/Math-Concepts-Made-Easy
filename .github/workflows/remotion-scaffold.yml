@@ -86,7 +86,11 @@ jobs:
         run: node --test tests/inspect-bridge-previews.mjs
       - name: Verify optional captions leave full-frame teaching pixels unobstructed
         run: node --test tests/inspect-caption-previews.mjs
-      - name: Check real top-left channel logo in every current Remotion slide
+      - name: Render large two-color branding on both cinematic backgrounds
+        run: |
+          npx remotion still src/index.ts Inverse-Opening build/preview/cinematic-dark.png --frame=25 --log=error
+          npx remotion still src/index.ts Inverse-Algebra build/preview/cinematic-light.png --frame=300 --log=error
+      - name: Check channel emblem and two-color cinematic branding
         run: node --test tests/inspect-brand-previews.mjs
       - name: Prepare complete-chapter Shorts selection and long-text layout fixtures
         run: node tests/prepare-shorts-previews.mjs
