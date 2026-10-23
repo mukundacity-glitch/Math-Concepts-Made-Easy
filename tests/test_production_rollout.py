@@ -27,7 +27,7 @@ def test_inverse_and_fraction_narration_preserve_meaning():
 
 def test_native_entry_point_accepts_the_actual_cell1_config(tmp_path, monkeypatch):
     from pipeline import native_shorts, paths
-    lesson = get_lesson(43)
+    lesson = dict(get_lesson(43))
     projected = {**lesson, 'id': lesson.pop('day'), 'title': lesson.pop('topic')}
     projected.pop('day', None)
     projected.pop('topic', None)
