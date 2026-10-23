@@ -1,0 +1,116 @@
+{
+  "status": "scheduled-and-verified",
+  "lessonDay": 43,
+  "topic": "Inverse Functions",
+  "releaseDateLocal": "2026-10-23",
+  "timezone": "America/New_York",
+  "productionRun": {
+    "id": 39945270854,
+    "url": "https://github.com/mukundacity-glitch/Math-Concepts-Made-Easy/actions/runs/39945270854",
+    "conclusion": "success",
+    "sourceCommit": "b2c8bb57832ee01e83716c15a9a0e9f060b51461"
+  },
+  "uploads": {
+    "MAIN": {
+      "status": "uploaded",
+      "publish_at": "2026-10-23T13:00:00Z",
+      "privacy": "public",
+      "video_id": "w9H3JqcjLdw"
+    },
+    "HOOK": {
+      "status": "uploaded",
+      "publish_at": "2026-10-23T16:00:00Z",
+      "privacy": "public",
+      "video_id": "P6CVAsf4CNI"
+    },
+    "FORMULA": {
+      "status": "uploaded",
+      "publish_at": "2026-10-23T22:00:00Z",
+      "privacy": "public",
+      "video_id": "SNESsYY3etw"
+    },
+    "MISTAKE": {
+      "status": "uploaded",
+      "publish_at": "2026-10-24T02:00:00Z",
+      "privacy": "public",
+      "video_id": "qJr9GbMUPIY"
+    }
+  },
+  "progress": {
+    "uploadedLessons": 43,
+    "nextDay": 44,
+    "previousLessonsPreserved": 42
+  },
+  "checks": {
+    "pythonTests": 173,
+    "remotionTests": 31,
+    "fullNarrationSamples": 9,
+    "lowestFullNarrationCorrelation": 0.9869470072672626,
+    "nativeNarrationSamples": 10,
+    "lowestNativeNarrationCorrelation": 0.9766013330845421,
+    "nativeTeachingPagesReviewedAtPhoneSize": 10,
+    "phoneSize": [
+      360,
+      640
+    ],
+    "fullChaptersVisuallySampled": 9,
+    "fullChapterSampleFraction": 0.55,
+    "fullVideoFrameByFrameReview": false
+  },
+  "artifacts": {
+    "productionPackage": 12498733331,
+    "nativePreflight": 12496457743,
+    "fractionRegression": 12497458015
+  },
+  "mergedPullRequests": [
+    31,
+    32
+  ],
+  "privacyFieldMeaning": "Requested public release privacy; uploads are scheduled for their publish_at timestamps.",
+  "finalMedia": [
+    {
+      "name": "Day_043_Inverse_Functions_-_How_to_Find_and_Verify_f_Inverse.mp4",
+      "size": [
+        1920,
+        1080
+      ],
+      "fps": "30/1",
+      "frames": 8932,
+      "seconds": 297.749,
+      "sha256": "23571c65f6995a2f045d7b5979c0c0c51781d7488a575989e03dec9f092bc35c"
+    },
+    {
+      "name": "Day_043_Inverse_Functions_-_How_to_Find_and_Verify_f_Inverse_SHORT_FORMULA.mp4",
+      "size": [
+        1080,
+        1920
+      ],
+      "fps": "30/1",
+      "frames": 592,
+      "seconds": 19.733333,
+      "sha256": "2897f11be97b7137fed22321a01f87e28fc79b79ba141573f95a1a54c3ebb029"
+    },
+    {
+      "name": "Day_043_Inverse_Functions_-_How_to_Find_and_Verify_f_Inverse_SHORT_HOOK.mp4",
+      "size": [
+        1080,
+        1920
+      ],
+      "fps": "30/1",
+      "frames": 471,
+      "seconds": 15.701,
+      "sha256": "4d9f4a6ac57c7c089ea155d8f655b5e93024cbd22a8da77cfed247134998b905"
+    },
+    {
+      "name": "Day_043_Inverse_Functions_-_How_to_Find_and_Verify_f_Inverse_SHORT_MISTAKE.mp4",
+      "size": [
+        1080,
+        1920
+      ],
+      "fps": "30/1",
+      "frames": 615,
+      "seconds": 20.501,
+      "sha256": "dc5d401860dba02eb8d253b0aacffa2897f4fe344fb95eb360c2280dc3c09171"
+    }
+  ]
+}

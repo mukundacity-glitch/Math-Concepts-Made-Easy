@@ -61,3 +61,30 @@ review precede production activation. Past uploaded days remain locked.
 The initial Day 43 kickoff was cancelled during dependency installation,
 before any YouTube upload, to include the fraction correction. Day 43 remains
 the first eligible production lesson at rollout; prior uploads 1–42 stay locked.
+
+## First production release
+
+[Daily production run 39945270854](https://github.com/mukundacity-glitch/Math-Concepts-Made-Easy/actions/runs/39945270854)
+completed successfully in 22 minutes 34 seconds on source commit
+`b2c8bb57832ee01e83716c15a9a0e9f060b51461`. YouTube returned and confirmed
+the following publication times for **October 23, 2026, America/New_York**:
+
+| Asset | Local release | YouTube |
+| --- | --- | --- |
+| Full lesson | 09:00 | https://youtu.be/w9H3JqcjLdw |
+| Concept Short | 12:00 | https://youtu.be/P6CVAsf4CNI |
+| Worked-example Short | 18:00 | https://youtu.be/SNESsYY3etw |
+| Mistake Short | 22:00 | https://youtu.be/qJr9GbMUPIY |
+
+The actual full export is 1920 × 1080 at 30 FPS, with 8,932 video frames.
+The three actual Shorts are 1080 × 1920 at 30 FPS, with 471, 592 and 615 frames.
+All nine full-lesson narration checks and ten native-page narration checks
+passed. Final source receipts matched all three published Short files. All
+ten portrait teaching pages were reviewed at 360 × 640; the full lesson was
+visually sampled in all nine chapters. This was sampled verification, not a
+frame-by-frame watch of the complete lesson.
+
+Progress advanced to Day 44 only after YouTube confirmed all four schedules;
+lessons 1–42 remain preserved. The daily scheduler remains enabled.
+
+![Actual portrait Short at phone size](assets/day43-native-short-phone.png)

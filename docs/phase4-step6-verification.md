@@ -1,6 +1,6 @@
 # Phase 4 Step 6 — completed verification
 
-The real nine-scene Manim–Remotion demonstration is implemented, rendered, verified and merged in [PR #30](https://github.com/mukundacity-glitch/Math-Concepts-Made-Easy/pull/30). Remotion production rollout remains disabled.
+The real nine-scene Manim–Remotion demonstration is implemented, rendered, verified and merged in [PR #30](https://github.com/mukundacity-glitch/Math-Concepts-Made-Easy/pull/30). Production was subsequently enabled through PRs #31 and #32: the complete Day 43 hybrid publishing run passed and YouTube confirmed all four scheduled uploads on October 23, 2026. See the [production release record](phase4-production-release-2026-10-23.json) and [native portrait guide](native-shorts-production.md). The demonstration evidence below describes the earlier protected staging run.
 
 ## Reproducible evidence
 
@@ -86,3 +86,4 @@ A fresh post-merge read confirms repository state still records lessons 1–42 a
 ## Reuse the independent review
 
 The manual `Phase 4 Step 6 — Export Evidence Review` workflow accepts a successful demo `run_id`. It downloads that run's artifact, verifies its digest/source identity, checks Short narration, extracts review frames and retains the package. Its PR verification is pinned to the successful run above so the record does not silently switch to unrelated newer media.
+
