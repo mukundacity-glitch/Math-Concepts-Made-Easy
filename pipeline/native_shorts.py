@@ -67,6 +67,8 @@ from pipeline.semantic_math import semantic_text, MATH_PALETTE
 config.frame_width = 8
 config.frame_height = 64 / 7
 config.background_color = "#0B1F38"
+PORTRAIT_TEX = TexTemplate()
+PORTRAIT_TEX.add_to_preamble(r"\usepackage{xcolor}")
 
 def math_rows(value):
     # Break only at top-level equalities: never split a fraction, exponent,
@@ -102,10 +104,10 @@ class PortraitBoard(Scene):
                             else 'relation' if token in '=<> ' else 'operator')
                     return r'\textcolor[HTML]{' + MATH_PALETTE[role][1:] + '}{' + token + '}'
                 return re.sub(pattern, atom, value)
-            whole = SingleStringMathTex(colored(page["display"]), font_size=54)
+            whole = SingleStringMathTex(colored(page["display"]), font_size=54, tex_template=PORTRAIT_TEX)
             lines = [page["display"]] if whole.width <= 7 else math_rows(page["display"])
             for line in lines:
-                obj = SingleStringMathTex(colored(line), font_size=54)
+                obj = SingleStringMathTex(colored(line), font_size=54, tex_template=PORTRAIT_TEX)
                 scale = min(1, 7.0 / max(obj.width, .001))
                 if scale < .74:
                     raise ValueError("Equation needs a hand-authored portrait break; refusing tiny math")

@@ -150,6 +150,14 @@ jobs:
         run: |
           echo "::warning::Day ${{ steps.day.outputs.day }} passed rendering and QA, but YouTube upload failed. The day counter was not advanced, so the next scheduled run will retry this same lesson."
 
+      - name: Retain per-asset upload receipts with the media package
+        if: always()
+        run: |
+          if test -f state/upload_ledger.json; then
+            mkdir -p output/logs
+            cp state/upload_ledger.json output/logs/upload-ledger.json
+          fi
+
       - name: Save output artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -163,9 +171,9 @@ jobs:
             output/final_videos/*native-shorts.json
             output/thumbnails/*.jpg
             output/logs/*coverage.json
+            output/logs/upload-ledger.json
             output/hybrid/*.json
             output/native-shorts/*.json
-            state/upload_ledger.json
 
       - name: Commit successful progress
         if: steps.upload.outcome == 'success'
