@@ -1,0 +1,99 @@
+# Inverse functions: full-frame rebuild
+
+The landscape compositor previously placed a 16:9 mathematical animation inside
+an inset panel beside a learning-focus sidebar, underneath a header and above a
+caption lane. The nested layout reduced the teaching image to a small part of
+the 1920×1080 output. `SceneFrame` now gives the original media the complete
+canvas and plays its separate voice track exactly once. Sidecar captions remain
+available; captions are not burned onto the teaching image.
+
+The new `InverseFunctions` composition is a separately authored replacement for
+the Day 43 lesson. It uses original vector mathematics, rather than enlarging
+old narration slides. Its nine chapters contain 60 timed teaching beats:
+
+1. A mathematical curiosity hook, channel welcome, title and objective.
+2. A token travelling through `3 → ×2 → 6 → +5 → 11`, then returning.
+3. Swapping variables, balancing an equation, and deriving `(x−5)/2`.
+4. Both orders of composition, with intermediate substitutions.
+5. Equal-scale coordinate axes and an animated reflection across `y=x`.
+6. The two-to-one square mapping, horizontal-line test, and domain restriction.
+7. A numerical distinction between inverse and reciprocal.
+8. Independent practice with `g(x)=3x−4`, a pause and worked solution.
+9. A short visual recap.
+
+The palette uses charcoal, warm ivory, teal and gold. The original channel
+emblem is retained. Large mathematical expressions occupy the teaching canvas;
+full narration sentences do not. The question-mark hook follows the explicit
+checklist in the current request. The earlier independently approved script
+could not be recovered; the repository's welcome and transition wording are
+retained, with a new mathematical hook. The supplied YouTube reference could
+not be inspected because the analysis service had insufficient credits. No
+attached screenshots were available in this turn. No claim of exact matching
+against those unavailable references is made.
+
+## Preview and build
+
+```bash
+cd remotion
+npm install
+npm run check
+npm run studio -- --no-open
+# Open the InverseFunctions composition.
+```
+
+Default Studio props provide a **silent visual draft**, with estimated reading
+times. Every substantial chapter also has a separate composition in the
+`Inverse-scenes` folder. Final timing is computed from generated narration,
+not those estimates.
+
+After narration transfer is approved, prepare the exact authored script:
+
+```bash
+python -m pip install 'edge-tts>=7,<9'
+python scripts/build_inverse_lesson.py --prepare-only
+cd remotion
+npx remotion studio src/index.ts --props=build/inverse/lesson.json --no-open
+```
+
+To produce the narrated 1920×1080 H.264 master:
+
+```bash
+python scripts/build_inverse_lesson.py
+```
+
+The voice defaults to `en-US-AndrewNeural`, with a consistent -5% rate, no
+scene-dependent pitch shifts, a dry mono signal, speech-band filtering and
+-16 LUFS / -1.5 dBTP loudness processing. There is no room simulation, delay,
+reverb, doubled narration or background music. Listening to the complete master
+is still required before calling its sound quality approved. This script sends
+only `speech` fields from `remotion/src/inverse/storyboard.json` to Microsoft's
+Edge speech service. It does not upload the repository or other files.
+
+Each beat is measured with ffprobe; authentic word boundaries produce optional
+SRT/VTT tracks. Audio bytes and the storyboard are hashed. Missing or partial
+narration, stale speech, invalid timings or altered narration files stop the
+build. Outputs are in `remotion/build/inverse/`.
+
+## Validation and release status
+
+```bash
+cd remotion
+node scripts-inverse-frames.mjs
+npm run check
+cd ..
+python -m pytest -q
+```
+
+`node scripts-inverse-frames.mjs` renders all 60 storyboard states for inspection.
+The new timeline tests cover contiguous chapters, first and last beats, stale
+scripts, partial narration and the mathematical examples over multiple inputs.
+The existing shell tests now assert the full-frame, sidecar-caption behavior.
+
+The current deliverable is a visual draft and a reviewable source change.
+Automatic approval review blocked external narration synthesis; the narrated
+master and perceptual audio QA remain pending. The new authored lesson is
+built explicitly with the command above; it does not silently replace a
+published YouTube upload or republish Day 43. The scheduled publisher and its
+uploaded-day locks remain intact. The shared full-frame compositor change will
+apply to future hybrid lessons after this branch is merged, but it cannot
+remove narration text already baked into older Manim scenes.

@@ -32,13 +32,13 @@ test('invalid seek frames do not display misleading stale narration', () => {
   }
 });
 
-test('caption lane exists outside visual panel and never restyles math', () => {
+test('landscape uses optional sidecars while caption utility remains available', () => {
   const lane = readFileSync('src/components/CaptionLane.tsx', 'utf8');
   const frame = readFileSync('src/components/SceneFrame.tsx', 'utf8');
   assert.match(lane, /data-caption-lane="scene-local"/);
   assert.match(lane, /captionAtFrame\(captions, frame, fps\)/);
-  assert.match(frame, /bottom: hasCaptions \? 258 : 134/);
-  assert.match(frame, /<CaptionLane/);
+  assert.doesNotMatch(frame, /<CaptionLane|<aside|LEARNING FOCUS/);
+  assert.match(frame, /width: '100%', height: '100%'/);
   assert.match(frame, /staticFile\(chapter.media.videoSrc\)/);
   assert.doesNotMatch(lane, /MATH_PALETTE|MathTex|equation\.replace/);
 });

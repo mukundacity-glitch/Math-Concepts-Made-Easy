@@ -62,6 +62,14 @@ def test_remotion_branding_reuses_same_file_in_header_and_scaffold():
     assert "staticFile(BRAND_LOGO_ASSET)" in comp
     assert "<BrandLogo size={72}/>" in header
     assert "<BrandLogo size={72}/>" in diag
-    for path in ["TitleCard.tsx", "SceneFrame.tsx", "OutroCard.tsx"]:
+    for path in ["TitleCard.tsx", "OutroCard.tsx"]:
         assert "<BrandHeader" in (
             ROOT / "remotion/src/components" / path).read_text()
+
+
+def test_full_frame_teaching_keeps_branding_in_authored_visuals():
+    visual = (ROOT / "remotion/src/inverse/visuals.tsx").read_text()
+    frame = (ROOT / "remotion/src/components/SceneFrame.tsx").read_text()
+    assert "branding/math-concepts-made-easy-logo.webp" in visual
+    assert '<BrandHeader' not in frame
+    assert "width: '100%', height: '100%'" in frame

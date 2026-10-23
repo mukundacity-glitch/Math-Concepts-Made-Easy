@@ -21,7 +21,8 @@ test('every current slide uses the shared real logo component', () => {
   assert.match(brand, /staticFile\(BRAND_LOGO_ASSET\)/);
   assert.match(header, /<BrandLogo size=\{72\}\s*\/>/);
   assert.match(diag, /<BrandLogo size=\{72\}\s*\/>/);
-  for (const page of ['TitleCard', 'SceneFrame', 'OutroCard']) {
+  assert.match(read('src/inverse/visuals.tsx'), /branding\/math-concepts-made-easy-logo\.webp/);
+  for (const page of ['TitleCard', 'OutroCard']) {
     assert.match(read('src/components/'+page+'.tsx'), /<BrandHeader/);
   }
 });
