@@ -46,7 +46,7 @@ times. Every substantial chapter also has a separate composition in the
 `Inverse-scenes` folder. Final timing is computed from generated narration,
 not those estimates.
 
-After narration transfer is approved, prepare the exact authored script:
+Prepare the exact authored script:
 
 ```bash
 python -m pip install -r scripts/requirements-inverse.txt
@@ -89,7 +89,7 @@ has clarified that the Day 2 voice signature must stay, with rate adapted for
 premium educational pacing.
 
 Each beat is measured with ffprobe; authentic word boundaries produce optional
-SRT/VTT tracks. Audio bytes and the storyboard are hashed. Missing or partial
+SRT/VTT sidecar tracks. They are optional and are not embedded or burned into the video. Audio bytes and the storyboard are hashed. Missing or partial
 narration, stale speech, invalid timings or altered narration files stop the
 build. Outputs are in `remotion/build/inverse/`.
 
@@ -108,11 +108,22 @@ The new timeline tests cover contiguous chapters, first and last beats, stale
 scripts, partial narration and the mathematical examples over multiple inputs.
 The existing shell tests now assert the full-frame, sidecar-caption behavior.
 
-The current deliverable is a visual draft and a reviewable source change.
-Automatic approval review blocked external narration synthesis; the narrated
-master and perceptual audio QA remain pending. The new authored lesson is
-built explicitly with the command above; it does not silently replace a
-published YouTube upload or republish Day 43. The scheduled publisher and its
-uploaded-day locks remain intact. The shared full-frame compositor change will
-apply to future hybrid lessons after this branch is merged, but it cannot
-remove narration text already baked into older Manim scenes.
+The narrated master is complete: **1920×1080, 30 FPS, 8:48.133, 15,844 frames**.
+A one-second waveform window from each of the 60 source narration clips was
+compared against the final AAC soundtrack. The minimum waveform correlation is 0.98150; no timing offset was
+detected at the verifier's 8 kHz sample resolution. The final master measures
+-18.03 LUFS, with a true peak of -4.46 dBTP. It contains one stereo AAC track,
+with optional captions supplied separately as SRT/VTT. Six key moments were
+also extracted from the encoded master and visually checked.
+
+The standalone builder now runs final narration-integrity verification after
+rendering. Its same-channel comparison avoids stereo-downmix gain errors and
+rejects doubled narration volume. Validation passed: 179 Python tests, including
+actual FFmpeg mastering and AAC integrity regressions; the 34 Remotion tests
+passed during the visual rebuild, with no subsequent TypeScript changes.
+
+The new authored lesson is built explicitly with the command above. The
+scheduled publisher and its uploaded-day locks remain intact; no published
+YouTube upload was replaced or duplicated. The shared full-frame compositor
+change applies to future hybrid lessons after merging, but cannot remove text
+already baked into older Manim scenes.

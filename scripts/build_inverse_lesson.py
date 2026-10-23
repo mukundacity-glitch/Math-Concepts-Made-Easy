@@ -13,6 +13,7 @@ import math
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -199,6 +200,7 @@ async def prepare() -> dict[str, Any]:
     return props
 
 
+
 def render(props: dict[str, Any], scale: float) -> None:
     for beat in props['beats']:
         path = REMOTION / 'public' / beat['audioSrc']
@@ -218,8 +220,9 @@ def render(props: dict[str, Any], scale: float) -> None:
     if abs(float(media['format']['duration']) - expected) > .1:
         raise ValueError('Final video duration disagrees with narration timeline')
     report = {'width': video['width'], 'height': video['height'], 'durationSeconds': expected,
-        'audioCodec': audio['codec_name'], 'videoSha256': digest(output), 'completeNarrationBeats': len(props['beats'])}
+        'audioCodec': audio['codec_name'], 'videoSha256': digest(output), 'completeNarrationBeats': len(props['beats']), 'optionalEnglishCaptionSidecar': 'Inverse-Functions.srt'}
     (BUILD / 'render-qa.json').write_text(json.dumps(report, indent=2)+'\n')
+    subprocess.run([sys.executable, str(ROOT / 'scripts/verify_inverse_master.py')], check=True)
     print(json.dumps(report, indent=2))
 
 
