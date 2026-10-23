@@ -5,7 +5,7 @@ from datetime import datetime, time, timezone
 import pytest
 
 from pipeline.curriculum import get_lesson
-from pipeline.native_shorts import short_plans
+from pipeline.native_shorts import short_plans, equation_speech
 from uploader import upload_ledger, youtube_upload
 
 
@@ -15,6 +15,13 @@ def test_native_short_preserves_complete_worked_example():
     assert set(plans) == {"HOOK", "FORMULA", "MISTAKE"}
     assert [p["display"] for p in plans["FORMULA"]["pages"]] == lesson["board_examples"]["worked_example"]
     assert all(page["speech"] and page["display"] for plan in plans.values() for page in plan["pages"])
+
+
+def test_inverse_and_fraction_narration_preserve_meaning():
+    speech = equation_speech(r'f^{-1}(x) = \frac{x-5}{2}')
+    assert 'f inverse' in speech
+    assert 'power' not in speech
+    assert 'the quantity x minus 5 divided by 2' in speech
 
 
 def test_partial_upload_retry_reuses_returned_video_id(tmp_path, monkeypatch):

@@ -58,6 +58,8 @@ jobs:
     if: ${{ needs.schedule_gate.outputs.should_run == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 180
+    env:
+      MCME_REQUIRE_NATIVE_SHORTS: "1"
     permissions:
       contents: write
 
@@ -74,12 +76,7 @@ jobs:
           node-version: "22"
 
       - name: Install system dependencies
-        run: |
-          sudo apt-get update -y -o Acquire::Retries=3
-          sudo apt-get install -y --no-install-recommends -o Acquire::Retries=3 \
-            libcairo2-dev libpango1.0-dev ffmpeg \
-            texlive texlive-latex-extra texlive-fonts-recommended \
-            texlive-extra-utils dvisvgm dvipng cm-super
+        run: bash .github/scripts/install-render-deps.sh
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
@@ -163,6 +160,7 @@ jobs:
             output/final_videos/*.mp4
             output/final_videos/*.srt
             output/final_videos/*.vtt
+            output/final_videos/*native-shorts.json
             output/thumbnails/*.jpg
             output/logs/*coverage.json
             output/hybrid/*.json

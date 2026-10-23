@@ -438,6 +438,28 @@ def upload_day(day: int, dry_run: bool = False, privacy: str = None):
                      tags + ["shorts"], privacy, publish_at=meta["publish_at"]),
                     publish_at=meta["publish_at"], privacy=privacy)
 
+    # Confirm the actual remote privacy/schedule before advancing the day.
+    from uploader.upload_ledger import read as read_upload_ledger
+    receipts = read_upload_ledger()[str(day)]
+    ids = [receipts[key]["video_id"] for key in ("MAIN", *SHORTS_SCHEDULE_LOCAL)]
+    result = service.videos().list(part="status", id=",".join(ids)).execute()
+    statuses = {item["id"]: item["status"] for item in result.get("items", [])}
+    for key in ("MAIN", *SHORTS_SCHEDULE_LOCAL):
+        receipt = receipts[key]
+        status = statuses.get(receipt["video_id"], {})
+        scheduled = receipt["publish_at"] if receipt["privacy"] == "public" else None
+        if scheduled:
+            expected = datetime.fromisoformat(scheduled.replace("Z", "+00:00"))
+            observed = status.get("publishAt")
+            if observed:
+                if datetime.fromisoformat(observed.replace("Z", "+00:00")) != expected:
+                    raise RuntimeError(f"{key} remote schedule differs from the upload receipt")
+            elif not (expected <= datetime.now(timezone.utc) and status.get("privacyStatus") == "public"):
+                raise RuntimeError(f"{key} scheduled publication was not confirmed by YouTube")
+        elif status.get("privacyStatus") != receipt["privacy"]:
+            raise RuntimeError(f"{key} remote privacy differs from the upload receipt")
+        print(f"Verified {key}: https://youtu.be/{receipt['video_id']} — {status.get('publishAt') or status.get('privacyStatus')}")
+
     print(f"\n🎉 Day {day} posted to YouTube — 1 lesson + "
           f"{len(SHORTS_SCHEDULE_LOCAL)} Shorts spread across the day.")
 

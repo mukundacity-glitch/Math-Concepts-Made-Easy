@@ -7,6 +7,7 @@ Does not touch Days 1–21 source curriculum entries.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -152,6 +153,18 @@ def validate_publish_package(day: int) -> tuple[bool, list[str]]:
                 errors.append(f"{key} Short has no narration stream")
         except Exception as exc:
             errors.append(f"{key} Short stream verification failed: {exc}")
+
+    if os.environ.get("MCME_REQUIRE_NATIVE_SHORTS") == "1":
+        try:
+            from pipeline.remotion_bridge import _sha256
+            receipt = json.loads((BASE_DIR / "final_videos" / f"Day_{day:03d}_native-shorts.json").read_text())
+            if receipt["format"] != "native-portrait-v1" or receipt["day"] != day:
+                raise ValueError("wrong native Shorts provenance")
+            for key, short in outs["shorts"].items():
+                if receipt["shorts"][key]["sha256"] != _sha256(short):
+                    raise ValueError(f"{key} differs from its verified native render")
+        except Exception as exc:
+            errors.append(f"native Shorts provenance failed: {exc}")
 
     return (len(errors) == 0, errors)
 

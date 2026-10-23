@@ -33,11 +33,16 @@ def main():
     props = json.loads(props_path.read_text())
     offset = props["introFrames"] / 30
     captions = []
+    speech = []
     for chapter in props["chapters"]:
+        speech.append((ROOT / "remotion/public" / chapter["media"]["audioSrc"], offset))
         for cap in chapter["media"]["captions"]:
             captions.append((offset + cap["startMs"] / 1000,
                              offset + cap["endMs"] / 1000, cap["text"]))
         offset += chapter["durationInFrames"] / 30
+    from pipeline.narration_integrity import verify_narration
+    report = verify_narration(cfg.FINAL_DIR / (stem + ".mp4"), speech)
+    props_path.with_name(f"lesson-{day:03d}-audio-qa.json").write_text(json.dumps(report, indent=2), encoding="utf8")
     def timestamp(seconds, separator):
         millis = round(seconds * 1000)
         hours, rest = divmod(millis, 3600000)

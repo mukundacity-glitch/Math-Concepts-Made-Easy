@@ -4,8 +4,11 @@ on:
     paths:
       - 'pipeline/native_shorts.py'
       - 'pipeline/hybrid_assembly.py'
+      - 'pipeline/narration_integrity.py'
+      - 'tests/verify_native_shorts.py'
       - 'remotion/src/compositions/NativeShort.tsx'
       - '.github/workflows/native-shorts-qa.yml'
+      - '.github/scripts/install-render-deps.sh'
   workflow_dispatch:
 permissions:
   contents: read
@@ -23,10 +26,7 @@ jobs:
           node-version: '22'
       - name: Install native rendering runtime
         run: |
-          sudo apt-get update -qq -o Acquire::Retries=3
-          sudo apt-get install -y --no-install-recommends -o Acquire::Retries=3 \
-            ffmpeg libcairo2-dev libpango1.0-dev pkg-config \
-            texlive-latex-base texlive-latex-extra texlive-fonts-recommended dvisvgm cm-super
+          bash .github/scripts/install-render-deps.sh
           python -m pip install 'manim==0.19.0' 'edge-tts>=7,<9' pytest sympy
       - name: Verify tests and portrait composition
         working-directory: remotion
@@ -54,6 +54,7 @@ jobs:
           if-no-files-found: error
           path: |
             output/final_videos/*.mp4
+            output/final_videos/*native-shorts.json
             output/native-shorts/*.json
             output/native-shorts/*.png
             remotion/public/native-shorts/**

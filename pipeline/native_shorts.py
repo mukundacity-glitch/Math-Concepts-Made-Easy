@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import json
 import math
+import re
 import shutil
 import subprocess
 import sys
@@ -19,6 +20,16 @@ from pipeline.remotion_bridge import _probe, _sha256
 from pipeline.remotion_captions import load_scene_word_captions
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def equation_speech(value: str) -> str:
+    # Function inverses must not be narrated as reciprocal powers.
+    value = re.sub(r"([A-Za-z])\^\{-1\}", r"\\text{\1 inverse}", value)
+    value = re.sub(r"\\frac\{([^{}]+)\}\{([^{}]+)\}",
+                   lambda m: r"\text{the quantity }" + m[1] + r"\text{ divided by }" + m[2], value)
+    spoken = latex_to_speech(value)
+    spoken = re.sub(r"\b([A-Za-z]|\d+)\s*-\s*(?=\d|\b[A-Za-z]\b)", r"\1 minus ", spoken)
+    return spoken
 
 
 def short_plans(lesson: dict) -> dict:
@@ -33,7 +44,7 @@ def short_plans(lesson: dict) -> dict:
     def prose(text):
         return {"kind": "prose", "display": text, "speech": text}
     def equation(text):
-        return {"kind": "math", "display": text, "speech": latex_to_speech(text)}
+        return {"kind": "math", "display": text, "speech": equation_speech(text)}
     return {
         "HOOK": {"title": lesson["topic"], "label": "Understand the idea",
                  "pages": [*(prose(t) for t in hook), equation(formula)]},
@@ -62,8 +73,8 @@ def math_rows(value):
     # bracketed expression, or a LaTeX command. Keep every symbol in order.
     result, current, depth = [], "", 0
     for char in value:
-        if char == "{": depth += 1
-        if char == "}": depth -= 1
+        if char in "{([": depth += 1
+        if char in "})]": depth -= 1
         if char == "=" and depth == 0 and current.strip():
             result.append(current.strip())
             current = "="
@@ -81,9 +92,11 @@ class PortraitBoard(Scene):
                 # Leave TeX commands and prose intact; color ordinary math atoms
                 # inside intact fractions/groups with TeX itself (no substring
                 # isolation that could corrupt a fraction's syntax).
-                pattern = r"\\text\{[^{}]*\}|\\[A-Za-z]+|[A-Za-z]|[0-9]+|[=<>+\-]"
+                pattern = r"\^\{[^{}]*\}|\\text\{[^{}]*\}|\\[A-Za-z]+|[A-Za-z]|[0-9]+|[=<>+\-]"
                 def atom(match):
                     token = match.group()
+                    if token.startswith('^{'):
+                        return r'^{\textcolor[HTML]{' + MATH_PALETTE['exponent'][1:] + '}{' + token[2:-1] + '}}'
                     if token.startswith('\\'): return token
                     role = ('number' if token.isdigit() else 'variable' if token.isalpha()
                             else 'relation' if token in '=<> ' else 'operator')
@@ -152,6 +165,7 @@ def build(lesson: dict, final_dir: Path, work: Path, voice: str) -> list[Path]:
     source = work / "portrait_board.py"
     source.write_text(BOARD_SOURCE.replace("__ROOT__", repr(str(ROOT))), encoding="utf8")
     outputs = []
+    receipts = {}
     for key, plan in short_plans(lesson).items():
         public = ROOT / "remotion/public/native-shorts" / f"day-{lesson['day']:03d}-{key.lower()}"
         public.mkdir(parents=True, exist_ok=True)
@@ -191,7 +205,26 @@ def build(lesson: dict, final_dir: Path, work: Path, voice: str) -> list[Path]:
         from pipeline.paths import safe_filename
         output = final_dir / f"Day_{lesson['day']:03d}_{safe_filename(lesson['seo_title'])}_SHORT_{key}.mp4"
         render("NativeShort", props, output)
+        from pipeline.narration_integrity import verify_narration
+        offset, segments = 0., []
+        for page in pages:
+            segments.append((ROOT / "remotion/public" / page["audioSrc"], offset))
+            offset += page["durationInFrames"] / 30
+        speech_checks = verify_narration(output, segments)
+        probe = json.loads(subprocess.check_output(["ffprobe", "-v", "error", "-show_streams",
+            "-of", "json", str(output)], text=True))
+        picture = next(s for s in probe["streams"] if s["codec_type"] == "video")
+        if ((picture["width"], picture["height"]) != (1080, 1920) or
+            picture["avg_frame_rate"] != "30/1" or int(picture["nb_frames"]) != total or
+            not any(s["codec_type"] == "audio" for s in probe["streams"])):
+            raise ValueError("Completed native Short failed final stream verification")
+        receipts[key] = {"sha256": _sha256(output), "frames": total,
+                         "nativeBoardSize": [840, 960], "completePages": len(pages),
+                         "speechChecks": speech_checks}
         outputs.append(output)
+    receipt = final_dir / f"Day_{lesson['day']:03d}_native-shorts.json"
+    receipt.write_text(json.dumps({"format": "native-portrait-v1", "day": lesson["day"],
+                                  "shorts": receipts}, indent=2) + "\n", encoding="utf8")
     return outputs
 
 
