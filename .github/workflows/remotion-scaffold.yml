@@ -84,7 +84,7 @@ jobs:
             --frame=15 --log=error
       - name: Verify correct source media displayed in chapter order
         run: node --test tests/inspect-bridge-previews.mjs
-      - name: Verify caption appears only during original word boundaries
+      - name: Verify optional captions leave full-frame teaching pixels unobstructed
         run: node --test tests/inspect-caption-previews.mjs
       - name: Check real top-left channel logo in every current Remotion slide
         run: node --test tests/inspect-brand-previews.mjs
