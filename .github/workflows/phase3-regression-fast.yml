@@ -4,6 +4,9 @@ name: Phase 3 Premium Manim No-Regression
 on:
   pull_request:
     paths:
+      - "pipeline/mathtext.py"
+      - "tests/test_fraction_display.py"
+      - "tests/smoke_render_fraction.py"
       - "pipeline/semantic_math.py"
       - "pipeline/cell4_animation.py"
       - "pipeline/premium_manim_helpers.py"
@@ -45,6 +48,13 @@ jobs:
           cp "$FRAME" build/regression-evidence/four-scene-preview.png
           python tests/inspect_semantic_math_frame.py \
             "$FRAME" build/regression-evidence/four-scene-colors.json
+      - name: Verify grouped fractions in actual production mathematics typography
+        run: |
+          python -m manim -ql -s --disable_caching \
+            --media_dir build/regression-scenes tests/smoke_render_fraction.py FractionGroupingSmoke
+          FRAME="$(find build/regression-scenes -name 'FractionGroupingSmoke*.png' -type f | head -n 1)"
+          test -s "$FRAME"
+          cp "$FRAME" build/regression-evidence/fraction-grouping-preview.png
       - name: Render every premium worked and practice item with unchanged scene contracts
         run: |
           mkdir -p build/phase3-smoke/audio build/phase3-smoke/evidence
@@ -93,3 +103,4 @@ jobs:
             build/regression-evidence/
             build/regression-scenes/videos/**/*.mp4
             build/real-narrated-regression/videos/**/*.mp4
+

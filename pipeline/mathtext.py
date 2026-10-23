@@ -24,6 +24,34 @@ _SQRT_RE = re.compile(r"\\sqrt\s*\{([^{}]*)\}")
 _SPACING_RE = re.compile(r"\\[,;:!]|\\quad|\\qquad|\\ ")
 _LEFTRIGHT_RE = re.compile(r"\\left|\\right")
 
+
+def _rewrite_fractions(text, formatter):
+    """Read balanced TeX arguments, including powers and nested fractions."""
+    command = re.compile(r"\\[dt]?frac\s*")
+    result, cursor = [], 0
+    while match := command.search(text, cursor):
+        result.append(text[cursor:match.start()])
+        position = match.end()
+        arguments = []
+        for _ in range(2):
+            while position < len(text) and text[position].isspace():
+                position += 1
+            if position >= len(text) or text[position] != "{":
+                raise ValueError("Fraction needs two balanced braced arguments")
+            start, depth = position + 1, 1
+            position += 1
+            while position < len(text) and depth:
+                if text[position] == "{" and text[position - 1] != "\\": depth += 1
+                if text[position] == "}" and text[position - 1] != "\\": depth -= 1
+                position += 1
+            if depth:
+                raise ValueError("Unbalanced fraction argument")
+            arguments.append(_rewrite_fractions(text[start:position - 1], formatter))
+        result.append(formatter(*arguments))
+        cursor = position
+    result.append(text[cursor:])
+    return "".join(result)
+
 # LaTeX command → (screen unicode, spoken English)
 _SYMBOLS = [
     (r"\Longrightarrow", "⟹", " which means "),
@@ -118,7 +146,21 @@ def latex_to_plain(latex) -> str:
     # Nested-safe: unwrap \text{} and fractions repeatedly
     for _ in range(4):
         new = _TEXT_RE.sub(r"\1", text)
-        new = _FRAC_RE.sub(r"\1/\2", new)
+        # A stacked fraction groups its entire numerator and denominator.
+        # Preserve that grouping in inline notation: x-5/2 means something
+        # different from (x-5)/2. Simple numeric fractions stay uncluttered.
+        def plain_fraction(numerator, denominator):
+            numerator, denominator = numerator.strip(), denominator.strip()
+            if re.search(r"[+*/=<>]|(?<!^)[-−]", numerator):
+                numerator = f"({numerator})"
+            simple_denominator = re.fullmatch(
+                r"[+-]?\d+(?:\.\d+)?|[A-Za-zΑ-Ωα-ω](?:\^\{?[-+]?\d+\}?)?",
+                denominator,
+            )
+            if not simple_denominator:
+                denominator = f"({denominator})"
+            return f"{numerator}/{denominator}"
+        new = _rewrite_fractions(new, plain_fraction)
         new = _SQRT_RE.sub(r"√(\1)", new)
         if new == text:
             break
@@ -127,8 +169,14 @@ def latex_to_plain(latex) -> str:
     for cmd, screen, _spoken in _SYMBOLS:
         text = text.replace(cmd, f" {screen} ")
 
-    text = text.replace("^2", "²").replace("^3", "³")
-    text = re.sub(r"\^\{([^{}]*)\}", r"^\1", text)
+    superscript = str.maketrans('0123456789+-', '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻')
+    def exponent(match):
+        value = match.group(1)
+        if re.fullmatch(r'[+-]?\d+', value):
+            return value.translate(superscript)
+        return '^' + (value if re.fullmatch(r'[A-Za-z]', value) else f'({value})')
+    text = re.sub(r"\^\{([^{}]*)\}", exponent, text)
+    text = re.sub(r"\^([+-]?\d+)", exponent, text)
     text = re.sub(r"_\{([^{}]*)\}", r"\1", text)
     text = _strip_residue(text)
 
@@ -151,7 +199,8 @@ def latex_to_speech(latex) -> str:
 
     for _ in range(4):
         new = _TEXT_RE.sub(r"\1", text)
-        new = _FRAC_RE.sub(lambda m: f" {_speak_num(m.group(1))} over {_speak_num(m.group(2))} ", new)
+        new = _rewrite_fractions(new, lambda numerator, denominator:
+                                 f" {_speak_num(numerator)} over {_speak_num(denominator)} ")
         new = _SQRT_RE.sub(r" the square root of \1 ", new)
         if new == text:
             break
@@ -226,3 +275,4 @@ def normalize_word(w: str) -> str:
     import unicodedata
     w = unicodedata.normalize("NFKD", str(w)).encode("ASCII", "ignore").decode()
     return re.sub(r"[^\w]", "", w).lower()
+
