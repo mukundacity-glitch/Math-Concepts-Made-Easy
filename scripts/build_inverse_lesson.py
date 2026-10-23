@@ -177,7 +177,8 @@ async def prepare() -> dict[str, Any]:
             last_scene = beat['scene']
         frames = math.ceil((receipt['durationSeconds'] + beat['holdSeconds']) * FPS)
         beats.append({**beat, 'durationInFrames': frames,
-            'audioSrc': f"inverse/audio/{beat['id']}.wav", 'audioSha256': receipt['sha256']})
+            'audioSrc': f"inverse/audio/{beat['id']}.wav", 'audioSha256': receipt['sha256'],
+            'words': receipt['words']})
         words = receipt['words']
         for index in range(0, len(words), 6):
             group = words[index:index+6]

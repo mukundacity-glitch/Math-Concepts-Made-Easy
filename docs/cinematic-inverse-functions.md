@@ -119,11 +119,68 @@ also extracted from the encoded master and visually checked.
 The standalone builder now runs final narration-integrity verification after
 rendering. Its same-channel comparison avoids stereo-downmix gain errors and
 rejects doubled narration volume. Validation passed: 179 Python tests, including
-actual FFmpeg mastering and AAC integrity regressions; the 34 Remotion tests
-passed during the visual rebuild, with no subsequent TypeScript changes.
+actual FFmpeg mastering and AAC integrity regressions; the original 34 Remotion tests
+passed during the first visual rebuild. The progressive-board update now passes
+44 Remotion tests and TypeScript checking, including real cached narration cues.
+The five Ryan/mastering/integrity Python regressions also pass after this update.
 
 The new authored lesson is built explicitly with the command above. The
 scheduled publisher and its uploaded-day locks remain intact; no published
 YouTube upload was replaced or duplicated. The shared full-frame compositor
 change applies to future hybrid lessons after merging, but cannot remove text
 already baked into older Manim scenes.
+
+
+## Progressive working and reusable cancellation
+
+The algebra, both composition checks, and practice now use the shared
+`remotion/src/math-board/MathBoard.tsx` renderer. Equations are expression trees
+with stable term IDs and independent narration cues. The builder passes the
+actual Ryan word boundaries into the render props. A number, operator or
+fraction component appears at its cue, instead of displaying a complete new
+answer at the start of a narration beat.
+
+The same token renderer now also serves the function-machine calculations and
+reciprocal example through `MathLine`. Diagram objects use the same word-cued
+visibility helper, including sequential positive/negative inputs in the square
+function example. The machine does not display its later addition operation
+before that operation is introduced.
+
+Working remains in a rolling board history. The current line and two preceding
+lines stay legible; the oldest line scrolls and fades only when another line
+needs the space. Existing expressions remain visible during balance operations,
+with curved arrows pointing to the newly applied terms. A single diagonal coral
+stroke crosses each cancelling number. The left-side subtraction remains intact
+when the opposing right-side addends cancel. The two factors in a quotient are
+marked separately, without crossing an entire numerator containing a sum.
+
+The renderer contains no lesson-specific numbers, function names or beat IDs.
+The two affine examples are configured in `src/inverse/models.json`; display
+values and numerical checks are computed from those models. Additive cancellation
+requires opposing signed values, and division requires a common nonzero factor.
+The source data owns the mathematics and speech anchors; it is not safe to infer
+cancellation from visually repeated digits alone. New scripts must supply anchors
+that occur in their actual narration. Missing anchors, absent word boundaries,
+invalid ordering, unknown targets and cancellation before a term appears stop
+rendering. Silent Studio previews alone may estimate word positions.
+
+For a future authored lesson, import `MathBoard` and provide a `Board` (rows of
+atoms/fractions with word cues) plus its narrated beats. Do not copy JSX branches
+for particular coefficients. Validate the complete board with `compileBoard`
+before rendering. The generic renderer supports arbitrary authored expressions;
+the included affine builders provide examples, rather than an automatic solver
+for every topic.
+
+`node scripts-board-review.mjs` renders twenty-two checkpoints using the actual
+narrated timeline: initial reveals, balance operations, cancellations and final
+numeric answers, including diagram and reciprocal reveals. The review catches symbol placement, readable working history
+and clipping as well as mathematical correctness.
+
+**Rollout:** PR #33 is still a draft and is not merged. Scheduled MP4s still use
+the existing Manim-to-`PremiumLesson` route. Merging enables the shared full-frame
+compositor for that route; it does not automatically translate every future
+Manim lesson into this new expression-tree board. The new progressive treatment
+is currently implemented and rendered for the authored inverse-functions
+algebra, verification and practice chapters, and progressive operation reveals
+in the machine, reciprocal and domain examples. Other topics need authored board
+plans and verification before the same claim can be made for all future MP4s.

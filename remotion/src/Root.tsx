@@ -9,6 +9,7 @@ import {Machine} from './inverse/scenes/Machine';
 import {Opening} from './inverse/scenes/Opening';
 import {InverseLesson} from './inverse/InverseLesson';
 import {previewBeats, totalFrames, chapterRange} from './inverse/timeline';
+import {validateMathBoards} from './inverse/boards';
 import {Composition, Folder} from 'remotion';
 import {ScaffoldDiagnostics} from './scaffold/ScaffoldDiagnostics';
 import {PremiumLesson} from './compositions/PremiumLesson';
@@ -24,7 +25,10 @@ import {NativeShort, nativeShortDuration} from './compositions/NativeShort';
 export const RemotionRoot = () => (
   <>
     <Composition id="InverseFunctions" component={InverseLesson} defaultProps={{beats: previewBeats}}
-      calculateMetadata={({props}) => ({durationInFrames: totalFrames(props.beats)})}
+      calculateMetadata={({props}) => {
+        validateMathBoards(props.beats, 30);
+        return {durationInFrames: totalFrames(props.beats)};
+      }}
       fps={30} width={1920} height={1080} durationInFrames={totalFrames(previewBeats)}/>
     <Folder name="Inverse-scenes">
       <Composition id="Inverse-Opening" component={Opening} defaultProps={{beats: previewBeats}}

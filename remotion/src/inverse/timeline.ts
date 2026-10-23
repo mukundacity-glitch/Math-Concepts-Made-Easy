@@ -1,4 +1,5 @@
 import storyboard from './storyboard.json';
+import type {Word} from '../math-board/timeline';
 
 export type SceneName = 'opening' | 'machine' | 'algebra' | 'verify' | 'graph' |
   'domain' | 'notation' | 'practice' | 'recap';
@@ -12,6 +13,7 @@ export type Beat = {
   readonly durationInFrames: number;
   readonly audioSrc?: string;
   readonly audioSha256?: string;
+  readonly words?: readonly Word[];
 };
 export type InverseProps = {readonly beats: readonly Beat[]};
 export const previewBeats: readonly Beat[] = storyboard.beats.map((beat) => ({

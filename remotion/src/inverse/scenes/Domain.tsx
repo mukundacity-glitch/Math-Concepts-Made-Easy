@@ -1,9 +1,14 @@
+import {useMemo} from 'react';
+import {CueGroup} from '../../math-board/MathBoard';
+import type {Cue} from '../../math-board/timeline';
 import type {InverseProps} from '../timeline';
 import {Stage, Text, Footer, Arrow, colors, useBeat, Reveal} from '../visuals';
 
 export const Domain = (props: InverseProps) => {
   const {beat, frame} = useBeat(props, 'domain');
   const stage = beat.stage;
+  const beats = useMemo(() => props.beats.filter((item) => item.scene === 'domain'), [props.beats]);
+  const c = (stage: number, phrase: string): Cue => ({beat: `domain-${String(stage).padStart(2, '0')}`, phrase});
   const restricted = stage >= 5;
   const reverse = stage === 2;
   const curve = Array.from({length: 121}, (_, index) => {
@@ -14,20 +19,20 @@ export const Domain = (props: InverseProps) => {
     chapter="06 / EXISTENCE">
     <Text x={112} y={340} size={68} color={colors.teal} anchor="start" math>f(x) = x²</Text>
     {stage < 5 ? <>
-      <Text x={230} y={485} size={82} math>2</Text>
-      <Text x={230} y={710} size={82} math>−2</Text>
+      <CueGroup at={c(1, 'Two squared')} beats={beats}><Text x={230} y={485} size={82} math>2</Text></CueGroup>
+      <CueGroup at={c(1, 'negative two')} beats={beats}><Text x={230} y={710} size={82} math>−2</Text></CueGroup>
       {stage >= 1 && <>
-        <Arrow x1={reverse ? 700 : 340} y1={reverse ? 565 : 460} x2={reverse ? 340 : 700} y2={reverse ? 460 : 565}/>
-        <Arrow x1={reverse ? 700 : 340} y1={reverse ? 605 : 685} x2={reverse ? 340 : 700} y2={reverse ? 685 : 605}/>
-        <Text x={800} y={610} size={100} math>4</Text>
-        <Text x={520} y={820} size={48} color={stage === 2 ? colors.coral : colors.teal}>
+        <CueGroup at={c(1, 'four')} beats={beats}><Arrow x1={reverse ? 700 : 340} y1={reverse ? 565 : 460} x2={reverse ? 340 : 700} y2={reverse ? 460 : 565}/></CueGroup>
+        <CueGroup at={c(1, 'negative two')} beats={beats}><Arrow x1={reverse ? 700 : 340} y1={reverse ? 605 : 685} x2={reverse ? 340 : 700} y2={reverse ? 685 : 605}/></CueGroup>
+        <CueGroup at={c(1, 'four')} beats={beats}><Text x={800} y={610} size={100} math>4</Text></CueGroup>
+        <CueGroup at={c(1, 'also four')} beats={beats}><Text x={520} y={820} size={48} color={stage === 2 ? colors.coral : colors.teal}>
           {stage === 2 ? 'Two outputs: not a function' : 'Two inputs. One output.'}
-        </Text>
+        </Text></CueGroup>
       </>}
     </> : <Reveal frame={frame}>
-      <Text x={112} y={480} size={86} color={colors.teal} anchor="start" math>x ≥ 0</Text>
-      {stage >= 6 && <><Text x={112} y={620} size={80} anchor="start" math>f⁻¹(x) = √x</Text>
-        <Text x={112} y={740} size={70} color={colors.teal} anchor="start" math>4 → 2</Text></>}
+      <CueGroup at={c(5, 'x greater')} beats={beats}><Text x={112} y={480} size={86} color={colors.teal} anchor="start" math>x ≥ 0</Text></CueGroup>
+      {stage >= 6 && <><CueGroup at={c(6, 'square root')} beats={beats}><Text x={112} y={620} size={80} anchor="start" math>f⁻¹(x) = √x</Text></CueGroup>
+        <CueGroup at={c(6, 'Four returns')} beats={beats}><Text x={112} y={740} size={70} color={colors.teal} anchor="start" math>4 → 2</Text></CueGroup></>}
     </Reveal>}
     <Arrow x1={1135} y1={890} x2={1650} y2={890}/>
     <Arrow x1={1390} y1={925} x2={1390} y2={245}/>
