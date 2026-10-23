@@ -46,6 +46,8 @@ jobs:
           FRAME="$(find build/regression-scenes -name 'SemanticFourSceneContextsSmoke*.png' -type f | head -n 1)"
           test -s "$FRAME"
           cp "$FRAME" build/regression-evidence/four-scene-preview.png
+          python tests/inspect_semantic_math_frame.py \
+            "$FRAME" build/regression-evidence/four-scene-colors.json
       - name: Verify grouped fractions in actual production mathematics typography
         run: |
           python -m manim -ql -s --disable_caching \
@@ -53,8 +55,6 @@ jobs:
           FRAME="$(find build/regression-scenes -name 'FractionGroupingSmoke*.png' -type f | head -n 1)"
           test -s "$FRAME"
           cp "$FRAME" build/regression-evidence/fraction-grouping-preview.png
-          python tests/inspect_semantic_math_frame.py \
-            "$FRAME" build/regression-evidence/four-scene-colors.json
       - name: Render every premium worked and practice item with unchanged scene contracts
         run: |
           mkdir -p build/phase3-smoke/audio build/phase3-smoke/evidence

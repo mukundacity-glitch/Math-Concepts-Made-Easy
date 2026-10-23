@@ -5,7 +5,7 @@ from pipeline.semantic_math import semantic_text
 
 class FractionGroupingSmoke(Scene):
     def construct(self):
-        config.background_color = '#0B1F38'
+        self.camera.background_color = '#0B1F38'
         examples = [
             (r'y = \frac{x-5}{2}', 'y = (x-5)/2'),
             (r'z = \frac{a+b}{c+d}', 'z = (a+b)/(c+d)'),
