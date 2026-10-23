@@ -118,7 +118,21 @@ def latex_to_plain(latex) -> str:
     # Nested-safe: unwrap \text{} and fractions repeatedly
     for _ in range(4):
         new = _TEXT_RE.sub(r"\1", text)
-        new = _FRAC_RE.sub(r"\1/\2", new)
+        # A stacked fraction groups its entire numerator and denominator.
+        # Preserve that grouping in inline notation: x-5/2 means something
+        # different from (x-5)/2. Simple numeric fractions stay uncluttered.
+        def plain_fraction(match):
+            numerator, denominator = (part.strip() for part in match.groups())
+            if re.search(r"[+*/=<>]|(?<!^)[-−]", numerator):
+                numerator = f"({numerator})"
+            simple_denominator = re.fullmatch(
+                r"[+-]?\d+(?:\.\d+)?|[A-Za-zΑ-Ωα-ω](?:\^\{?[-+]?\d+\}?)?",
+                denominator,
+            )
+            if not simple_denominator:
+                denominator = f"({denominator})"
+            return f"{numerator}/{denominator}"
+        new = _FRAC_RE.sub(plain_fraction, new)
         new = _SQRT_RE.sub(r"√(\1)", new)
         if new == text:
             break
@@ -226,3 +240,4 @@ def normalize_word(w: str) -> str:
     import unicodedata
     w = unicodedata.normalize("NFKD", str(w)).encode("ASCII", "ignore").decode()
     return re.sub(r"[^\w]", "", w).lower()
+
