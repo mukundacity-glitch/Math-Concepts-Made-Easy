@@ -49,7 +49,7 @@ not those estimates.
 After narration transfer is approved, prepare the exact authored script:
 
 ```bash
-python -m pip install 'edge-tts>=7,<9'
+python -m pip install -r scripts/requirements-inverse.txt
 python scripts/build_inverse_lesson.py --prepare-only
 cd remotion
 npx remotion studio src/index.ts --props=build/inverse/lesson.json --no-open
@@ -61,13 +61,32 @@ To produce the narrated 1920×1080 H.264 master:
 python scripts/build_inverse_lesson.py
 ```
 
-The voice defaults to `en-US-AndrewNeural`, with a consistent -5% rate, no
-scene-dependent pitch shifts, a dry mono signal, speech-band filtering and
--16 LUFS / -1.5 dBTP loudness processing. There is no room simulation, delay,
-reverb, doubled narration or background music. Listening to the complete master
-is still required before calling its sound quality approved. This script sends
-only `speech` fields from `remotion/src/inverse/storyboard.json` to Microsoft's
-Edge speech service. It does not upload the repository or other files.
+The narrator is locked to `en-GB-RyanNeural`, using the Day 2 settings from
+`mukundacity-glitch/FPL-VORTEX-YOUTUBE-POST`. That reference repository and its
+linked notebook are read-only; neither was modified.
+
+The notebook defines baseline moods, then applies Day 2 runtime rate overrides.
+The effective profiles are intro +13% / -4 Hz; analysis +17% / -4 Hz; key statistic
++18% / 0 Hz; warning +11% / -4 Hz; outro +11% / -4 Hz. Volume stays +0%.
+`scripts/day2_ryan_settings.json` preserves both the baseline profiles and their
+overrides. Mapping maths chapters to those moods is an implementation choice:
+opening uses intro; machine/verification/graph use analysis; algebra/practice use
+key statistic; domain/notation use warning; recap uses outro.
+
+The transport follows the tested Day 2 `edge-tts==7.2.8` setup at Microsoft's
+`api.msedgeservices.com` speech endpoint. Narration is mastered with measured
+two-pass EBU R128 normalization at -18 LUFS / -1.5 dBTP, LRA 7, using stereo
+48 kHz, 24-bit PCM intermediates. There is no added room simulation, delay,
+reverb, doubled narration or music. Listening to the complete master is still
+required before calling its sound quality approved.
+
+This is the same Microsoft Edge speech service discussed in the previous
+approval question, with the Day 2 transport and Ryan profiles. The user's latest
+message begins with “No”, so the configuration has been corrected without
+sending the lesson script for synthesis. Generation remains pending clarification
+of whether that refusal concerns the service or the previous voice selection.
+The script sends only authored `speech` fields when explicitly run; it does not
+upload the reference repository, notebook or other files.
 
 Each beat is measured with ffprobe; authentic word boundaries produce optional
 SRT/VTT tracks. Audio bytes and the storyboard are hashed. Missing or partial

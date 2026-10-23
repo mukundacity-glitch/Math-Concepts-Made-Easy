@@ -11,6 +11,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,64 @@ BUILD = REMOTION / 'build/inverse'
 PUBLIC = REMOTION / 'public/inverse/audio'
 STORY = REMOTION / 'src/inverse/storyboard.json'
 FPS = 30
+SETTINGS_PATH = ROOT / 'scripts/day2_ryan_settings.json'
+SETTINGS = json.loads(SETTINGS_PATH.read_text())
+VOICE = SETTINGS['voice']
+
+
+def voice_profile(scene: str) -> dict[str, str]:
+    mood = SETTINGS['scene_moods'][scene]
+    profile = dict(SETTINGS['moods'][mood])
+    profile['rate'] = SETTINGS['runtime_rate_overrides'].get(mood, profile['rate'])
+    return profile
+
+
+def narration_fingerprint(beat: dict[str, Any]) -> str:
+    return hashlib.sha256(json.dumps([beat, SETTINGS, 'day2-ryan-v1'],
+        sort_keys=True).encode()).hexdigest()
+
+
+def configure_ryan_transport() -> None:
+    import edge_tts
+    import edge_tts.communicate as communicate
+    from edge_tts import constants
+    if edge_tts.__version__ != SETTINGS['edge_tts_version']:
+        raise RuntimeError('Install scripts/requirements-inverse.txt for the tested Day 2 Ryan transport')
+    endpoint = SETTINGS['transport'] + '?Ocp-Apim-Subscription-Key=' + constants.TRUSTED_CLIENT_TOKEN
+    constants.WSS_URL = endpoint
+    communicate.WSS_URL = endpoint
+    constants.WSS_HEADERS['Sec-WebSocket-Protocol'] = 'synthesize'
+    communicate.WSS_HEADERS['Sec-WebSocket-Protocol'] = 'synthesize'
+    certificate = os.environ.get('SSL_CERT_FILE')
+    if certificate:
+        communicate._SSL_CTX.load_verify_locations(cafile=certificate)
+
+
+def measure_loudness(path: Path, prefilter: str = '') -> dict[str, str]:
+    mastering = SETTINGS['mastering']
+    analyzer = (f"loudnorm=I={mastering['integrated_lufs']}:"
+        f"TP={mastering['true_peak_dbtp']}:LRA={mastering['lra_lu']}:print_format=json")
+    filters = f'{prefilter},{analyzer}' if prefilter else analyzer
+    result = subprocess.run(['ffmpeg', '-hide_banner', '-nostats', '-i', str(path),
+        '-map', '0:a:0', '-af', filters, '-f', 'null', '-'],
+        check=True, capture_output=True, text=True)
+    matches = re.findall(r'\{\s*"input_i"[\s\S]*?\}', result.stderr)
+    if len(matches) != 1:
+        raise ValueError('Expected one stable narration loudness measurement')
+    measurement = json.loads(matches[0])
+    for key in ['input_i', 'input_tp', 'input_lra', 'input_thresh', 'target_offset']:
+        if not math.isfinite(float(measurement[key])):
+            raise ValueError('Narration loudness measurement is not finite')
+    return measurement
+
+
+def day2_loudnorm_filter(measurement: dict[str, str]) -> str:
+    mastering = SETTINGS['mastering']
+    return (f"loudnorm=I={mastering['integrated_lufs']}:TP={mastering['true_peak_dbtp']}:"
+        f"LRA={mastering['lra_lu']}:measured_I={measurement['input_i']}:"
+        f"measured_TP={measurement['input_tp']}:measured_LRA={measurement['input_lra']}:"
+        f"measured_thresh={measurement['input_thresh']}:offset={measurement['target_offset']}:"
+        'linear=true:print_format=none')
 
 
 def digest(path: Path) -> str:
@@ -41,14 +100,14 @@ def stamp(seconds: float, separator: str = ',') -> str:
     return f'{hours:02}:{minutes:02}:{secs:02}{separator}{millis:03}'
 
 
-async def synthesize(beat: dict[str, Any], voice: str, semaphore: asyncio.Semaphore) -> dict[str, Any]:
+async def synthesize(beat: dict[str, Any], semaphore: asyncio.Semaphore) -> dict[str, Any]:
     import edge_tts
     identifier = beat['id']
     raw = BUILD / f'{identifier}.mp3'
     target = PUBLIC / f'{identifier}.wav'
     receipt = BUILD / f'{identifier}.json'
-    fingerprint = hashlib.sha256(json.dumps([beat, voice, '-5%', 'dry-v1'],
-        sort_keys=True).encode()).hexdigest()
+    fingerprint = narration_fingerprint(beat)
+    profile = voice_profile(beat['scene'])
     async with semaphore:
         if target.exists() and receipt.exists():
             cached = json.loads(receipt.read_text())
@@ -57,7 +116,7 @@ async def synthesize(beat: dict[str, Any], voice: str, semaphore: asyncio.Semaph
         for attempt in range(3):
             try:
                 words: list[dict[str, Any]] = []
-                communicator = edge_tts.Communicate(beat['speech'], voice, rate='-5%',
+                communicator = edge_tts.Communicate(beat['speech'], VOICE, **profile,
                     boundary='WordBoundary', connect_timeout=15, receive_timeout=45)
                 with raw.open('wb') as output:
                     async for chunk in communicator.stream():
@@ -69,10 +128,11 @@ async def synthesize(beat: dict[str, Any], voice: str, semaphore: asyncio.Semaph
                 if not words or raw.stat().st_size < 1000:
                     raise ValueError(f'Missing real narration/word timing for {identifier}')
                 # Preserve timing: no time stretching, room effects, echo or silence trimming.
-                filters = 'highpass=f=75,lowpass=f=14500,loudnorm=I=-16:TP=-1.5:LRA=7'
+                measurement = measure_loudness(raw)
+                filters = day2_loudnorm_filter(measurement)
                 process = await asyncio.create_subprocess_exec('ffmpeg', '-v', 'error', '-y',
-                    '-i', str(raw), '-af', filters, '-ar', '48000', '-ac', '1',
-                    '-c:a', 'pcm_s16le', str(target), stderr=asyncio.subprocess.PIPE)
+                    '-i', str(raw), '-af', filters, '-ar', '48000', '-ac', '2',
+                    '-c:a', 'pcm_s24le', str(target), stderr=asyncio.subprocess.PIPE)
                 _, errors = await process.communicate()
                 if process.returncode:
                     raise RuntimeError(errors.decode())
@@ -80,7 +140,13 @@ async def synthesize(beat: dict[str, Any], voice: str, semaphore: asyncio.Semaph
                 duration = float(media['format']['duration'])
                 if not math.isfinite(duration) or not 0.3 < duration < 60 or words[-1]['end'] > duration + .1:
                     raise ValueError(f'Invalid narration duration for {identifier}')
-                result = {'fingerprint': fingerprint, 'sha256': digest(target), 'voice': voice,
+                post_measurement = measure_loudness(target)
+                if abs(float(post_measurement['input_i']) + 18.0) > 0.8:
+                    raise ValueError(f'Day 2 narration loudness missed target for {identifier}')
+                if float(post_measurement['input_tp']) > -1.0:
+                    raise ValueError(f'Narration true peak exceeded the ceiling for {identifier}')
+                result = {'fingerprint': fingerprint, 'sha256': digest(target), 'voice': VOICE,
+                    'profile': profile, 'loudness': post_measurement,
                     'durationSeconds': duration, 'words': words}
                 receipt.write_text(json.dumps(result, indent=2)+'\n')
                 print(f'{identifier}: {duration:.2f}s', flush=True)
@@ -92,17 +158,13 @@ async def synthesize(beat: dict[str, Any], voice: str, semaphore: asyncio.Semaph
     raise RuntimeError(f'Unreachable synthesis failure: {identifier}')
 
 
-async def prepare(voice: str) -> dict[str, Any]:
+async def prepare() -> dict[str, Any]:
     BUILD.mkdir(parents=True, exist_ok=True)
     PUBLIC.mkdir(parents=True, exist_ok=True)
-    # Some managed hosts provide an additional trusted CA; certificate validation stays enabled.
-    certificate = os.environ.get('SSL_CERT_FILE')
-    if certificate:
-        import edge_tts.communicate
-        edge_tts.communicate._SSL_CTX.load_verify_locations(cafile=certificate)
+    configure_ryan_transport()
     story = json.loads(STORY.read_text())
     semaphore = asyncio.Semaphore(3)
-    receipts = await asyncio.gather(*(synthesize(beat, voice, semaphore) for beat in story['beats']))
+    receipts = await asyncio.gather(*(synthesize(beat, semaphore) for beat in story['beats']))
     beats = []
     captions = []
     cursor = 0
@@ -131,8 +193,8 @@ async def prepare(voice: str) -> dict[str, Any]:
     (BUILD / 'chapters.json').write_text(json.dumps(chapters, indent=2)+'\n')
     (BUILD / 'narration.txt').write_text('\n\n'.join(beat['speech'] for beat in beats)+'\n')
     (BUILD / 'source-proof.json').write_text(json.dumps({'storyboardSha256': digest(STORY),
-        'voice': voice, 'beats': len(beats), 'totalFrames': cursor, 'fps': FPS,
-        'audioTreatment': 'Dry mono; highpass 75 Hz; lowpass 14.5 kHz; EBU R128 -16 LUFS / -1.5 dBTP',
+        'voice': VOICE, 'settingsSha256': digest(SETTINGS_PATH), 'beats': len(beats), 'totalFrames': cursor, 'fps': FPS,
+        'audioTreatment': 'Day 2 Ryan profiles; stereo 48 kHz PCM; measured two-pass -18 LUFS / -1.5 dBTP',
         'burnedInCaptions': False}, indent=2)+'\n')
     return props
 
@@ -164,11 +226,10 @@ def render(props: dict[str, Any], scale: float) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--prepare-only', action='store_true')
-    parser.add_argument('--voice', default='en-US-AndrewNeural')
     parser.add_argument('--scale', type=float, default=1.0, choices=[0.5, 1.0, 2.0])
     args = parser.parse_args()
     try:
-        props = asyncio.run(prepare(args.voice))
+        props = asyncio.run(prepare())
         if not args.prepare_only:
             render(props, args.scale)
     except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:

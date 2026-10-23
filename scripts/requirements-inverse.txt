@@ -1,0 +1,2 @@
+# Same tested Ryan transport as the read-only Day 2 reference.
+edge-tts==7.2.8
