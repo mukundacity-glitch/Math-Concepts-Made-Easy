@@ -12,3 +12,6 @@ public/native-shorts/
 
 # Narration is generated from the authored storyboard
 public/inverse/audio/
+
+# Generated scheduled cinematic narration
+public/cinematic/

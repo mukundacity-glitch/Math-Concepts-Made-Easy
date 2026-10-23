@@ -83,6 +83,24 @@ def day2_loudnorm_filter(measurement: dict[str, str]) -> str:
         'linear=true:print_format=none')
 
 
+def trim_master_loudness(path: Path) -> dict[str, str]:
+    """Correct measured short-clip gating error without changing duration or adding room effects."""
+    actual = measure_loudness(path)
+    mastering = SETTINGS['mastering']
+    gain = mastering['integrated_lufs'] - float(actual['input_i'])
+    if abs(gain) > .2:
+        if abs(gain) > 6:
+            raise ValueError('Unexpected mastering gain; refusing a damaged narration clip')
+        if float(actual['input_tp']) + gain > mastering['true_peak_dbtp']:
+            raise ValueError('Loudness correction would exceed the approved true-peak ceiling')
+        temporary = path.with_name(path.stem + '.levelled.wav')
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(path), '-af', f'volume={gain:.5f}dB',
+            '-ar', '48000', '-ac', '2', '-c:a', 'pcm_s24le', str(temporary)], check=True)
+        temporary.replace(path)
+        actual = measure_loudness(path)
+    return actual
+
+
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -101,12 +119,15 @@ def stamp(seconds: float, separator: str = ',') -> str:
     return f'{hours:02}:{minutes:02}:{secs:02}{separator}{millis:03}'
 
 
-async def synthesize(beat: dict[str, Any], semaphore: asyncio.Semaphore) -> dict[str, Any]:
+async def synthesize(beat: dict[str, Any], semaphore: asyncio.Semaphore, *,
+                     build_dir: Path | None = None, public_dir: Path | None = None) -> dict[str, Any]:
     import edge_tts
     identifier = beat['id']
-    raw = BUILD / f'{identifier}.mp3'
-    target = PUBLIC / f'{identifier}.wav'
-    receipt = BUILD / f'{identifier}.json'
+    build_dir = BUILD if build_dir is None else build_dir
+    public_dir = PUBLIC if public_dir is None else public_dir
+    raw = build_dir / f'{identifier}.mp3'
+    target = public_dir / f'{identifier}.wav'
+    receipt = build_dir / f'{identifier}.json'
     fingerprint = narration_fingerprint(beat)
     profile = voice_profile(beat['scene'])
     async with semaphore:
@@ -141,7 +162,7 @@ async def synthesize(beat: dict[str, Any], semaphore: asyncio.Semaphore) -> dict
                 duration = float(media['format']['duration'])
                 if not math.isfinite(duration) or not 0.3 < duration < 60 or words[-1]['end'] > duration + .1:
                     raise ValueError(f'Invalid narration duration for {identifier}')
-                post_measurement = measure_loudness(target)
+                post_measurement = trim_master_loudness(target)
                 if abs(float(post_measurement['input_i']) + 18.0) > 0.8:
                     raise ValueError(f'Day 2 narration loudness missed target for {identifier}')
                 if float(post_measurement['input_tp']) > -1.0:

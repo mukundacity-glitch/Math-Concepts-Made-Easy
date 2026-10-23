@@ -1,16 +1,17 @@
 /** A lesson-independent board contract. Cues refer to spoken words, never seconds. */
 export type Word = {readonly text: string; readonly start: number; readonly end: number};
 export type SpeechBeat = {readonly id: string; readonly speech: string;
-  readonly durationInFrames: number; readonly audioSrc?: string; readonly words?: readonly Word[]};
+  readonly durationInFrames: number; readonly audioSrc?: string; readonly audioSha256?: string; readonly words?: readonly Word[]};
 export type Cue = {readonly beat: string; readonly phrase: string; readonly occurrence?: number;
   readonly edge?: 'start' | 'end'};
 export type Atom = {readonly id: string; readonly text: string; readonly cue?: Cue;
   readonly accent?: boolean; readonly cancel?: Cue};
 export type Fraction = {readonly id: string; readonly top: readonly Node[];
   readonly bottom: readonly Node[]; readonly cue?: Cue};
-export type Node = Atom | Fraction;
+export type Matrix = {readonly id: string; readonly cells: readonly (readonly (readonly Node[])[])[]; readonly determinant?: boolean; readonly cue?: Cue};
+export type Node = Atom | Fraction | Matrix;
 export type Row = {readonly id: string; readonly cue: Cue; readonly nodes: readonly Node[];
-  readonly label?: string; readonly arrows?: readonly {readonly target: string; readonly cue: Cue}[]};
+  readonly label?: string; readonly wide?: boolean; readonly arrows?: readonly {readonly target: string; readonly cue: Cue}[]};
 export type Board = readonly Row[];
 
 const normalize = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
@@ -41,7 +42,7 @@ export const cueFrame = (cue: Cue, beats: readonly SpeechBeat[], fps: number): n
 };
 
 export const walkNodes = (nodes: readonly Node[]): Node[] => nodes.flatMap((node) =>
-  'text' in node ? [node] : [node, ...walkNodes(node.top), ...walkNodes(node.bottom)]);
+  'text' in node ? [node] : 'cells' in node ? [node, ...node.cells.flatMap((row) => row.flatMap((cell) => walkNodes(cell)))] : [node, ...walkNodes(node.top), ...walkNodes(node.bottom)]);
 
 export const compileBoard = (board: Board, beats: readonly SpeechBeat[], fps: number) => {
   if (!Number.isFinite(fps) || fps <= 0 || new Set(beats.map((beat) => beat.id)).size !== beats.length) {
@@ -79,7 +80,8 @@ export const compileBoard = (board: Board, beats: readonly SpeechBeat[], fps: nu
           if (cancel < reveal) throw new Error('Cannot cancel an unseen term');
           cancellations.set(node.id, cancel);
         }
-        if (!('text' in node)) {visit(node.top, reveal); visit(node.bottom, reveal);}
+        if ('cells' in node) {for (const row of node.cells) for (const cell of row) visit(cell, reveal);}
+        else if ('top' in node) {visit(node.top, reveal); visit(node.bottom, reveal);}
       }
     };
     visit(row.nodes, start);

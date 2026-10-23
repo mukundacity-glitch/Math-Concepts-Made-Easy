@@ -60,6 +60,7 @@ jobs:
     timeout-minutes: 180
     env:
       MCME_REQUIRE_NATIVE_SHORTS: "1"
+      MCME_REQUIRE_CINEMATIC: "1"
     permissions:
       contents: write
 
@@ -91,6 +92,9 @@ jobs:
           npm run check
           npx remotion browser ensure
 
+      - name: Audit all remaining curriculum boards and narration cues
+        run: python -m pipeline.cinematic_lesson --audit
+
       - name: Determine lesson day
         id: day
         env:
@@ -112,7 +116,7 @@ jobs:
           PY
 
       - name: Produce and verify Day ${{ steps.day.outputs.day }}
-        run: python autopilot.py --day ${{ steps.day.outputs.day }} --no-advance --hybrid
+        run: python autopilot.py --day ${{ steps.day.outputs.day }} --no-advance --cinematic
 
       - name: Upload Day ${{ steps.day.outputs.day }} to YouTube
         id: upload
@@ -173,6 +177,8 @@ jobs:
             output/logs/*coverage.json
             output/logs/upload-ledger.json
             output/hybrid/*.json
+            output/cinematic/**/*.json
+            output/final_videos/*cinematic-qa.json
             output/native-shorts/*.json
 
       - name: Commit successful progress

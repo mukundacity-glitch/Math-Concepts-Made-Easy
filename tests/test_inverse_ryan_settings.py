@@ -56,3 +56,15 @@ def test_day2_mastering_uses_measured_two_pass_normalization(tmp_path):
     assert stream['sample_rate'] == '48000'
     assert stream['channels'] == 2
     assert stream['codec_name'] == 'pcm_s24le'
+
+
+def test_short_clip_loudness_trim_preserves_timing_and_peak_headroom(tmp_path):
+    target = tmp_path / 'short.wav'
+    subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=900:duration=4',
+                    '-ar', '48000', '-ac', '2', '-c:a', 'pcm_s24le', str(target)], check=True)
+    before = BUILD.probe(target)
+    result = BUILD.trim_master_loudness(target)
+    after = BUILD.probe(target)
+    assert abs(float(result['input_i']) + 18) < .25
+    assert float(result['input_tp']) <= -1.5
+    assert before['format']['duration'] == after['format']['duration']

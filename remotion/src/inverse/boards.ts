@@ -94,7 +94,8 @@ export const verificationBoard = (m: AffineModel = models.example): Board => {
       [atom('backD', m.multiplier, c(5, 'divide by two'))])], 'Keep the substituted expression grouped'),
     row('backSimplify', c(6, 'Two x'), [fraction('backRemaining', [factor, atom('backRemainingX', 'x', undefined, true)], [denominator]),
       atom('backEq', '=', c(6, 'is x')), atom('backAnswer', 'x', c(6, 'is x'), true)], 'The nonzero common factor cancels'),
-    row('verifiedBoth', c(7, 'Both compositions'), [atom('verifiedBothN', `${m.name}(${m.name}⁻¹(x)) = ${m.name}⁻¹(${m.name}(x)) = x`, undefined, true)], 'Both directions return every real input'),
+    row('verifiedBothForward', c(7, 'Both compositions'), [atom('verifiedBothForwardN', `${m.name}(${m.name}⁻¹(x)) = x`, undefined, true)], 'Inverse then function'),
+    row('verifiedBothReverse', c(7, 'Both compositions'), [atom('verifiedBothReverseN', `${m.name}⁻¹(${m.name}(x)) = x`, undefined, true)], 'Function then inverse'),
   ];
 };
 

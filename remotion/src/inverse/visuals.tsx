@@ -4,8 +4,8 @@ import {activeBeat, type InverseProps, type SceneName} from './timeline';
 import {useCurrentFrame} from 'remotion';
 
 export const colors = {
-  paper: '#F4F0E7', ink: '#252A2D', slate: '#20262B', white: '#FAF6EB',
-  teal: '#087E83', mint: '#54D9C7', gold: '#EDBB63', coral: '#C15B48', muted: '#AAAFAE',
+  paper: '#F4F0E7', ink: '#172A35', slate: '#20262B', white: '#FFFDF4',
+  teal: '#006A70', mint: '#63EED7', gold: '#EDBB63', coral: '#C15B48', muted: '#AAAFAE',
 };
 export const ease = (frame: number, length = 24) => interpolate(frame, [0, length], [0, 1], {
   extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.bezier(0.16, 1, 0.3, 1),
@@ -35,9 +35,12 @@ export const Stage = ({title, chapter, dark = false, children}: {
       </marker>
     </defs>
     <rect width="1920" height="1080" fill="url(#light)"/>
-    <image href={staticFile("branding/math-concepts-made-easy-logo.webp")} x={112} y={48} width={70} height={70}/>
-    <Text x={210} y={100} size={24} color={dark ? colors.muted : '#6D7373'} anchor="start">MATH CONCEPTS MADE EASY</Text>
-    <Text x={1808} y={100} size={24} color={dark ? colors.muted : '#6D7373'} anchor="end">{chapter}</Text>
+    <image href={staticFile("branding/math-concepts-made-easy-logo.webp")} x={112} y={39} width={84} height={84}/>
+    <text x={220} y={101} fontSize={38} fontWeight={700} fontFamily="Arial, Helvetica, sans-serif">
+      <tspan fill={dark ? colors.white : colors.ink}>MATH CONCEPTS </tspan>
+      <tspan fill={dark ? colors.gold : colors.teal}>MADE EASY</tspan>
+    </text>
+    <Text x={1808} y={100} size={30} color={dark ? colors.white : colors.ink} anchor="end">{chapter}</Text>
     <Text x={112} y={206} size={62} color={dark ? colors.white : colors.ink} anchor="start">{title}</Text>
     {children}
   </svg>

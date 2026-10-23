@@ -48,9 +48,9 @@ export const NativeShort = (props: NativeShortProps) => {
   if (width !== 1080 || height !== 1920 || fps !== 30) throw new Error('Native Shorts require 1080×1920 at 30 FPS');
   nativeShortDuration(props);
   let start = 0;
-  return <AbsoluteFill style={{background: '#0B1F38', color: theme.text, fontFamily: theme.font}}>
+  return <AbsoluteFill style={{background: '#20262B', color: theme.text, fontFamily: theme.font}}>
     <div style={{position: 'absolute', top: 140, left: 80, display: 'flex', alignItems: 'center', gap: 24}}>
-      <BrandLogo size={72}/><span style={{fontSize: 24}}>Math Concepts Made Easy</span>
+      <BrandLogo size={84}/><span style={{fontSize: 36, fontWeight: 700}}><span style={{color: '#FFFDF4'}}>Math Concepts </span><span style={{color: '#EDBB63'}}>Made Easy</span></span>
     </div>
     <div style={{position: 'absolute', top: 255, left: 80, width: 840}}>
       <ShortText text={props.title} width={840} height={110} fontSize={56} minimumSize={40} lineHeight={1.1}/>

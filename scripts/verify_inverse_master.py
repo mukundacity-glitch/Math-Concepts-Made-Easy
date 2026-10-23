@@ -24,7 +24,7 @@ def decode_left(path: Path, start: float = 0.0, duration: float | None = None) -
     return np.frombuffer(subprocess.check_output(args), dtype='<f4')
 
 
-def verify_master(final: Path, props: dict[str, Any]) -> dict[str, Any]:
+def verify_master(final: Path, props: dict[str, Any], *, report_path: Path | None = None) -> dict[str, Any]:
     if not final.is_file():
         raise FileNotFoundError(final)
     samples = decode_left(final)
@@ -60,7 +60,9 @@ def verify_master(final: Path, props: dict[str, Any]) -> dict[str, Any]:
     report = {'verifiedBeats': len(reports), 'minimumCorrelation': min(item['correlation'] for item in reports),
         'maximumAbsoluteTimingErrorMs': max(abs(item['lagMilliseconds']) for item in reports),
         'beats': reports}
-    (BUILD / 'narration-integrity.json').write_text(json.dumps(report, indent=2)+'\n')
+    destination = report_path if report_path is not None else BUILD / 'narration-integrity.json'
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(json.dumps(report, indent=2)+'\n')
     return report
 
 

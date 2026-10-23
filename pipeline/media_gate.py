@@ -166,7 +166,26 @@ def validate_publish_package(day: int) -> tuple[bool, list[str]]:
         except Exception as exc:
             errors.append(f"native Shorts provenance failed: {exc}")
 
+    if os.environ.get("MCME_REQUIRE_CINEMATIC") == "1":
+        try:
+            validate_cinematic_receipt(day, video)
+        except Exception as exc:
+            errors.append(f"cinematic master provenance failed: {exc}")
+
     return (len(errors) == 0, errors)
+
+
+def validate_cinematic_receipt(day: int, video: Path | None) -> None:
+    from pipeline.remotion_bridge import _sha256
+    receipt_path = BASE_DIR / "final_videos" / f"Day_{day:03d}_cinematic-qa.json"
+    receipt = json.loads(receipt_path.read_text())
+    if (receipt["format"] != "cinematic-v1" or receipt["day"] != day or
+        not video or receipt["videoSha256"] != _sha256(video) or
+        not isinstance(receipt["narrationBeats"], int) or receipt["narrationBeats"] <= 0 or
+        receipt["narrationBeats"] != receipt["verifiedNarrationBeats"] or
+        (receipt["width"], receipt["height"]) != (1920, 1080) or
+        receipt["minimumLabelSize"] < 42 or receipt["unreadableFallbackAllowed"]):
+        raise ValueError("Cinematic picture, voice or readability evidence does not match the video")
 
 
 def assert_publishable(day: int) -> None:

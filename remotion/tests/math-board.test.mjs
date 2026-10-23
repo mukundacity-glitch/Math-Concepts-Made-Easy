@@ -98,3 +98,27 @@ test('diagram calculations wait for each operation and result', () => {
   assert.ok(notation.frames.get('reciprocalWorkOutput') > notation.frames.get('reciprocalWorkOffset'));
   assert.ok(notation.frames.get('reciprocalDenominator') > notation.frames.get('reciprocalWorkOutput'));
 });
+
+test('teaching labels stay large and both canvas palettes have readable text contrast', () => {
+  const {boardLayout,boardThemes,wrapBoardLabel}=load('src/math-board/theme.ts');
+  assert.ok(boardLayout.labelSize >= 42);
+  assert.equal(wrapBoardLabel('Divide both sides by the same nonzero factor').length,3);
+  const luminance=(hex)=>{const rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;};
+  for(const palette of Object.values(boardThemes)){
+    const background=luminance(palette.background);
+    for(const color of [palette.ink,palette.accent,palette.secondary]){
+      const foreground=luminance(color);
+      const contrast=(Math.max(foreground,background)+.05)/(Math.min(foreground,background)+.05);
+      assert.ok(contrast>=4.5, `${color} has contrast ${contrast} on ${palette.background}`);
+    }
+  }
+});
+
+test('matrix cells keep separate source word cues and fit at readable scale',()=>{
+  const {lineWidth}=load('src/math-board/geometry.ts');
+  const node={id:'m',cells:[[{id:'a',text:'1'}],[{id:'b',text:'2'}]].map(row=>row.map(cell=>[cell]))};
+  const board=[{id:'matrix-row',cue:{beat:'b',phrase:'one'},nodes:[node]}];
+  const plan=timeline.compileBoard(board,[{id:'b',speech:'one two',durationInFrames:120}],30);
+  assert.ok(plan.frames.has('a') && plan.frames.has('b'));
+  assert.ok(lineWidth([node],90) < 1090);
+});

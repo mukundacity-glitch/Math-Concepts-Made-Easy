@@ -1,3 +1,4 @@
+import {CinematicLesson, cinematicFrames, type CinematicProps} from './cinematic/CinematicLesson';
 import {Recap} from './inverse/scenes/Recap';
 import {Practice} from './inverse/scenes/Practice';
 import {Notation} from './inverse/scenes/Notation';
@@ -20,10 +21,18 @@ import {PremiumShort} from './compositions/PremiumShort';
 import {getShortDurationInFrames, shortsCanvas} from './shorts/timeline';
 import {NativeShort, nativeShortDuration} from './compositions/NativeShort';
 
+const cinematicPreview: CinematicProps = {schemaVersion: 'cinematic-v1', day: 1, title: 'Mathematics', chapters: [{
+  id: 'opening', title: 'A mathematical story', dark: true, board: [], beats: [{id: 'preview',
+    speech: 'Prepare the curriculum lesson to preview its mathematics.', durationInFrames: 150}],
+}]};
+
 // This registry remains strictly isolated from Python production stages.
 // Landscape and vertical layouts share verified source packages.
 export const RemotionRoot = () => (
   <>
+    <Composition id="CinematicLesson" component={CinematicLesson} defaultProps={cinematicPreview}
+      calculateMetadata={({props}) => ({durationInFrames: cinematicFrames(props)})}
+      fps={30} width={1920} height={1080} durationInFrames={150}/>
     <Composition id="InverseFunctions" component={InverseLesson} defaultProps={{beats: previewBeats}}
       calculateMetadata={({props}) => {
         validateMathBoards(props.beats, 30);
