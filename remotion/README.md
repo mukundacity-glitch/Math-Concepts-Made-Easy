@@ -100,7 +100,7 @@ alongside its scene's Manim MP4 and original MP3.
 
 These are optional development previews, not live publishing.
 
-**Not implemented yet:** a complete real nine-stage hybrid lesson demo or production rollout.
+**Step 6 is verified and complete.** The real nine-stage hybrid demo passed a clean end-to-end run and independent export/frame review. See [the final verification report](../docs/phase4-step6-verification.md) for the exact tested source, media hashes, evidence and limits. Production rollout remains disabled.
 
 ## Approved fixed order
 
@@ -109,7 +109,7 @@ These are optional development previews, not live publishing.
 - ✅ Step 3 — Connect Manim outputs into Remotion timeline.
 - ✅ Step 4 — Add caption overlays.
 - ✅ Step 5 — Add Shorts composition.
-- **NEXT Step 6 — Run one full demo lesson through the hybrid pipeline.**
+- ✅ Step 6 — Full real hybrid lesson and formula Short rendered, verified and visually reviewed.
 - Only then consider production rollout.
 
 
