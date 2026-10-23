@@ -30,12 +30,12 @@ VOICE = SETTINGS['voice']
 def voice_profile(scene: str) -> dict[str, str]:
     mood = SETTINGS['scene_moods'][scene]
     profile = dict(SETTINGS['moods'][mood])
-    profile['rate'] = SETTINGS['runtime_rate_overrides'].get(mood, profile['rate'])
+    profile['rate'] = SETTINGS['lesson_rate_overrides'][mood]
     return profile
 
 
 def narration_fingerprint(beat: dict[str, Any]) -> str:
-    return hashlib.sha256(json.dumps([beat, SETTINGS, 'day2-ryan-v1'],
+    return hashlib.sha256(json.dumps([beat, SETTINGS, 'day2-ryan-premium-paced-v1'],
         sort_keys=True).encode()).hexdigest()
 
 
@@ -194,7 +194,7 @@ async def prepare() -> dict[str, Any]:
     (BUILD / 'narration.txt').write_text('\n\n'.join(beat['speech'] for beat in beats)+'\n')
     (BUILD / 'source-proof.json').write_text(json.dumps({'storyboardSha256': digest(STORY),
         'voice': VOICE, 'settingsSha256': digest(SETTINGS_PATH), 'beats': len(beats), 'totalFrames': cursor, 'fps': FPS,
-        'audioTreatment': 'Day 2 Ryan profiles; stereo 48 kHz PCM; measured two-pass -18 LUFS / -1.5 dBTP',
+        'audioTreatment': 'Day 2 Ryan pitch/volume; premium lesson rates; stereo 48 kHz PCM; two-pass -18 LUFS / -1.5 dBTP',
         'burnedInCaptions': False}, indent=2)+'\n')
     return props
 

@@ -14,15 +14,16 @@ BUILD = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(BUILD)
 
 
-def test_day2_effective_profiles_preserve_ryan_and_runtime_overrides():
+def test_day2_voice_signature_is_preserved_with_premium_lesson_rates():
     assert BUILD.VOICE == 'en-GB-RyanNeural'
     expected = {
-        'opening': ('+13%', '-4Hz'), 'machine': ('+17%', '-4Hz'),
-        'algebra': ('+18%', '+0Hz'), 'verify': ('+17%', '-4Hz'),
-        'graph': ('+17%', '-4Hz'), 'domain': ('+11%', '-4Hz'),
-        'notation': ('+11%', '-4Hz'), 'practice': ('+18%', '+0Hz'),
-        'recap': ('+11%', '-4Hz'),
+        'opening': ('-3%', '-4Hz'), 'machine': ('-6%', '-4Hz'),
+        'algebra': ('-10%', '+0Hz'), 'verify': ('-6%', '-4Hz'),
+        'graph': ('-6%', '-4Hz'), 'domain': ('-5%', '-4Hz'),
+        'notation': ('-5%', '-4Hz'), 'practice': ('-10%', '+0Hz'),
+        'recap': ('-3%', '-4Hz'),
     }
+    assert BUILD.SETTINGS['runtime_rate_overrides'] == {'analysis': '+17%', 'key_stat': '+18%', 'warning': '+11%'}
     for scene, (rate, pitch) in expected.items():
         assert BUILD.voice_profile(scene) == {'rate': rate, 'pitch': pitch, 'volume': '+0%'}
     with pytest.raises(KeyError):
@@ -33,7 +34,7 @@ def test_profile_changes_invalidate_cached_narration(monkeypatch):
     beat = {'id': 'opening-00', 'scene': 'opening', 'speech': 'A function reverses a mapping.'}
     original = BUILD.narration_fingerprint(beat)
     settings = json.loads(json.dumps(BUILD.SETTINGS))
-    settings['moods']['intro']['rate'] = '+14%'
+    settings['lesson_rate_overrides']['intro'] = '-2%'
     monkeypatch.setattr(BUILD, 'SETTINGS', settings)
     assert BUILD.narration_fingerprint(beat) != original
 

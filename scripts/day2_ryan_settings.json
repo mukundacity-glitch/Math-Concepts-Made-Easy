@@ -3,21 +3,61 @@
   "edge_tts_version": "7.2.8",
   "transport": "wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1",
   "moods": {
-    "intro": {"rate": "+13%", "pitch": "-4Hz", "volume": "+0%"},
-    "analysis": {"rate": "+10%", "pitch": "-4Hz", "volume": "+0%"},
-    "key_stat": {"rate": "+15%", "pitch": "+0Hz", "volume": "+0%"},
-    "warning": {"rate": "+7%", "pitch": "-4Hz", "volume": "+0%"},
-    "outro": {"rate": "+11%", "pitch": "-4Hz", "volume": "+0%"}
+    "intro": {
+      "rate": "+13%",
+      "pitch": "-4Hz",
+      "volume": "+0%"
+    },
+    "analysis": {
+      "rate": "+10%",
+      "pitch": "-4Hz",
+      "volume": "+0%"
+    },
+    "key_stat": {
+      "rate": "+15%",
+      "pitch": "+0Hz",
+      "volume": "+0%"
+    },
+    "warning": {
+      "rate": "+7%",
+      "pitch": "-4Hz",
+      "volume": "+0%"
+    },
+    "outro": {
+      "rate": "+11%",
+      "pitch": "-4Hz",
+      "volume": "+0%"
+    }
   },
-  "runtime_rate_overrides": {"analysis": "+17%", "key_stat": "+18%", "warning": "+11%"},
+  "runtime_rate_overrides": {
+    "analysis": "+17%",
+    "key_stat": "+18%",
+    "warning": "+11%"
+  },
   "scene_moods": {
-    "opening": "intro", "machine": "analysis", "algebra": "key_stat",
-    "verify": "analysis", "graph": "analysis", "domain": "warning",
-    "notation": "warning", "practice": "key_stat", "recap": "outro"
+    "opening": "intro",
+    "machine": "analysis",
+    "algebra": "key_stat",
+    "verify": "analysis",
+    "graph": "analysis",
+    "domain": "warning",
+    "notation": "warning",
+    "practice": "key_stat",
+    "recap": "outro"
   },
   "mastering": {
-    "integrated_lufs": -18.0, "true_peak_dbtp": -1.5,
-    "lra_lu": 7.0, "sample_rate": 48000, "channels": 2
+    "integrated_lufs": -18.0,
+    "true_peak_dbtp": -1.5,
+    "lra_lu": 7.0,
+    "sample_rate": 48000,
+    "channels": 2
   },
-  "reference": "https://github.com/mukundacity-glitch/FPL-VORTEX-YOUTUBE-POST/tree/main/day2"
+  "reference": "https://github.com/mukundacity-glitch/FPL-VORTEX-YOUTUBE-POST/tree/main/day2",
+  "lesson_rate_overrides": {
+    "intro": "-3%",
+    "analysis": "-6%",
+    "key_stat": "-10%",
+    "warning": "-5%",
+    "outro": "-3%"
+  }
 }
