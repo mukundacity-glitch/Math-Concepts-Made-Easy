@@ -17,7 +17,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, time, timezone
+from datetime import datetime, time, timezone, timedelta
 from pathlib import Path
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -57,13 +57,14 @@ SHORT_TYPE_META = {
 
 
 def _compute_local_publish_at(slot_time: time) -> Optional[str]:
-    """Return today's local slot as an ISO UTC timestamp, or None if past."""
+    """Keep uploads scheduled: a missed slot moves to the next local day."""
     now = datetime.now(timezone.utc)
     local_date = now.astimezone(PUBLISH_TIMEZONE).date()
     publish_dt = datetime.combine(local_date, slot_time, tzinfo=PUBLISH_TIMEZONE)
     publish_dt = publish_dt.astimezone(timezone.utc)
-    if publish_dt <= now:
-        return None
+    if publish_dt <= now + timedelta(minutes=15):
+        publish_dt = datetime.combine(local_date + timedelta(days=1), slot_time,
+                                      tzinfo=PUBLISH_TIMEZONE).astimezone(timezone.utc)
     return publish_dt.isoformat().replace("+00:00", "Z")
 
 
@@ -78,7 +79,14 @@ def compute_main_publish_at() -> Optional[str]:
         return None
     try:
         hour, minute = (int(part) for part in value.split(":", 1))
-        return _compute_local_publish_at(time(hour, minute))
+        scheduled = _compute_local_publish_at(time(hour, minute))
+        # Explicit first-day/manual kickoff may begin later today, with time
+        # for YouTube processing. Regular daily runs retain the 09:00 slot.
+        if os.environ.get("YT_START_TODAY") == "1":
+            now = datetime.now(timezone.utc)
+            if datetime.fromisoformat(scheduled.replace("Z", "+00:00")).astimezone(PUBLISH_TIMEZONE).date() > now.astimezone(PUBLISH_TIMEZONE).date():
+                return (now + timedelta(minutes=30)).isoformat().replace("+00:00", "Z")
+        return scheduled
     except (TypeError, ValueError):
         raise SystemExit("🛑 YT_MAIN_PUBLISH_LOCAL_TIME must use HH:MM (for example 09:00).")
 
@@ -411,10 +419,10 @@ def upload_day(day: int, dry_run: bool = False, privacy: str = None):
     service = get_service()
 
     print("\n▶ Uploading main lesson…")
-    video_id = _upload_file(
+    from uploader.upload_ledger import upload_once
+    video_id = upload_once(day, "MAIN", lambda: _upload_file(
         service, paths["video"], title, description, tags, privacy,
-        publish_at=main_publish_at,
-    )
+        publish_at=main_publish_at), publish_at=main_publish_at, privacy=privacy)
     if paths["thumbnail"].exists():
         _set_thumbnail(service, video_id, paths["thumbnail"])
     if paths["srt"].exists():
@@ -423,12 +431,34 @@ def upload_day(day: int, dry_run: bool = False, privacy: str = None):
 
     for key, short_path in paths["shorts"].items():
         if not short_path.exists():
-            print(f"\n⚠️  Short {key} not found ({short_path.name}) — skipping.")
-            continue
+            raise RuntimeError(f"Mandatory Short missing: {short_path.name}")
         meta = short_meta[key]
         print(f"\n▶ Uploading Short [{key}]…")
-        _upload_file(service, short_path, meta["title"], meta["description"],
-                     tags + ["shorts"], privacy, publish_at=meta["publish_at"])
+        upload_once(day, key, lambda: _upload_file(service, short_path, meta["title"], meta["description"],
+                     tags + ["shorts"], privacy, publish_at=meta["publish_at"]),
+                    publish_at=meta["publish_at"], privacy=privacy)
+
+    # Confirm the actual remote privacy/schedule before advancing the day.
+    from uploader.upload_ledger import read as read_upload_ledger
+    receipts = read_upload_ledger()[str(day)]
+    ids = [receipts[key]["video_id"] for key in ("MAIN", *SHORTS_SCHEDULE_LOCAL)]
+    result = service.videos().list(part="status", id=",".join(ids)).execute()
+    statuses = {item["id"]: item["status"] for item in result.get("items", [])}
+    for key in ("MAIN", *SHORTS_SCHEDULE_LOCAL):
+        receipt = receipts[key]
+        status = statuses.get(receipt["video_id"], {})
+        scheduled = receipt["publish_at"] if receipt["privacy"] == "public" else None
+        if scheduled:
+            expected = datetime.fromisoformat(scheduled.replace("Z", "+00:00"))
+            observed = status.get("publishAt")
+            if observed:
+                if datetime.fromisoformat(observed.replace("Z", "+00:00")) != expected:
+                    raise RuntimeError(f"{key} remote schedule differs from the upload receipt")
+            elif not (expected <= datetime.now(timezone.utc) and status.get("privacyStatus") == "public"):
+                raise RuntimeError(f"{key} scheduled publication was not confirmed by YouTube")
+        elif status.get("privacyStatus") != receipt["privacy"]:
+            raise RuntimeError(f"{key} remote privacy differs from the upload receipt")
+        print(f"Verified {key}: https://youtu.be/{receipt['video_id']} — {status.get('publishAt') or status.get('privacyStatus')}")
 
     print(f"\n🎉 Day {day} posted to YouTube — 1 lesson + "
           f"{len(SHORTS_SCHEDULE_LOCAL)} Shorts spread across the day.")
@@ -447,3 +477,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

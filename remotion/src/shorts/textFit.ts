@@ -3,10 +3,10 @@ export type MeasureText = (text: string, fontSize: number) => number;
 /** Wrap measured glyphs, including long unbroken metadata, without dropping text. */
 export const fitShortText = (
   text: string, width: number, height: number, preferredSize: number,
-  lineHeight: number, measure: MeasureText,
+  lineHeight: number, measure: MeasureText, minimumSize = 24,
 ): {fontSize: number; lines: string[]} => {
   const words = text.trim().split(/\s+/);
-  for (let fontSize = preferredSize; fontSize >= 24; fontSize--) {
+  for (let fontSize = preferredSize; fontSize >= minimumSize; fontSize--) {
     const lines: string[] = [];
     let current = '';
     for (const word of words) {
@@ -33,3 +33,4 @@ export const fitShortText = (
   }
   throw new Error('Shorts text cannot fit its safe area at a readable font size');
 };
+

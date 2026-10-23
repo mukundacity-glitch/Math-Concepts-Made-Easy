@@ -7,3 +7,5 @@ dist/
 
 # Staged Manim video/audio exports — never commit generated media
 public/manim/
+public/native-shorts/
+

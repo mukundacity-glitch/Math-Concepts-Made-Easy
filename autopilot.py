@@ -41,6 +41,14 @@ STAGES = [
 ]
 
 
+def production_stages(hybrid: bool):
+    if not hybrid:
+        return STAGES
+    # Sidecar captions are emitted by hybrid_assembly from its exact timeline.
+    return [*STAGES[:5], ("Remotion hybrid assembly and captions", "pipeline.hybrid_assembly"),
+            STAGES[7], ("Native portrait Shorts", "pipeline.native_shorts")]
+
+
 def run_stage(index: int, name: str, module: str, day: int):
     print(f"\n{'█' * 65}")
     print(f"  STAGE {index}/{len(STAGES)} — {name}  (Day {day})")
@@ -54,6 +62,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--day", type=int, default=None,
                         help="lesson day to produce (default: next from state/progress.json)")
+    parser.add_argument("--hybrid", action="store_true", help="Use Remotion and native portrait Shorts")
     parser.add_argument("--from-stage", type=int, default=1,
                         help="1-based stage number to resume from")
     parser.add_argument("--upload", action="store_true",
@@ -102,7 +111,7 @@ def main():
     print(f"  🎨 Engine : ENGINE_VISUAL_V4 (scene manifest + semantic QA)")
     print(f"{'═' * 65}")
 
-    for i, (name, module) in enumerate(STAGES, start=1):
+    for i, (name, module) in enumerate(production_stages(args.hybrid), start=1):
         if i < args.from_stage:
             print(f"  ⏭  Skipping stage {i} — {name}")
             continue
@@ -168,3 +177,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+

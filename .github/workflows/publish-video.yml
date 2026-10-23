@@ -38,6 +38,10 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      MCME_REQUIRE_NATIVE_SHORTS: "1"
+      MCME_PERSIST_UPLOAD_LEDGER: "1"
+      YT_MAIN_PUBLISH_LOCAL_TIME: "09:00"
     permissions:
       contents: write
 
@@ -99,3 +103,4 @@ jobs:
           git add state/progress.json
           git diff --cached --quiet || git commit -m "autopilot: mark day ${{ github.event.inputs.day }} as uploaded"
           git push
+
