@@ -104,10 +104,10 @@ class PortraitBoard(Scene):
                             else 'relation' if token in '=<> ' else 'operator')
                     return r'\textcolor[HTML]{' + MATH_PALETTE[role][1:] + '}{' + token + '}'
                 return re.sub(pattern, atom, value)
-            whole = SingleStringMathTex(colored(page["display"]), font_size=54, tex_template=PORTRAIT_TEX)
+            whole = SingleStringMathTex(colored(page["display"]), font_size=90, tex_template=PORTRAIT_TEX)
             lines = [page["display"]] if whole.width <= 7 else math_rows(page["display"])
             for line in lines:
-                obj = SingleStringMathTex(colored(line), font_size=54, tex_template=PORTRAIT_TEX)
+                obj = SingleStringMathTex(colored(line), font_size=90, tex_template=PORTRAIT_TEX)
                 scale = min(1, 7.0 / max(obj.width, .001))
                 if scale < .74:
                     raise ValueError("Equation needs a hand-authored portrait break; refusing tiny math")

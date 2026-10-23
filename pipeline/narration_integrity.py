@@ -12,7 +12,9 @@ def verify_narration(final: Path, segments: list[tuple[Path, float]]) -> list[di
         '-of', 'json', str(final)], text=True))['streams']
     audio = next(s for s in streams if s['codec_type'] == 'audio')
     def samples(path, start, channel=False):
-        args = ['ffmpeg', '-v', 'error', '-ss', str(start), '-i', str(path), '-t', '1.5', '-vn']
+        # Decode before seeking: fast MP3 input seeks can omit the bit reservoir
+        # and corrupt the beginning of a comparison window, despite intact audio.
+        args = ['ffmpeg', '-v', 'error', '-i', str(path), '-ss', str(start), '-t', '1.5', '-vn']
         if channel and audio.get('channels', 1) > 1:
             args += ['-af', 'pan=mono|c0=FL']
         return np.frombuffer(subprocess.check_output(args + ['-ac', '1', '-ar', '8000',
