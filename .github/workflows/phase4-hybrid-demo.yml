@@ -7,6 +7,7 @@ on:
       - "tests/run_phase4_hybrid_demo.py"
       - "tests/verify_phase4_hybrid_demo.py"
       - "tests/test_phase4_hybrid_demo.py"
+      - "tests/test_phase4_demo_protection.py"
       - "pipeline/premium_manim_helpers.py"
       - ".github/workflows/phase4-hybrid-demo.yml"
   workflow_dispatch:
@@ -24,6 +25,8 @@ jobs:
       LESSON_DAY: "999"
     steps:
       - uses: actions/checkout@v4
+      - name: Capture production baseline before dependency installation
+        run: python3 tests/run_phase4_hybrid_demo.py snapshot
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -31,12 +34,32 @@ jobs:
         with:
           node-version: "22"
       - name: Install native renderer libraries with bounded mirror fallback
-        timeout-minutes: 8
+        timeout-minutes: 20
         run: |
-          timeout 120s sudo apt-get install -y --no-install-recommends ffmpeg libcairo2-dev libpango1.0-dev pkg-config || {
-            timeout 90s sudo apt-get update -qq -o Acquire::Retries=0 -o Acquire::http::Timeout=15 -o Acquire::https::Timeout=15
-            timeout 120s sudo apt-get install -y --no-install-recommends ffmpeg libcairo2-dev libpango1.0-dev pkg-config
-          }
+          set -euo pipefail
+          apt_options=(-o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+          packages=(ffmpeg libcairo2-dev libpango1.0-dev pkg-config)
+          if ! timeout 300s sudo apt-get "${apt_options[@]}" install -y --no-install-recommends "${packages[@]}"; then
+            # Refresh metadata against a different origin rather than retrying Azure.
+            sudo tee /etc/apt/sources.list.d/ubuntu.sources > /dev/null <<'SOURCES'
+          Types: deb
+          URIs: https://archive.ubuntu.com/ubuntu/
+          Suites: noble noble-updates noble-backports
+          Components: main restricted universe multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb
+          URIs: https://security.ubuntu.com/ubuntu/
+          Suites: noble-security
+          Components: main restricted universe multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+          SOURCES
+            timeout 180s sudo apt-get "${apt_options[@]}" update
+            timeout 600s sudo apt-get "${apt_options[@]}" install -y --no-install-recommends "${packages[@]}"
+          fi
+          ffmpeg -version
+          ffprobe -version
+          pkg-config --modversion cairo pangocairo
       - name: Install real Manim and narration Python runtime
         timeout-minutes: 10
         run: |
@@ -73,6 +96,7 @@ jobs:
         with:
           name: phase4-step6-real-hybrid-lesson
           retention-days: 14
+          if-no-files-found: error
           path: |
             build/phase4-demo/evidence/**
             build/phase4-demo/output/scripts/*.json
@@ -81,3 +105,4 @@ jobs:
             build/phase4-demo/output/renders/lesson_999/*.mp4
             remotion/build/phase4-demo/*.mp4
             remotion/build/phase4-demo/*.json
+
