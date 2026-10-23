@@ -1,0 +1,59 @@
+name: Native portrait Shorts verification
+on:
+  pull_request:
+    paths:
+      - 'pipeline/native_shorts.py'
+      - 'pipeline/hybrid_assembly.py'
+      - 'remotion/src/compositions/NativeShort.tsx'
+      - '.github/workflows/native-shorts-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-portrait-shorts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install native rendering runtime
+        run: |
+          sudo apt-get update -qq -o Acquire::Retries=3
+          sudo apt-get install -y --no-install-recommends -o Acquire::Retries=3 \
+            ffmpeg libcairo2-dev libpango1.0-dev pkg-config \
+            texlive-latex-base texlive-latex-extra texlive-fonts-recommended dvisvgm cm-super
+          python -m pip install 'manim==0.19.0' 'edge-tts>=7,<9' pytest sympy
+      - name: Verify tests and portrait composition
+        working-directory: remotion
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npx remotion browser ensure
+      - name: Generate three authentic native portrait Shorts for Day 43
+        run: |
+          python -m pytest -q
+          python - <<'PY'
+          from pathlib import Path
+          from pipeline.curriculum import get_lesson
+          from pipeline.native_shorts import build
+          build(get_lesson(43), Path('output/final_videos').resolve(),
+                Path('output/native-shorts').resolve(), 'en-US-RyanNeural')
+          PY
+      - name: Verify every final stream and extract phone review frames
+        run: python tests/verify_native_shorts.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-portrait-shorts-day43
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            output/final_videos/*.mp4
+            output/native-shorts/*.json
+            output/native-shorts/*.png
+            remotion/public/native-shorts/**

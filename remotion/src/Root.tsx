@@ -6,11 +6,20 @@ import {getLessonDurationInFrames} from './lesson/timeline';
 import {lessonCanvas} from './design/theme';
 import {PremiumShort} from './compositions/PremiumShort';
 import {getShortDurationInFrames, shortsCanvas} from './shorts/timeline';
+import {NativeShort, nativeShortDuration} from './compositions/NativeShort';
 
 // This registry remains strictly isolated from Python production stages.
 // Landscape and vertical layouts share verified source packages.
 export const RemotionRoot = () => (
   <>
+    <Composition id="NativeShort" component={NativeShort}
+      defaultProps={{title: 'Mathematics', label: 'One idea at a time', pages: [{
+        durationInFrames: 60, videoSrc: 'native-shorts/preview.mp4',
+        audioSrc: 'native-shorts/preview.mp3', captions: [{text: 'Portrait teaching preview',
+          startMs: 0, endMs: 2000, timestampMs: 0, confidence: null}],
+      }]}}
+      calculateMetadata={({props}) => ({durationInFrames: nativeShortDuration(props)})}
+      fps={30} width={1080} height={1920} durationInFrames={60}/>
     <Composition
       id="ScaffoldDiagnostics"
       component={ScaffoldDiagnostics}
@@ -43,3 +52,4 @@ export const RemotionRoot = () => (
     />
   </>
 );
+

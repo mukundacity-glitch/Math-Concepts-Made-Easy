@@ -139,8 +139,19 @@ def validate_publish_package(day: int) -> tuple[bool, list[str]]:
             errors.append(f"missing/too-small {key} Short")
             continue
         duration = _duration(short)
-        if duration <= 0 or duration > 60.5:
+        if duration <= 0 or duration > 180.05:
             errors.append(f"{key} Short duration invalid: {duration:.1f}s")
+        try:
+            streams = json.loads(subprocess.check_output([
+                "ffprobe", "-v", "error", "-show_streams", "-of", "json", str(short),
+            ], text=True))["streams"]
+            picture = next(s for s in streams if s["codec_type"] == "video")
+            if (picture["width"], picture["height"]) != (1080, 1920):
+                errors.append(f"{key} Short is not native 1080x1920")
+            if not any(s["codec_type"] == "audio" for s in streams):
+                errors.append(f"{key} Short has no narration stream")
+        except Exception as exc:
+            errors.append(f"{key} Short stream verification failed: {exc}")
 
     return (len(errors) == 0, errors)
 
@@ -154,3 +165,4 @@ def assert_publishable(day: int) -> None:
             f"Refusing YouTube upload."
         )
     print(f"✅ Media gate passed for Day {day}")
+

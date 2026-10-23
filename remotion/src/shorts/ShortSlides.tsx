@@ -11,18 +11,19 @@ import {fitShortText} from './textFit';
 type TextProps = {
   readonly text: string; readonly width: number; readonly height: number;
   readonly fontSize: number; readonly weight?: number; readonly lineHeight?: number;
+  readonly minimumSize?: number;
 };
 
 /** Measure the installed font so accepted metadata never clips or truncates. */
-const ShortText = ({text, width, height, fontSize, weight = 750, lineHeight = 1.2}: TextProps) => {
+export const ShortText = ({text, width, height, fontSize, weight = 750, lineHeight = 1.2, minimumSize = 24}: TextProps) => {
   const fitted = useMemo(() => {
     const context = document.createElement('canvas').getContext('2d');
     if (!context) throw new Error('Shorts needs a canvas context to measure readable text');
     return fitShortText(text, width - 4, height, fontSize, lineHeight, (value, size) => {
       context.font = weight + ' ' + size + 'px ' + theme.font;
       return context.measureText(value).width;
-    });
-  }, [text, width, height, fontSize, weight, lineHeight]);
+    }, minimumSize);
+  }, [text, width, height, fontSize, weight, lineHeight, minimumSize]);
   return (
     <span data-short-text="fitted" style={{display: 'block', width, maxHeight: height,
       fontFamily: theme.font, fontWeight: weight, fontSize: fitted.fontSize,
@@ -148,3 +149,4 @@ export const ShortChapter = ({series, chapter, index, count}: {
     </AbsoluteFill>
   );
 };
+
