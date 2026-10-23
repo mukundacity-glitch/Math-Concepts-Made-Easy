@@ -9,6 +9,7 @@ on:
       - "tests/test_phase4_hybrid_demo.py"
       - "tests/test_phase4_demo_protection.py"
       - "pipeline/premium_manim_helpers.py"
+      - "pipeline/cell4_animation.py"
       - ".github/workflows/phase4-hybrid-demo.yml"
   workflow_dispatch:
 

@@ -1555,7 +1555,8 @@ class Scene03_Concept(Scene):
             anims = []
             if len(live_ideas) > 2:
                 old = live_ideas.pop(0)
-                anims.append(FadeOut(old, shift=UP * 0.1))
+                # Restacking reuses the old sentence's space immediately.
+                self.remove(old)
             # Re-stack remaining from top of card
             stack = VGroup(*live_ideas).arrange(DOWN, aligned_edge=LEFT, buff=0.28)
             stack.move_to(np.array([-3.30, 0.15, 0.0]))
@@ -2373,3 +2374,4 @@ if _failed_scenes:
         f"🛑 Render failed for scenes: {_failed_scenes}. "
         f"Fix the errors above and re-run (autopilot.py --from-stage 4)."
     )
+
