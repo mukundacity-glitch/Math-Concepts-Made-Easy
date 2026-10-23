@@ -92,7 +92,7 @@ test('composition uses verified original math media, not recomputed equations', 
   const stage = read('src/components/SceneFrame.tsx');
   assert.match(shell, /buildLessonTimeline\(props\)/);
   assert.match(shell, /<Sequence/);
-  assert.match(stage, /data-visual-slot=\{chapter\.media/);
+  assert.match(stage, /data-visual-slot="manim-connected"/);
   assert.match(stage, /staticFile\(chapter\.media\.videoSrc\)/);
   assert.match(stage, /staticFile\(chapter\.media\.audioSrc\)/);
   assert.doesNotMatch(shell + stage, /<CaptionTrack|<BasicCaptions|PremiumShort/);

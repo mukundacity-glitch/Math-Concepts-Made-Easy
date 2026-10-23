@@ -12,7 +12,7 @@ const pix = async (path) => {
   return data;
 };
 
-test('original timed subtitles appear and disappear without covering Manim math', async () => {
+test('optional captions do not paint a strip over the full-frame teaching image', async () => {
   const silent = await pix('build/preview/caption-before.png');
   const spoken = await pix('build/preview/connected-concept.png');
   assert.equal(silent.length, spoken.length);
@@ -22,7 +22,11 @@ test('original timed subtitles appear and disappear without covering Manim math'
         Math.abs(silent[i+1] - spoken[i+1]) +
         Math.abs(silent[i+2] - spoken[i+2]) > 90) different++;
   }
-  assert.ok(different > 350,
-            'caption text did not visually appear in reserved non-math lane');
-  console.log('Verified caption text pixel changes in reserved lower lane:', different);
+  assert.equal(different, 0,
+    'a caption overlay appeared over the static full-frame media fixture');
+  for (let i = 0; i < spoken.length; i += 3) {
+    assert.ok(Math.abs(spoken[i] - 192) < 20 && Math.abs(spoken[i+1] - 38) < 20 && Math.abs(spoken[i+2] - 45) < 20,
+      'the former caption lane must now show the original teaching pixels');
+  }
+  console.log('Verified the lower teaching region remains unobstructed across caption word boundaries');
 });

@@ -1,0 +1,4 @@
+{
+  "example": {"name": "f", "multiplier": 2, "offset": 5, "input": 3},
+  "practice": {"name": "g", "multiplier": 3, "offset": -4, "input": 4}
+}

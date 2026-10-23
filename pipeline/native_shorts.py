@@ -66,7 +66,7 @@ from manim import *
 from pipeline.semantic_math import semantic_text, MATH_PALETTE
 config.frame_width = 8
 config.frame_height = 64 / 7
-config.background_color = "#0B1F38"
+config.background_color = "#20262B"
 PORTRAIT_TEX = TexTemplate()
 PORTRAIT_TEX.add_to_preamble(r"\usepackage{xcolor}")
 
@@ -133,30 +133,23 @@ class PortraitBoard(Scene):
 '''
 
 
-async def narrate(text: str, audio: Path, words: Path, voice: str) -> None:
-    import edge_tts
-    error = None
-    for attempt in range(3):
-        try:
-            events = []
-            stream = edge_tts.Communicate(text, voice, rate="-5%", boundary="WordBoundary")
-            with audio.open("wb") as fp:
-                async for part in stream.stream():
-                    if part["type"] == "audio":
-                        fp.write(part["data"])
-                    elif part["type"] == "WordBoundary":
-                        start = part["offset"] / 10_000_000
-                        events.append({"word": part["text"], "start": start,
-                                       "end": start + part["duration"] / 10_000_000})
-            if not events:
-                raise ValueError("No real word boundaries from Shorts narration")
-            words.write_text(json.dumps(events), encoding="utf8")
-            return
-        except Exception as exc:
-            error = exc
-            if attempt < 2:
-                await asyncio.sleep(2)
-    raise RuntimeError("Native Shorts narration failed") from error
+async def narrate(text: str, audio: Path, words: Path, voice: str, scene: str = 'machine') -> None:
+    import hashlib
+    from scripts.build_inverse_lesson import VOICE, configure_ryan_transport, synthesize
+    if voice != VOICE:
+        raise ValueError('The approved narrator is Ryan; voice substitution is disabled')
+    configure_ryan_transport()
+    cache = words.parent / 'ryan-cache'
+    public_cache = audio.parent / 'ryan-cache'
+    cache.mkdir(parents=True, exist_ok=True)
+    public_cache.mkdir(parents=True, exist_ok=True)
+    identifier = 'native-' + hashlib.sha256((scene + text).encode()).hexdigest()[:16]
+    beat = {'id': identifier, 'scene': scene, 'speech': text, 'holdSeconds': .4}
+    receipt = await synthesize(beat, asyncio.Semaphore(1), build_dir=cache, public_dir=public_cache)
+    # Keep the approved PCM master: MP3 encoder priming shifts word cues by 23ms.
+    shutil.copyfile(public_cache / (identifier + '.wav'), audio)
+    words.write_text(json.dumps([{'word': word['text'], 'start': word['start'], 'end': word['end']}
+                                for word in receipt['words']]), encoding='utf8')
 
 
 def build(lesson: dict, final_dir: Path, work: Path, voice: str) -> list[Path]:
@@ -173,9 +166,9 @@ def build(lesson: dict, final_dir: Path, work: Path, voice: str) -> list[Path]:
         public.mkdir(parents=True, exist_ok=True)
         pages = []
         for index, page in enumerate(plan["pages"]):
-            audio = public / f"page-{index}.mp3"
+            audio = public / f"page-{index}.wav"
             words = work / f"{key}-{index}.words.json"
-            asyncio.run(narrate(page["speech"], audio, words, voice))
+            asyncio.run(narrate(page["speech"], audio, words, voice, "algebra" if page["kind"] == "math" else "machine"))
             seconds, _ = _probe(audio, "audio")
             frames = math.ceil((seconds + .4) * 30)
             page = {**page, "durationInFrames": frames}

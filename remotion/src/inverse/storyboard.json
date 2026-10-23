@@ -1,0 +1,485 @@
+{
+  "title": "Inverse functions",
+  "beats": [
+    {
+      "id": "opening-00",
+      "scene": "opening",
+      "stage": 0,
+      "title": "The way back",
+      "speech": "Here is a mystery. A machine turns three into eleven. Can you find the way back?",
+      "holdSeconds": 1.5
+    },
+    {
+      "id": "opening-01",
+      "scene": "opening",
+      "stage": 1,
+      "title": "The way back",
+      "speech": "Hold that thought — because today it becomes mathematics. Welcome to Math Concepts Made Easy.",
+      "holdSeconds": 0.8
+    },
+    {
+      "id": "opening-02",
+      "scene": "opening",
+      "stage": 2,
+      "title": "The way back",
+      "speech": "Today is Day forty-three, and our lesson is all about inverse functions.",
+      "holdSeconds": 0.8
+    },
+    {
+      "id": "opening-03",
+      "scene": "opening",
+      "stage": 3,
+      "title": "The way back",
+      "speech": "By the end of this lesson, you will be able to find an inverse, verify it, and explain when one exists.",
+      "holdSeconds": 1.2
+    },
+    {
+      "id": "machine-00",
+      "scene": "machine",
+      "stage": 0,
+      "title": "Undo the journey",
+      "speech": "Start with three. Our function first multiplies by two.",
+      "holdSeconds": 1.0
+    },
+    {
+      "id": "machine-01",
+      "scene": "machine",
+      "stage": 1,
+      "title": "Undo the journey",
+      "speech": "Three times two is six.",
+      "holdSeconds": 1.0
+    },
+    {
+      "id": "machine-02",
+      "scene": "machine",
+      "stage": 2,
+      "title": "Undo the journey",
+      "speech": "Then add five. Six plus five is eleven. Together, these operations define f of x equals two x plus five.",
+      "holdSeconds": 1.4
+    },
+    {
+      "id": "machine-03",
+      "scene": "machine",
+      "stage": 3,
+      "title": "Undo the journey",
+      "speech": "Now start at eleven and travel backwards. Undo the last operation first: subtract five.",
+      "holdSeconds": 1.1
+    },
+    {
+      "id": "machine-04",
+      "scene": "machine",
+      "stage": 4,
+      "title": "Undo the journey",
+      "speech": "Eleven minus five is six. Then undo multiplication by two: divide by two.",
+      "holdSeconds": 1.1
+    },
+    {
+      "id": "machine-05",
+      "scene": "machine",
+      "stage": 5,
+      "title": "Undo the journey",
+      "speech": "Six divided by two is three. We have recovered the original input.",
+      "holdSeconds": 1.4
+    },
+    {
+      "id": "machine-06",
+      "scene": "machine",
+      "stage": 6,
+      "title": "Undo the journey",
+      "speech": "The order matters. To undo multiply, then add, we must subtract, then divide.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "machine-07",
+      "scene": "machine",
+      "stage": 7,
+      "title": "Undo the journey",
+      "speech": "This reverse journey is the inverse function. It exchanges the roles of input and output.",
+      "holdSeconds": 1.5
+    },
+    {
+      "id": "algebra-00",
+      "scene": "algebra",
+      "stage": 0,
+      "title": "Build the inverse",
+      "speech": "Let us turn that picture into algebra. Write y equals two x plus five.",
+      "holdSeconds": 1.4
+    },
+    {
+      "id": "algebra-01",
+      "scene": "algebra",
+      "stage": 1,
+      "title": "Build the inverse",
+      "speech": "The inverse swaps input and output. Exchange x and y: x equals two y plus five.",
+      "holdSeconds": 1.6
+    },
+    {
+      "id": "algebra-02",
+      "scene": "algebra",
+      "stage": 2,
+      "title": "Build the inverse",
+      "speech": "Subtract five from both sides. Keep the equation balanced.",
+      "holdSeconds": 1.5
+    },
+    {
+      "id": "algebra-03",
+      "scene": "algebra",
+      "stage": 3,
+      "title": "Build the inverse",
+      "speech": "On the right, plus five and minus five cancel. We have x minus five equals two y.",
+      "holdSeconds": 1.5
+    },
+    {
+      "id": "algebra-04",
+      "scene": "algebra",
+      "stage": 4,
+      "title": "Build the inverse",
+      "speech": "Divide both sides by two.",
+      "holdSeconds": 1.4
+    },
+    {
+      "id": "algebra-05",
+      "scene": "algebra",
+      "stage": 5,
+      "title": "Build the inverse",
+      "speech": "The twos cancel on the right. So y equals the quantity x minus five, divided by two.",
+      "holdSeconds": 1.7
+    },
+    {
+      "id": "algebra-06",
+      "scene": "algebra",
+      "stage": 6,
+      "title": "Build the inverse",
+      "speech": "Name the reverse rule: f inverse of x equals the quantity x minus five, divided by two.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "algebra-07",
+      "scene": "algebra",
+      "stage": 7,
+      "title": "Build the inverse",
+      "speech": "Check our original number. Put eleven into the inverse: eleven minus five, all divided by two.",
+      "holdSeconds": 1.2
+    },
+    {
+      "id": "algebra-08",
+      "scene": "algebra",
+      "stage": 8,
+      "title": "Build the inverse",
+      "speech": "Eleven minus five is six. Six divided by two is three. The algebra matches the journey.",
+      "holdSeconds": 2.0
+    },
+    {
+      "id": "verify-00",
+      "scene": "verify",
+      "stage": 0,
+      "title": "Prove it returns x",
+      "speech": "A single successful number is encouraging. Composition checks every real input at once.",
+      "holdSeconds": 1.2
+    },
+    {
+      "id": "verify-01",
+      "scene": "verify",
+      "stage": 1,
+      "title": "Prove it returns x",
+      "speech": "First apply the inverse, then f. Replace the input of f with the entire inverse expression.",
+      "holdSeconds": 1.5
+    },
+    {
+      "id": "verify-02",
+      "scene": "verify",
+      "stage": 2,
+      "title": "Prove it returns x",
+      "speech": "Two times the quantity x minus five divided by two, plus five. The outside two cancels the denominator.",
+      "holdSeconds": 1.7
+    },
+    {
+      "id": "verify-03",
+      "scene": "verify",
+      "stage": 3,
+      "title": "Prove it returns x",
+      "speech": "That leaves x minus five plus five. The fives cancel, leaving x.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "verify-04",
+      "scene": "verify",
+      "stage": 4,
+      "title": "Prove it returns x",
+      "speech": "Now check the other direction. Apply f first, then the inverse.",
+      "holdSeconds": 1.2
+    },
+    {
+      "id": "verify-05",
+      "scene": "verify",
+      "stage": 5,
+      "title": "Prove it returns x",
+      "speech": "Substitute two x plus five into the inverse. Subtract five from that whole expression, then divide by two.",
+      "holdSeconds": 1.7
+    },
+    {
+      "id": "verify-06",
+      "scene": "verify",
+      "stage": 6,
+      "title": "Prove it returns x",
+      "speech": "The fives cancel. Two x divided by two is x.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "verify-07",
+      "scene": "verify",
+      "stage": 7,
+      "title": "Prove it returns x",
+      "speech": "Both compositions return the input. Here both functions have domain and range equal to all real numbers.",
+      "holdSeconds": 1.7
+    },
+    {
+      "id": "graph-00",
+      "scene": "graph",
+      "stage": 0,
+      "title": "A reflection of the same idea",
+      "speech": "The same swap has a geometric meaning. Here is the graph of f of x equals two x plus five.",
+      "holdSeconds": 1.4
+    },
+    {
+      "id": "graph-01",
+      "scene": "graph",
+      "stage": 1,
+      "title": "A reflection of the same idea",
+      "speech": "The point three, eleven lies on this graph: input three, output eleven.",
+      "holdSeconds": 1.5
+    },
+    {
+      "id": "graph-02",
+      "scene": "graph",
+      "stage": 2,
+      "title": "A reflection of the same idea",
+      "speech": "Swap those coordinates. Eleven, three lies on the inverse graph.",
+      "holdSeconds": 1.6
+    },
+    {
+      "id": "graph-03",
+      "scene": "graph",
+      "stage": 3,
+      "title": "A reflection of the same idea",
+      "speech": "Draw the line y equals x. Points on this line have equal coordinates.",
+      "holdSeconds": 1.6
+    },
+    {
+      "id": "graph-04",
+      "scene": "graph",
+      "stage": 4,
+      "title": "A reflection of the same idea",
+      "speech": "Reflect the function across this line. Every point a, b moves to b, a.",
+      "holdSeconds": 2.0
+    },
+    {
+      "id": "graph-05",
+      "scene": "graph",
+      "stage": 5,
+      "title": "A reflection of the same idea",
+      "speech": "The reflected graph is y equals the quantity x minus five, divided by two. The axes use exactly the same scale.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "graph-06",
+      "scene": "graph",
+      "stage": 6,
+      "title": "A reflection of the same idea",
+      "speech": "An inverse exchanges domain and range: the possible inputs become the possible outputs.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "domain-00",
+      "scene": "domain",
+      "stage": 0,
+      "title": "When the way back is ambiguous",
+      "speech": "Does every function have an inverse function? Consider f of x equals x squared.",
+      "holdSeconds": 1.3
+    },
+    {
+      "id": "domain-01",
+      "scene": "domain",
+      "stage": 1,
+      "title": "When the way back is ambiguous",
+      "speech": "Two squared is four. But negative two squared is also four.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "domain-02",
+      "scene": "domain",
+      "stage": 2,
+      "title": "When the way back is ambiguous",
+      "speech": "Reverse the arrows. Four now points to two different answers. That is not a function.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "domain-03",
+      "scene": "domain",
+      "stage": 3,
+      "title": "When the way back is ambiguous",
+      "speech": "On the graph, a horizontal line at y equals four crosses the parabola twice.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "domain-04",
+      "scene": "domain",
+      "stage": 4,
+      "title": "When the way back is ambiguous",
+      "speech": "A function is one-to-one when different inputs give different outputs. Its graph passes the horizontal line test.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "domain-05",
+      "scene": "domain",
+      "stage": 5,
+      "title": "When the way back is ambiguous",
+      "speech": "We can repair this example by restricting the original domain to x greater than or equal to zero.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "domain-06",
+      "scene": "domain",
+      "stage": 6,
+      "title": "When the way back is ambiguous",
+      "speech": "Now the reverse rule is the principal square root. Four returns only two. Its domain and range are both nonnegative.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "domain-07",
+      "scene": "domain",
+      "stage": 7,
+      "title": "When the way back is ambiguous",
+      "speech": "The original domain restriction is essential. The square root of x squared is the absolute value of x, and equals x only when x is nonnegative.",
+      "holdSeconds": 2.0
+    },
+    {
+      "id": "notation-00",
+      "scene": "notation",
+      "stage": 0,
+      "title": "Inverse is not reciprocal",
+      "speech": "One notation trap remains. The minus one in f inverse names a reverse function. It does not mean one divided by f of x.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "notation-01",
+      "scene": "notation",
+      "stage": 1,
+      "title": "Inverse is not reciprocal",
+      "speech": "At eleven, our inverse returns three.",
+      "holdSeconds": 1.5
+    },
+    {
+      "id": "notation-02",
+      "scene": "notation",
+      "stage": 2,
+      "title": "Inverse is not reciprocal",
+      "speech": "The reciprocal gives one divided by f of eleven. Since two times eleven plus five is twenty-seven, this is one over twenty-seven.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "notation-03",
+      "scene": "notation",
+      "stage": 3,
+      "title": "Inverse is not reciprocal",
+      "speech": "Three and one over twenty-seven are different. Inverse means undo the mapping. Reciprocal means divide one by the output.",
+      "holdSeconds": 2.0
+    },
+    {
+      "id": "practice-00",
+      "scene": "practice",
+      "stage": 0,
+      "title": "Your turn",
+      "speech": "Try this one. Let g of x equal three x minus four. Find its inverse, then check it at eight.",
+      "holdSeconds": 1.5
+    },
+    {
+      "id": "practice-01",
+      "scene": "practice",
+      "stage": 1,
+      "title": "Your turn",
+      "speech": "Pause the video here. Which operation must you undo first?",
+      "holdSeconds": 6.0
+    },
+    {
+      "id": "practice-02",
+      "scene": "practice",
+      "stage": 2,
+      "title": "Your turn",
+      "speech": "Start with y equals three x minus four. Swap x and y.",
+      "holdSeconds": 1.5
+    },
+    {
+      "id": "practice-03",
+      "scene": "practice",
+      "stage": 3,
+      "title": "Your turn",
+      "speech": "Add four to both sides. Then divide both sides by three.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "practice-04",
+      "scene": "practice",
+      "stage": 4,
+      "title": "Your turn",
+      "speech": "So g inverse of x equals the quantity x plus four, divided by three.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "practice-05",
+      "scene": "practice",
+      "stage": 5,
+      "title": "Your turn",
+      "speech": "At eight, this gives eight plus four, divided by three. Twelve divided by three is four.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "practice-06",
+      "scene": "practice",
+      "stage": 6,
+      "title": "Your turn",
+      "speech": "Check forwards: g of four equals three times four minus four. Twelve minus four is eight.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "recap-00",
+      "scene": "recap",
+      "stage": 0,
+      "title": "The idea to keep",
+      "speech": "An inverse is the way back. Reverse the operations, in reverse order.",
+      "holdSeconds": 1.7
+    },
+    {
+      "id": "recap-01",
+      "scene": "recap",
+      "stage": 1,
+      "title": "The idea to keep",
+      "speech": "Algebraically, swap x and y, solve for y, then verify both compositions on the appropriate domains.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "recap-02",
+      "scene": "recap",
+      "stage": 2,
+      "title": "The idea to keep",
+      "speech": "Geometrically, exchange coordinates and reflect across y equals x.",
+      "holdSeconds": 1.7
+    },
+    {
+      "id": "recap-03",
+      "scene": "recap",
+      "stage": 3,
+      "title": "The idea to keep",
+      "speech": "And always ask whether the original function is one-to-one. If necessary, restrict its domain first.",
+      "holdSeconds": 1.8
+    },
+    {
+      "id": "recap-04",
+      "scene": "recap",
+      "stage": 4,
+      "title": "The idea to keep",
+      "speech": "Three went to eleven. Eleven came back to three. That is what it means to undo a function.",
+      "holdSeconds": 2.8
+    }
+  ]
+}

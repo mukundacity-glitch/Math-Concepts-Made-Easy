@@ -40,6 +40,7 @@ jobs:
     timeout-minutes: 30
     env:
       MCME_REQUIRE_NATIVE_SHORTS: "1"
+      MCME_REQUIRE_CINEMATIC: "1"
       MCME_PERSIST_UPLOAD_LEDGER: "1"
       YT_MAIN_PUBLISH_LOCAL_TIME: "09:00"
     permissions:

@@ -41,7 +41,10 @@ STAGES = [
 ]
 
 
-def production_stages(hybrid: bool):
+def production_stages(hybrid: bool, cinematic: bool = True):
+    if cinematic:
+        return [STAGES[0], ("Cinematic lesson, Ryan narration and encoded QA", "pipeline.cinematic_lesson"),
+                STAGES[7], ("Native portrait Shorts", "pipeline.native_shorts")]
     if not hybrid:
         return STAGES
     # Sidecar captions are emitted by hybrid_assembly from its exact timeline.
@@ -62,6 +65,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--day", type=int, default=None,
                         help="lesson day to produce (default: next from state/progress.json)")
+    renderer = parser.add_mutually_exclusive_group()
+    renderer.add_argument("--cinematic", dest="cinematic", action="store_true", default=True, help="Use the approved curriculum-driven cinematic renderer (default)")
+    renderer.add_argument("--legacy-renderer", dest="cinematic", action="store_false", help="Render an older layout for local review only; publishing is disabled")
     parser.add_argument("--hybrid", action="store_true", help="Use Remotion and native portrait Shorts")
     parser.add_argument("--from-stage", type=int, default=1,
                         help="1-based stage number to resume from")
@@ -74,6 +80,10 @@ def main():
     parser.add_argument("--allow-locked-day", action="store_true",
                         help="EMERGENCY only: allow rendering a locked posted day. Default: blocked.")
     args = parser.parse_args()
+    if args.upload and not args.cinematic:
+        parser.error("Publishing requires the approved cinematic renderer")
+    if args.cinematic:
+        os.environ["MCME_REQUIRE_CINEMATIC"] = "1"
 
     state = read_state()
     if args.allow_locked_day:
@@ -108,10 +118,10 @@ def main():
     print(f"  📚 {lesson['subject']} → {lesson['topic']}")
     print(f"  🗓  {datetime.date.today():%A, %d %B %Y}")
     print(f"  📂 Output: {BASE_DIR}")
-    print(f"  🎨 Engine : ENGINE_VISUAL_V4 (scene manifest + semantic QA)")
+    print("  🎨 Engine : " + ("Cinematic boards + Ryan word cues" if args.cinematic else "Legacy review renderer"))
     print(f"{'═' * 65}")
 
-    for i, (name, module) in enumerate(production_stages(args.hybrid), start=1):
+    for i, (name, module) in enumerate(production_stages(args.hybrid, args.cinematic), start=1):
         if i < args.from_stage:
             print(f"  ⏭  Skipping stage {i} — {name}")
             continue

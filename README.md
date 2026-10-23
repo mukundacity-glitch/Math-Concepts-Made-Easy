@@ -174,3 +174,9 @@ tests/                   manifest, timing, lock, and schedule regressions
 legacy/                  immutable posted-video policy
 ```
 
+
+## Cinematic inverse-functions rebuild
+
+The new full-frame `InverseFunctions` lesson has 60 authored mathematical beats,
+equal-scale graph reflection, domain restrictions and optional sidecar captions.
+See [preview, narration build and review status](docs/cinematic-inverse-functions.md).

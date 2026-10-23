@@ -74,13 +74,13 @@ test('wrong identity, invalid digest or mismatched duration are rejected', () =>
   assert.throws(() => validateLessonProps(wrongDuration), /duration/);
 });
 
-test('video remains silent while original Cell-3 voice and caption lane remain scene-local', () => {
+test('video remains silent while exactly one original Cell-3 voice remains scene-local', () => {
   const frame = source('src/components/SceneFrame.tsx');
   assert.match(frame, /<Video[\s\S]*?muted[\s\S]*?<Audio/);
   assert.match(frame, /staticFile\(chapter\.media\.videoSrc\)/);
   assert.match(frame, /staticFile\(chapter\.media\.audioSrc\)/);
   assert.match(frame, /objectFit="contain"/);
-  assert.match(frame, /<CaptionLane/);
+  assert.doesNotMatch(frame, /<CaptionLane/);
   assert.doesNotMatch(frame, /<PremiumShort/);
 });
 

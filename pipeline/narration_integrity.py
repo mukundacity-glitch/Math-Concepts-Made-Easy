@@ -15,8 +15,8 @@ def verify_narration(final: Path, segments: list[tuple[Path, float]]) -> list[di
         # Decode before seeking: fast MP3 input seeks can omit the bit reservoir
         # and corrupt the beginning of a comparison window, despite intact audio.
         args = ['ffmpeg', '-v', 'error', '-i', str(path), '-ss', str(start), '-t', '1.5', '-vn']
-        if channel and audio.get('channels', 1) > 1:
-            args += ['-af', 'pan=mono|c0=FL']
+        # Compare the first channel on both sides; stereo downmix adds gain.
+        args += ['-af', 'pan=mono|c0=c0']
         return np.frombuffer(subprocess.check_output(args + ['-ac', '1', '-ar', '8000',
             '-f', 'f32le', 'pipe:1']), dtype='<f4')
     reports = []
