@@ -1,7 +1,7 @@
 import {width, matrixWidths, lineWidth} from './geometry';
 import {useMemo, type ReactNode} from 'react';
 import {useCurrentFrame, useVideoConfig, interpolate, Easing} from 'remotion';
-import {compileBoard, cueFrame, walkNodes, type Board, type Cue, type Node, type Row, type SpeechBeat} from './timeline';
+import {compileBoard, cueFrame, walkNodes, retainedRows, type BoardState, type Board, type Cue, type Node, type Row, type SpeechBeat} from './timeline';
 import {boardLayout, boardThemes, wrapBoardLabel} from './theme';
 
 const ink = boardThemes.light.ink, teal = boardThemes.light.accent;
@@ -16,10 +16,13 @@ const renderLine = (nodes: readonly Node[], center: number, baseline: number, si
       left += w;
       const reveal = advance(frame, plan.frames.get(node.id) ?? Infinity);
       const cancelAt = plan.cancellations.get(node.id);
-      const cancel = cancelAt === undefined ? 0 : advance(frame, cancelAt, 14);
+      const cancel = cancelAt === undefined || frame >= (plan.cancellationEnds.get(node.id) ?? Infinity) ? 0 : advance(frame, cancelAt, 14);
+      const highlight = plan.highlights.get(node.id);
+      const highlighted = highlight && frame >= highlight[0] && frame < highlight[1];
       const arrowAt = plan.arrows.get(node.id);
       const arrow = arrowAt === undefined ? 0 : advance(frame, arrowAt, 14);
       return <g key={node.id} opacity={reveal} transform={`translate(0 ${(1 - reveal) * 9})`}>
+        {highlighted && <rect x={x - w / 2 - 8} y={baseline - size * .9} width={w + 16} height={size * 1.2} rx={10} fill={teal} fillOpacity={.14} stroke={teal} strokeWidth={3}/>}
         {'text' in node ? <>
           <text x={x} y={baseline} textAnchor="middle" fill={node.accent ? teal : ink}
             fontSize={size} fontFamily="Georgia, DejaVu Serif, serif">{node.text}</text>
@@ -52,7 +55,7 @@ const renderLine = (nodes: readonly Node[], center: number, baseline: number, si
   };
 
 /** Persistent working, stable token IDs, word-cued reveals and one diagonal cancellation stroke. */
-export const MathBoard = ({board, beats, dark = false}: {board: Board; beats: readonly SpeechBeat[]; dark?: boolean}) => {
+export const MathBoard = ({board, beats, dark = false, states}: {board: Board; beats: readonly SpeechBeat[]; dark?: boolean; states?: readonly BoardState[]}) => {
   const palette = dark ? boardThemes.dark : boardThemes.light;
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -62,18 +65,20 @@ export const MathBoard = ({board, beats, dark = false}: {board: Board; beats: re
   // Earlier work only leaves the viewport when a new logical line needs the space.
   const hasMatrices = board.some((row) => walkNodes(row.nodes).some((node) => 'cells' in node));
   const retained = hasMatrices ? 2 : 3;
-  const visible = active.slice(-(retained + 1));
+  const visible = states ? retainedRows(board, states, beats, fps, frame) : active.slice(-(retained + 1));
+  const state = states?.filter((item) => cueFrame(item.cue, beats, fps) <= frame).at(-1);
   const last = active.at(-1);
   const scroll = Math.max(0, active.length - retained - 1) + (active.length > retained ?
     advance(frame, plan.frames.get(last!.id) ?? Infinity, 20) : 0);
   return <g><defs><clipPath id="working-area"><rect x={90} y={265} width={1740} height={685}/></clipPath></defs>
+    {state && <text x={112} y={245} fill={palette.accent} fontSize={36} fontFamily="Arial, sans-serif">{state.reason}</text>}
     <g clipPath="url(#working-area)">{visible.map((row) => {
     const newest = row === last;
     const size = Math.min(boardLayout.mathSize, (row.wide ? 1680 : boardLayout.mathWidth) / Math.max(1, lineWidth(row.nodes, 1)));
     if (size < 64) throw new Error('Mathematical working needs a semantic line break, not smaller text: ' + row.id);
     const labelLines = row.wide ? [row.label ?? ''] : wrapBoardLabel(row.label ?? '');
-    const y = (hasMatrices ? 430 : boardLayout.firstBaseline) + (board.indexOf(row) - scroll) * (hasMatrices ? 280 : boardLayout.rowSpacing);
-    const leaving = Math.max(0, Math.min(1, 1 - (scroll - board.indexOf(row))));
+    const y = states ? 360 + visible.indexOf(row) * 175 : (hasMatrices ? 430 : boardLayout.firstBaseline) + (board.indexOf(row) - scroll) * (hasMatrices ? 280 : boardLayout.rowSpacing);
+    const leaving = states ? 1 : Math.max(0, Math.min(1, 1 - (scroll - board.indexOf(row))));
     return <g key={row.id} opacity={leaving}>
       {newest && <rect x={88} y={y - 68} width={5} height={92} rx={2.5} fill={palette.accent}/>}
       <text x={boardLayout.labelX} y={row.wide ? y - 100 : y - (labelLines.length - 1) * boardLayout.labelLineHeight / 2}

@@ -1,13 +1,13 @@
 import {lineWidth} from '../math-board/geometry';
 import {wrapBoardLabel} from '../math-board/theme';
-import {compileBoard, cueFrame, type Board, type Cue, type SpeechBeat} from '../math-board/timeline';
+import {compileBoard, cueFrame, retainedRows, type BoardState, type Board, type Cue, type SpeechBeat} from '../math-board/timeline';
 export type Point = {readonly x: number; readonly y: number};
 export type Diagram = {readonly kind: 'function'; readonly equation: string;
   readonly points: readonly (Point | null)[]; readonly samples: readonly Point[]; readonly sampleCues?: readonly Cue[]};
 export type Chapter = {readonly id: string; readonly title: string; readonly dark: boolean;
-  readonly beats: readonly SpeechBeat[]; readonly board: Board; readonly diagram?: Diagram | null};
+  readonly beats: readonly SpeechBeat[]; readonly board: Board; readonly boardStates?: readonly BoardState[]; readonly diagram?: Diagram | null};
 export type CinematicProps = {readonly schemaVersion: string; readonly day: number;
-  readonly title: string; readonly chapters: readonly Chapter[]};
+  readonly title: string; readonly previewMode?: boolean; readonly chapters: readonly Chapter[]};
 export const chapterDuration = (chapter: Chapter) => chapter.beats.reduce((sum, beat) => sum + beat.durationInFrames, 0);
 
 export const cinematicFrames = (props: CinematicProps): number => {
@@ -19,11 +19,12 @@ export const cinematicFrames = (props: CinematicProps): number => {
     ids.add(chapter.id);
     for (const beat of chapter.beats) {
       if (!Number.isSafeInteger(beat.durationInFrames) || beat.durationInFrames < 15 || !beat.speech.trim()) throw new Error('Invalid narrated beat');
-      if (beat.audioSrc && (!/^cinematic\/day-\d+\/[a-z0-9-]+\.wav$/.test(beat.audioSrc) || !beat.words?.length || !/^[a-f0-9]{64}$/.test(beat.audioSha256 ?? ''))) {
+      if (beat.audioSrc && (!/^cinematic\/day-\d+\/(?:worked-example\/)?[a-z0-9-]+\.wav$/.test(beat.audioSrc) || !beat.words?.length || !/^[a-f0-9]{64}$/.test(beat.audioSha256 ?? ''))) {
         throw new Error('Unverified cinematic narration');
       }
     }
     compileBoard(chapter.board, chapter.beats, 30);
+    if (chapter.boardStates) retainedRows(chapter.board, chapter.boardStates, chapter.beats, 30, 0);
     for (const row of chapter.board) {
       if (!row.wide) wrapBoardLabel(row.label ?? '');
       if ((row.wide ? 1680 : 1090) / Math.max(1, lineWidth(row.nodes, 1)) < 64) throw new Error('Unreadably small mathematical row: ' + row.id);

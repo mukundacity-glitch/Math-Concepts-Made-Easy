@@ -1,7 +1,7 @@
 {
   "name": "@math-concepts-made-easy/remotion",
   "version": "0.1.0",
-  "description": "Verified Manim–Remotion lesson assembly and native portrait Shorts",
+  "description": "Verified Manim\u2013Remotion lesson assembly and native portrait Shorts",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
     "check": "npm run typecheck && npm test",
-    "bundle": "remotion bundle src/index.ts --out-dir=build/scaffold"
+    "bundle": "remotion bundle src/index.ts --out-dir=build/scaffold",
+    "preview:worked": "node scripts-portable-preview.mjs",
+    "test:preview": "node tests/portable-preview-smoke.mjs"
   },
   "engines": {
     "node": ">=20"
@@ -19,7 +21,8 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "@remotion/media": "4.0.537",
-    "@remotion/captions": "4.0.537"
+    "@remotion/captions": "4.0.537",
+    "@remotion/player": "4.0.537"
   },
   "devDependencies": {
     "@remotion/cli": "4.0.537",
@@ -27,7 +30,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@types/node": "^22.0.0",
-    "sharp": "^0.34.4"
+    "sharp": "^0.34.4",
+    "esbuild": "0.28.1"
   }
 }
-

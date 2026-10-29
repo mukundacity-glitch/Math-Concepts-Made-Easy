@@ -1,4 +1,5 @@
-import {useMemo} from 'react';
+import {useContext, useMemo} from 'react';
+import {PreviewAssets} from '../preview/PreviewAssets';
 import {AbsoluteFill, Sequence, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {Audio} from '@remotion/media';
 import {Stage, Text, colors} from '../inverse/visuals';
@@ -40,12 +41,12 @@ const FunctionDiagram = ({diagram, dark, beats}: {diagram: Diagram; dark: boolea
   </g>;
 };
 
-const CinematicChapter = ({chapter, day, title, index}: {chapter: Chapter; day: number; title: string; index: number}) => {
+const CinematicChapter = ({chapter, day, title, index, previewMode}: {previewMode?: boolean; chapter: Chapter; day: number; title: string; index: number}) => {
   const frame = useCurrentFrame();
   const duration = chapterDuration(chapter);
   const mainTitle = chapter.id === 'opening' ? title : chapter.title;
-  return <Stage title={mainTitle} chapter={`${String(index + 1).padStart(2, '0')} / DAY ${day}`} dark={chapter.dark}>
-    {chapter.board.length ? <MathBoard board={chapter.board} beats={chapter.beats} dark={chapter.dark}/> :
+  return <Stage title={mainTitle} chapter={previewMode ? 'SILENT PREVIEW · ESTIMATED TIMING' : `${String(index + 1).padStart(2, '0')} / DAY ${day}`} dark={chapter.dark}>
+    {chapter.board.length ? <MathBoard board={chapter.board} beats={chapter.beats} dark={chapter.dark} states={chapter.boardStates}/> :
       chapter.diagram ? <FunctionDiagram diagram={chapter.diagram} dark={chapter.dark} beats={chapter.beats}/> : <>
         <Text y={550} size={chapter.id === 'opening' ? 180 : 104} color={chapter.dark ? colors.gold : colors.teal} math>
           {chapter.id === 'opening' && frame < chapter.beats[0].durationInFrames ? '?' : `Day ${day}`}
@@ -60,17 +61,18 @@ const CinematicChapter = ({chapter, day, title, index}: {chapter: Chapter; day: 
 
 export const CinematicLesson = (props: CinematicProps) => {
   useMemo(() => cinematicFrames(props), [props]);
+  const previewAssets = useContext(PreviewAssets);
   const {fps} = useVideoConfig();
   let cursor = 0;
   return <AbsoluteFill>{props.chapters.map((chapter, index) => {
     const from = cursor; cursor += chapterDuration(chapter);
     let audioCursor = 0;
     return <Sequence key={chapter.id} from={from} durationInFrames={chapterDuration(chapter)} premountFor={fps} name={chapter.title}>
-      <CinematicChapter chapter={chapter} day={props.day} title={props.title} index={index}/>
+      <CinematicChapter chapter={chapter} day={props.day} title={props.title} index={index} previewMode={props.previewMode}/>
       {chapter.beats.map((beat) => {
         const audioFrom = audioCursor; audioCursor += beat.durationInFrames;
         return beat.audioSrc ? <Sequence key={beat.id} from={audioFrom} durationInFrames={beat.durationInFrames} premountFor={fps}>
-          <Audio src={staticFile(beat.audioSrc)} premountFor={fps}/>
+          <Audio src={previewAssets?.[beat.audioSrc] ?? staticFile(beat.audioSrc)} premountFor={fps}/>
         </Sequence> : null;
       })}
     </Sequence>;

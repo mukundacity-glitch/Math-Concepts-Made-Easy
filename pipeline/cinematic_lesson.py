@@ -21,6 +21,7 @@ REMOTION = REPO_ROOT / 'remotion'
 
 def preview_props(plan: dict) -> dict:
     result = json.loads(json.dumps(plan))
+    result['previewMode'] = True
     for chapter in result['chapters']:
         for beat in chapter['beats']:
             beat['durationInFrames'] = math.ceil((len(beat['speech'].split()) / 2.2 + beat['holdSeconds']) * 30)
@@ -30,7 +31,7 @@ def preview_props(plan: dict) -> dict:
 async def prepare(lesson: dict, work: Path) -> dict:
     plan = build_cinematic_plan(lesson)
     work.mkdir(parents=True, exist_ok=True)
-    relative = f"cinematic/day-{lesson['day']:03d}"
+    relative = f"cinematic/day-{lesson['day']:03d}" + ('/worked-example' if lesson.get('schemaVersion') == 'worked-linear-v1' else '')
     public = REMOTION / 'public' / relative
     public.mkdir(parents=True, exist_ok=True)
     configure_ryan_transport()
@@ -104,7 +105,21 @@ def main() -> None:
     parser.add_argument('--day', type=int, default=get_day_number())
     parser.add_argument('--prepare-only', action='store_true')
     parser.add_argument('--preview-only', action='store_true')
+    parser.add_argument('--worked-example', type=Path, help='Opt-in worked contract; preview or prepare only')
     args = parser.parse_args()
+    if args.worked_example:
+        if args.audit or args.preview_only == args.prepare_only:
+            parser.error('--worked-example requires --preview-only or --prepare-only; no export/publishing')
+        lesson = json.loads(args.worked_example.read_text())
+        work = REMOTION / 'build' / 'worked-example'
+        work.mkdir(parents=True, exist_ok=True)
+        plan = preview_props(build_cinematic_plan(lesson)) if args.preview_only else asyncio.run(prepare(lesson, work))
+        destination = work / ('preview.json' if args.preview_only else 'lesson.json')
+        destination.write_text(json.dumps(plan, ensure_ascii=False, indent=2)+'\n')
+        if args.prepare_only:
+            export_captions(plan, work / 'lesson')
+        print(destination)
+        return
     if args.audit:
         from pipeline.curriculum import MASTER_CURRICULUM
         from pipeline.paths import read_state

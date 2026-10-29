@@ -1,0 +1,510 @@
+{
+  "schemaVersion": "worked-linear-v1",
+  "id": "elimination",
+  "day": 1,
+  "title": "Solve a system by elimination",
+  "pinnedRows": [
+    "first",
+    "second"
+  ],
+  "rows": [
+    {
+      "id": "first",
+      "label": "First equation",
+      "nodes": [
+        {
+          "id": "first-x",
+          "text": "x"
+        },
+        {
+          "id": "first-plus-y",
+          "text": "+y"
+        },
+        {
+          "id": "first-eq",
+          "text": "="
+        },
+        {
+          "id": "first-seven",
+          "text": "7"
+        }
+      ]
+    },
+    {
+      "id": "second",
+      "label": "Second equation",
+      "nodes": [
+        {
+          "id": "second-x",
+          "text": "x"
+        },
+        {
+          "id": "second-minus-y",
+          "text": "-y"
+        },
+        {
+          "id": "second-eq",
+          "text": "="
+        },
+        {
+          "id": "second-one",
+          "text": "1"
+        }
+      ]
+    },
+    {
+      "id": "sum",
+      "label": "Add both equations",
+      "nodes": [
+        {
+          "id": "sum-two",
+          "text": "2"
+        },
+        {
+          "id": "sum-x",
+          "text": "x"
+        },
+        {
+          "id": "sum-eq",
+          "text": "="
+        },
+        {
+          "id": "sum-eight",
+          "text": "8"
+        }
+      ]
+    },
+    {
+      "id": "solve-x",
+      "label": "Divide both sides by 2",
+      "nodes": [
+        {
+          "id": "solve-x-x",
+          "text": "x"
+        },
+        {
+          "id": "solve-x-eq",
+          "text": "="
+        },
+        {
+          "id": "solve-x-four",
+          "text": "4"
+        }
+      ]
+    },
+    {
+      "id": "substitute",
+      "label": "Substitute x = 4",
+      "nodes": [
+        {
+          "id": "substitute-four",
+          "text": "4"
+        },
+        {
+          "id": "substitute-plus",
+          "text": "+"
+        },
+        {
+          "id": "substitute-y",
+          "text": "y"
+        },
+        {
+          "id": "substitute-eq",
+          "text": "="
+        },
+        {
+          "id": "substitute-seven",
+          "text": "7"
+        }
+      ]
+    },
+    {
+      "id": "solve-y",
+      "label": "Subtract 4 on both sides",
+      "nodes": [
+        {
+          "id": "solve-y-y",
+          "text": "y"
+        },
+        {
+          "id": "solve-y-eq",
+          "text": "="
+        },
+        {
+          "id": "solve-y-three",
+          "text": "3"
+        }
+      ]
+    },
+    {
+      "id": "check-first",
+      "label": "Check first equation",
+      "nodes": [
+        {
+          "id": "check-first-four",
+          "text": "4"
+        },
+        {
+          "id": "check-first-plus",
+          "text": "+"
+        },
+        {
+          "id": "check-first-three",
+          "text": "3"
+        },
+        {
+          "id": "check-first-eq",
+          "text": "="
+        },
+        {
+          "id": "check-first-seven",
+          "text": "7"
+        }
+      ]
+    },
+    {
+      "id": "check-second",
+      "label": "Check second equation",
+      "nodes": [
+        {
+          "id": "check-second-four",
+          "text": "4"
+        },
+        {
+          "id": "check-second-minus",
+          "text": "-"
+        },
+        {
+          "id": "check-second-three",
+          "text": "3"
+        },
+        {
+          "id": "check-second-eq",
+          "text": "="
+        },
+        {
+          "id": "check-second-one",
+          "text": "1"
+        }
+      ]
+    }
+  ],
+  "beats": [
+    {
+      "id": "question-first",
+      "purpose": "question",
+      "narration": "Find values that make both equations true. The first equation is {result}.",
+      "reason": "Start with the two conditions.",
+      "operation": {
+        "kind": "given"
+      },
+      "sources": [],
+      "results": [
+        "first"
+      ],
+      "retain": [
+        "first"
+      ],
+      "highlights": [],
+      "readingPauseSeconds": 1.5,
+      "cuePhrase": "Find"
+    },
+    {
+      "id": "question-second",
+      "purpose": "question",
+      "narration": "The second equation is {result}.",
+      "reason": "Both equations must hold at the same time.",
+      "operation": {
+        "kind": "given"
+      },
+      "sources": [],
+      "results": [
+        "second"
+      ],
+      "retain": [
+        "first",
+        "second"
+      ],
+      "highlights": [],
+      "readingPauseSeconds": 1.5,
+      "cuePhrase": "The"
+    },
+    {
+      "id": "goal",
+      "purpose": "goal",
+      "narration": "A solution is one pair of values for x and y that makes both equations true.",
+      "reason": "One pair must satisfy both conditions.",
+      "operation": {
+        "kind": "explain"
+      },
+      "sources": [
+        "first",
+        "second"
+      ],
+      "results": [],
+      "retain": [
+        "first",
+        "second"
+      ],
+      "highlights": [],
+      "readingPauseSeconds": 1.5,
+      "cuePhrase": "A"
+    },
+    {
+      "id": "method",
+      "purpose": "method",
+      "narration": "Choose addition. Positive y and negative y are opposites. Together they make zero.",
+      "reason": "Addition removes y because its coefficients are opposites.",
+      "operation": {
+        "kind": "explain"
+      },
+      "sources": [
+        "first",
+        "second"
+      ],
+      "results": [],
+      "retain": [
+        "first",
+        "second"
+      ],
+      "highlights": [
+        "first-plus-y",
+        "second-minus-y"
+      ],
+      "readingPauseSeconds": 2,
+      "cuePhrase": "Choose"
+    },
+    {
+      "id": "add",
+      "purpose": "working",
+      "narration": "Add the left sides and add the right sides. The opposite y terms cancel. This gives {result}.",
+      "reason": "Add equal quantities on each side.",
+      "operation": {
+        "kind": "add",
+        "cancelTerms": [
+          "first-plus-y",
+          "second-minus-y"
+        ]
+      },
+      "sources": [
+        "first",
+        "second"
+      ],
+      "results": [
+        "sum"
+      ],
+      "retain": [
+        "first",
+        "second",
+        "sum"
+      ],
+      "highlights": [],
+      "readingPauseSeconds": 1.5,
+      "cuePhrase": "Add"
+    },
+    {
+      "id": "divide",
+      "purpose": "working",
+      "narration": "Divide both sides by two to isolate x. We obtain {result}.",
+      "reason": "Division by the same nonzero number preserves equality.",
+      "operation": {
+        "kind": "divide",
+        "divisor": 2
+      },
+      "sources": [
+        "sum"
+      ],
+      "results": [
+        "solve-x"
+      ],
+      "retain": [
+        "first",
+        "second",
+        "sum",
+        "solve-x"
+      ],
+      "highlights": [],
+      "readingPauseSeconds": 1.5,
+      "cuePhrase": "Divide"
+    },
+    {
+      "id": "substitute",
+      "purpose": "working",
+      "narration": "Replace x with four in the first original equation. We obtain {result}.",
+      "reason": "Use the value of x in an original equation.",
+      "operation": {
+        "kind": "substitute",
+        "values": {
+          "x": 4
+        },
+        "evidence": [
+          "solve-x"
+        ]
+      },
+      "sources": [
+        "first",
+        "solve-x"
+      ],
+      "results": [
+        "substitute"
+      ],
+      "retain": [
+        "first",
+        "second",
+        "solve-x",
+        "substitute"
+      ],
+      "highlights": [],
+      "readingPauseSeconds": 1.5,
+      "cuePhrase": "Replace"
+    },
+    {
+      "id": "solve-y",
+      "purpose": "working",
+      "narration": "Subtract four from both sides. This leaves {result}.",
+      "reason": "Subtracting the same value preserves equality.",
+      "operation": {
+        "kind": "subtract",
+        "value": 4
+      },
+      "sources": [
+        "substitute"
+      ],
+      "results": [
+        "solve-y"
+      ],
+      "retain": [
+        "first",
+        "second",
+        "substitute",
+        "solve-y"
+      ],
+      "highlights": [],
+      "readingPauseSeconds": 1.5,
+      "cuePhrase": "Subtract"
+    },
+    {
+      "id": "pause",
+      "purpose": "practice",
+      "narration": "Before we check, try substituting x equals four and y equals three into both original equations.",
+      "reason": "Try both checks before seeing the answers.",
+      "operation": {
+        "kind": "explain"
+      },
+      "sources": [
+        "first",
+        "second",
+        "solve-x",
+        "solve-y"
+      ],
+      "results": [],
+      "retain": [
+        "first",
+        "second",
+        "solve-x",
+        "solve-y"
+      ],
+      "highlights": [],
+      "readingPauseSeconds": 6,
+      "cuePhrase": "Before"
+    },
+    {
+      "id": "check-first",
+      "purpose": "verification",
+      "narration": "Check the first original equation using our pair. We get {result}. It is true.",
+      "reason": "The pair must satisfy the first equation.",
+      "operation": {
+        "kind": "verify",
+        "values": {
+          "x": 4,
+          "y": 3
+        },
+        "evidence": [
+          "solve-x",
+          "solve-y"
+        ]
+      },
+      "sources": [
+        "first",
+        "solve-x",
+        "solve-y"
+      ],
+      "results": [
+        "check-first"
+      ],
+      "retain": [
+        "first",
+        "second",
+        "check-first"
+      ],
+      "highlights": [],
+      "readingPauseSeconds": 1.5,
+      "cuePhrase": "Check"
+    },
+    {
+      "id": "check-second",
+      "purpose": "verification",
+      "narration": "Check the second original equation using the same pair. We get {result}. It is also true.",
+      "reason": "The same pair must satisfy the second equation.",
+      "operation": {
+        "kind": "verify",
+        "values": {
+          "x": 4,
+          "y": 3
+        },
+        "evidence": [
+          "solve-x",
+          "solve-y"
+        ]
+      },
+      "sources": [
+        "second",
+        "solve-x",
+        "solve-y"
+      ],
+      "results": [
+        "check-second"
+      ],
+      "retain": [
+        "first",
+        "second",
+        "check-first",
+        "check-second"
+      ],
+      "highlights": [],
+      "readingPauseSeconds": 1.5,
+      "cuePhrase": "Check"
+    },
+    {
+      "id": "interpret",
+      "purpose": "interpretation",
+      "narration": "Our solution is x equals four and y equals three. The pair four, three satisfies both equations simultaneously.",
+      "reason": "Both checks are true for the same pair.",
+      "operation": {
+        "kind": "interpret",
+        "values": {
+          "x": 4,
+          "y": 3
+        }
+      },
+      "sources": [
+        "first",
+        "second",
+        "solve-x",
+        "solve-y",
+        "check-first",
+        "check-second"
+      ],
+      "results": [],
+      "retain": [
+        "first",
+        "second",
+        "check-first",
+        "check-second"
+      ],
+      "highlights": [],
+      "readingPauseSeconds": 3,
+      "cuePhrase": "Our"
+    }
+  ]
+}
