@@ -1,4 +1,5 @@
-import {useMemo} from 'react';
+import {useContext, useMemo} from 'react';
+import {PreviewAssets} from '../preview/PreviewAssets';
 import {AbsoluteFill, Sequence, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {Audio} from '@remotion/media';
 import {Stage, Text, colors} from '../inverse/visuals';
@@ -60,6 +61,7 @@ const CinematicChapter = ({chapter, day, title, index, previewMode}: {previewMod
 
 export const CinematicLesson = (props: CinematicProps) => {
   useMemo(() => cinematicFrames(props), [props]);
+  const previewAssets = useContext(PreviewAssets);
   const {fps} = useVideoConfig();
   let cursor = 0;
   return <AbsoluteFill>{props.chapters.map((chapter, index) => {
@@ -70,7 +72,7 @@ export const CinematicLesson = (props: CinematicProps) => {
       {chapter.beats.map((beat) => {
         const audioFrom = audioCursor; audioCursor += beat.durationInFrames;
         return beat.audioSrc ? <Sequence key={beat.id} from={audioFrom} durationInFrames={beat.durationInFrames} premountFor={fps}>
-          <Audio src={staticFile(beat.audioSrc)} premountFor={fps}/>
+          <Audio src={previewAssets?.[beat.audioSrc] ?? staticFile(beat.audioSrc)} premountFor={fps}/>
         </Sequence> : null;
       })}
     </Sequence>;

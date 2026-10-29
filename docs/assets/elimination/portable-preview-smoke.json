@@ -1,0 +1,43 @@
+{
+  "offline": true,
+  "checkpoints": [
+    {
+      "checkpoint": "Method",
+      "highlights": 2,
+      "audio": 5,
+      "logo": true,
+      "overflow": false
+    },
+    {
+      "checkpoint": "Cancellation",
+      "highlights": 0,
+      "audio": 5,
+      "logo": true,
+      "overflow": false
+    },
+    {
+      "checkpoint": "Substitution",
+      "highlights": 0,
+      "audio": 5,
+      "logo": true,
+      "overflow": false
+    },
+    {
+      "checkpoint": "Verification",
+      "highlights": 0,
+      "audio": 5,
+      "logo": true,
+      "overflow": false
+    }
+  ],
+  "playingAudio": [
+    {
+      "time": 4.811063,
+      "ready": 4,
+      "source": "data:audio/ogg;"
+    }
+  ],
+  "desktopOverflow": false,
+  "mobileOverflow": false,
+  "browserErrors": []
+}

@@ -1,4 +1,5 @@
-import type {ReactNode} from 'react';
+import {useContext, type ReactNode} from 'react';
+import {PreviewAssets} from '../preview/PreviewAssets';
 import {interpolate, Easing, staticFile} from 'remotion';
 import {activeBeat, type InverseProps, type SceneName} from './timeline';
 import {useCurrentFrame} from 'remotion';
@@ -24,8 +25,9 @@ export const Reveal = ({frame, children}: {frame: number; children: ReactNode}) 
 );
 export const Stage = ({title, chapter, dark = false, children}: {
   title: string; chapter: string; dark?: boolean; children: ReactNode;
-}) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%"
+}) => {
+  const previewAssets = useContext(PreviewAssets);
+  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%"
     style={{position: 'absolute', inset: 0, background: dark ? colors.slate : colors.paper}}>
     <defs>
       <radialGradient id="light"><stop stopColor={dark ? '#364047' : '#FFFFFF'} stopOpacity=".45"/>
@@ -35,7 +37,7 @@ export const Stage = ({title, chapter, dark = false, children}: {
       </marker>
     </defs>
     <rect width="1920" height="1080" fill="url(#light)"/>
-    <image href={staticFile("branding/math-concepts-made-easy-logo.webp")} x={112} y={39} width={84} height={84}/>
+    <image href={previewAssets?.["branding/math-concepts-made-easy-logo.webp"] ?? staticFile("branding/math-concepts-made-easy-logo.webp")} x={112} y={39} width={84} height={84}/>
     <text x={220} y={101} fontSize={38} fontWeight={700} fontFamily="Arial, Helvetica, sans-serif">
       <tspan fill={dark ? colors.white : colors.ink}>MATH CONCEPTS </tspan>
       <tspan fill={dark ? colors.gold : colors.teal}>MADE EASY</tspan>
@@ -43,8 +45,8 @@ export const Stage = ({title, chapter, dark = false, children}: {
     <Text x={1808} y={100} size={30} color={dark ? colors.white : colors.ink} anchor="end">{chapter}</Text>
     <Text x={112} y={206} size={62} color={dark ? colors.white : colors.ink} anchor="start">{title}</Text>
     {children}
-  </svg>
-);
+  </svg>;
+};
 export const Arrow = ({x1, y1, x2, y2, color = colors.teal, progress = 1, dashed = false}: {
   x1: number; y1: number; x2: number; y2: number; color?: string; progress?: number; dashed?: boolean;
 }) => <path d={`M ${x1} ${y1} L ${x2} ${y2}`} fill="none" stroke={color} strokeWidth={4}

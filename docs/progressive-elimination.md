@@ -87,11 +87,40 @@ verification frame includes the solution pair and both original checks.
 No final encoded video was requested or exported, so final AAC soundtrack
 integrity and continuous video playback have not been verified. Automated math
 and geometry tests do not prove teaching quality. Studio starts in this execution
-environment, but the connected browser cannot reach its localhost server; opening
-the interactive preview remotely remains blocked. No production workflow,
+environment, but the connected browser cannot reach its localhost server. The
+portable player below removes that dependency. No production workflow,
 publishing action, curriculum, upload ledger or lesson progress was changed.
 
 ![Method choice](assets/elimination/method.png)
 ![Cancellation and addition](assets/elimination/cancellation.png)
 ![Substitution](assets/elimination/substitution.png)
 ![Final verification](assets/elimination/verification.png)
+
+
+## Portable player (localhost-independent)
+
+After narration preparation, run from `remotion/`:
+
+```bash
+npm run preview:worked
+npm run test:preview
+```
+
+Open `build/worked-example/elimination-preview.html` directly in a browser.
+It is a single file with the existing `CinematicLesson`, Remotion Player,
+logo and all 12 narration clips embedded. It provides play/pause, scrubbing,
+volume/fullscreen controls and four checkpoint buttons. It does not start a
+server, contact an external host, generate MP4 or publish anything.
+
+The build verifies each prepared PCM source hash and all speech cues before
+packaging. Preview-only Opus audio derivatives keep the same word/frame timeline;
+the production renderer continues to use the original PCM assets and
+`@remotion/media`. The portable bundle uses Remotion's native Audio player to
+avoid external decoder/worker requests. The React asset context is empty in
+production and is supplied only by the portable preview wrapper.
+
+Real browser smoke testing opened the single file with no server, exercised all
+four checkpoints, verified paired highlights and final verification text, played
+embedded narration, and checked for overflow at 1100px and 360px. No browser
+errors occurred. Evidence is in `docs/assets/elimination/portable-preview-smoke.json`.
+This verifies preview playback; it is not a final MP4 soundtrack-integrity check.
