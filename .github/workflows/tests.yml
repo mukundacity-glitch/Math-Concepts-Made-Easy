@@ -21,5 +21,5 @@ jobs:
               timeout 120s sudo apt-get install -y --no-install-recommends ffmpeg
             }
           fi
-      - run: pip install pytest numpy 'sympy>=1.12'
+      - run: pip install pytest numpy pillow 'sympy>=1.12'
       - run: python -m pytest -q

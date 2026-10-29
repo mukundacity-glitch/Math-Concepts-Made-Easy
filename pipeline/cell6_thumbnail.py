@@ -18,6 +18,7 @@ import sys as _sys
 from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 from pipeline.paths import load_cell1_config, safe_filename, LOGO_PATH
+from pipeline.thumbnail_metadata import thumbnail_metadata
 cell1_config = load_cell1_config()
 print("✅ cell1_config loaded.")
 
@@ -35,11 +36,7 @@ ASSETS_DIR.mkdir(parents=True, exist_ok=True)
 THUMBNAIL_NAME = f"Day_{lesson_id:03d}_{seo_title}_Thumb.jpg"
 THUMBNAIL_PATH = THUMBNAILS_DIR / THUMBNAIL_NAME
 
-if not TIMED_SCRIPT.exists():
-    raise SystemExit(f"🛑 Timed script not found at {TIMED_SCRIPT}. Run Cell 3 first.")
-
-with open(TIMED_SCRIPT, "r", encoding="utf-8") as f:
-    SCRIPT = json.load(f)
+SCRIPT = thumbnail_metadata(lesson_data, TIMED_SCRIPT)
 
 THUMB_ANGLE = SCRIPT.get("title", "Math Lesson").upper()
 SUBJECT     = SCRIPT.get("subject", "MATH").upper()
@@ -48,7 +45,7 @@ DAY_TEXT    = f"DAY {lesson_id}"
 TOPIC       = SCRIPT.get("title", "Math Lesson").upper()
 FORMULA     = SCRIPT.get("formula_spoken", "")[:55]
 
-print(f"✅ Timed script loaded → {TIMED_SCRIPT.name}")
+print("✅ Thumbnail content loaded from " + (TIMED_SCRIPT.name if TIMED_SCRIPT.exists() else "curriculum metadata"))
 print(f"   Angle   : {THUMB_ANGLE}")
 print(f"   Topic   : {TOPIC}")
 print(f"   Target  : {THUMBNAIL_NAME}\n")
