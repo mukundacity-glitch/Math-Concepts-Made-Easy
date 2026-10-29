@@ -5,7 +5,7 @@ export type SpeechBeat = {readonly id: string; readonly speech: string;
 export type Cue = {readonly beat: string; readonly phrase: string; readonly occurrence?: number;
   readonly edge?: 'start' | 'end'};
 export type Atom = {readonly id: string; readonly text: string; readonly cue?: Cue;
-  readonly accent?: boolean; readonly cancel?: Cue};
+  readonly accent?: boolean; readonly highlight?: {readonly from: Cue; readonly to: Cue}; readonly cancel?: Cue; readonly cancelUntil?: Cue};
 export type Fraction = {readonly id: string; readonly top: readonly Node[];
   readonly bottom: readonly Node[]; readonly cue?: Cue};
 export type Matrix = {readonly id: string; readonly cells: readonly (readonly (readonly Node[])[])[]; readonly determinant?: boolean; readonly cue?: Cue};
@@ -13,6 +13,20 @@ export type Node = Atom | Fraction | Matrix;
 export type Row = {readonly id: string; readonly cue: Cue; readonly nodes: readonly Node[];
   readonly label?: string; readonly wide?: boolean; readonly arrows?: readonly {readonly target: string; readonly cue: Cue}[]};
 export type Board = readonly Row[];
+export type BoardState = {readonly cue: Cue; readonly rowIds: readonly string[]; readonly reason: string};
+
+/** Explicit retained content for worked examples; other lessons retain their rolling history. */
+export const retainedRows = (board: Board, states: readonly BoardState[], beats: readonly SpeechBeat[], fps: number, frame: number): Board => {
+  let previous = -1;
+  for (const state of states) {
+    const start = cueFrame(state.cue, beats, fps);
+    if (start < previous || state.rowIds.length > 4 || new Set(state.rowIds).size !== state.rowIds.length ||
+        state.rowIds.some((id) => !board.some((row) => row.id === id))) throw new Error('Invalid retained board state');
+    previous = start;
+  }
+  const state = states.filter((item) => cueFrame(item.cue, beats, fps) <= frame).at(-1);
+  return (state?.rowIds ?? []).map((id) => board.find((row) => row.id === id)!);
+};
 
 const normalize = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
 
@@ -61,7 +75,9 @@ export const compileBoard = (board: Board, beats: readonly SpeechBeat[], fps: nu
   }
   const frames = new Map<string, number>();
   const cancellations = new Map<string, number>();
+  const cancellationEnds = new Map<string, number>();
   const arrows = new Map<string, number>();
+  const highlights = new Map<string, readonly [number, number]>();
   let previous = -1;
   for (const row of board) {
     if (frames.has(row.id)) throw new Error('Duplicate board ID: ' + row.id);
@@ -75,10 +91,20 @@ export const compileBoard = (board: Board, beats: readonly SpeechBeat[], fps: nu
         const reveal = node.cue ? cueFrame(node.cue, beats, fps) : parentStart;
         if (reveal < parentStart) throw new Error('A token cannot precede its row or fraction: ' + node.id);
         frames.set(node.id, reveal);
+        if ('text' in node && node.highlight) {
+          const from = cueFrame(node.highlight.from, beats, fps), to = cueFrame(node.highlight.to, beats, fps);
+          if (from < reveal || to <= from) throw new Error('Invalid highlight window');
+          highlights.set(node.id, [from, to]);
+        }
         if ('text' in node && node.cancel) {
           const cancel = cueFrame(node.cancel, beats, fps);
           if (cancel < reveal) throw new Error('Cannot cancel an unseen term');
           cancellations.set(node.id, cancel);
+          if (node.cancelUntil) {
+            const end = cueFrame(node.cancelUntil, beats, fps);
+            if (end <= cancel) throw new Error('Invalid cancellation window');
+            cancellationEnds.set(node.id, end);
+          }
         }
         if ('cells' in node) {for (const row of node.cells) for (const cell of row) visit(cell, reveal);}
         else if ('top' in node) {visit(node.top, reveal); visit(node.bottom, reveal);}
@@ -92,5 +118,5 @@ export const compileBoard = (board: Board, beats: readonly SpeechBeat[], fps: nu
       arrows.set(arrow.target, when);
     }
   }
-  return {frames, cancellations, arrows};
+  return {frames, cancellations, cancellationEnds, arrows, highlights};
 };

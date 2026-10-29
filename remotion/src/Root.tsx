@@ -1,3 +1,4 @@
+import eliminationPreview from './cinematic/elimination-preview.json';
 import {CinematicLesson, cinematicFrames, type CinematicProps} from './cinematic/CinematicLesson';
 import {Recap} from './inverse/scenes/Recap';
 import {Practice} from './inverse/scenes/Practice';
@@ -30,6 +31,9 @@ const cinematicPreview: CinematicProps = {schemaVersion: 'cinematic-v1', day: 1,
 // Landscape and vertical layouts share verified source packages.
 export const RemotionRoot = () => (
   <>
+    <Composition id="EliminationWorkedExample" component={CinematicLesson} defaultProps={eliminationPreview as CinematicProps}
+      calculateMetadata={({props}) => ({durationInFrames: cinematicFrames(props)})}
+      fps={30} width={1920} height={1080} durationInFrames={cinematicFrames(eliminationPreview as CinematicProps)}/>
     <Composition id="CinematicLesson" component={CinematicLesson} defaultProps={cinematicPreview}
       calculateMetadata={({props}) => ({durationInFrames: cinematicFrames(props)})}
       fps={30} width={1920} height={1080} durationInFrames={150}/>

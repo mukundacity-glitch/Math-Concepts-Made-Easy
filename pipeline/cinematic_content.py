@@ -336,6 +336,9 @@ def graph_model(source: str) -> dict | None:
 
 def build_cinematic_plan(lesson: dict) -> dict:
     """All mathematical states come from the lesson; the renderer is shared by all days."""
+    if lesson.get('schemaVersion') == 'worked-linear-v1':
+        from pipeline.worked_linear import compile_lesson
+        return compile_lesson(lesson)
     for name in ['day', 'topic', 'lesson_goal', 'concept_intuition', 'key_formula', 'board_examples', 'common_mistake']:
         if not lesson.get(name): raise ValueError('Missing cinematic lesson field: ' + name)
     day = int(lesson['day'])

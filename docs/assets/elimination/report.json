@@ -1,0 +1,87 @@
+{
+  "mode": "measured-Ryan-narration",
+  "frames": 3511,
+  "checkpoints": {
+    "method": 779,
+    "cancellation": 1299,
+    "substitution": 1818,
+    "verification": 3496
+  },
+  "narrationBeats": 12,
+  "allCuesResolved": true,
+  "verifiedFinalVideo": false,
+  "audio": [
+    {
+      "id": "question-first",
+      "durationInFrames": 276,
+      "wordCount": 16,
+      "sha256": "52bc23233b4f9674c9c42d9f29a4bc5af42649267d45aaad4f52f33e72992550"
+    },
+    {
+      "id": "question-second",
+      "durationInFrames": 169,
+      "wordCount": 9,
+      "sha256": "8a3ed8bad4a55a69e8ea14bbd9fbe0b49dcd665eaed3fc9eed7c1ac21f5eeb27"
+    },
+    {
+      "id": "goal",
+      "durationInFrames": 224,
+      "wordCount": 16,
+      "sha256": "39350c1071700487f20e2c1732227fb89cedd2baa1bfb82e10711b731255390d"
+    },
+    {
+      "id": "method",
+      "durationInFrames": 308,
+      "wordCount": 13,
+      "sha256": "1faf84a1dccc94db6c8f2847d5437b3f979a73e55009f49d19ef81d5ed69f615"
+    },
+    {
+      "id": "add",
+      "durationInFrames": 337,
+      "wordCount": 20,
+      "sha256": "073538291e0b0cdc2659f3a8b537d2c0878d0bbb5a2c245dc41c3869cfc04b85"
+    },
+    {
+      "id": "divide",
+      "durationInFrames": 249,
+      "wordCount": 13,
+      "sha256": "d53cc94c28408846253fce935766a21dd656275bc290ac6e6acef8a1f864cba0"
+    },
+    {
+      "id": "substitute",
+      "durationInFrames": 270,
+      "wordCount": 17,
+      "sha256": "1abfe2f3318f4a12e716b5aba6141435fe61b3b864dcb80ce298b8bbcc16c867"
+    },
+    {
+      "id": "solve-y",
+      "durationInFrames": 226,
+      "wordCount": 10,
+      "sha256": "c51e94af5bfe4a50a78443a351374077b839447d59a62f89f28f52d6c15f2fd3"
+    },
+    {
+      "id": "pause",
+      "durationInFrames": 412,
+      "wordCount": 16,
+      "sha256": "e846f229749d2fcfc0bf9bc060ef4f3b114f0af244e783786aee87ef3b46ce51"
+    },
+    {
+      "id": "check-first",
+      "durationInFrames": 319,
+      "wordCount": 19,
+      "sha256": "bbe0a4df13fdbdfeb235dfb6b35f44c4cb9da4389b9001106e32cbf326a7dc91"
+    },
+    {
+      "id": "check-second",
+      "durationInFrames": 336,
+      "wordCount": 21,
+      "sha256": "e907fceb1f1fe64791e68489c393277f373aec6f9abf336670dcbaa3712b57e2"
+    },
+    {
+      "id": "interpret",
+      "durationInFrames": 385,
+      "wordCount": 18,
+      "sha256": "922429a141cd2ae2c449ead11433e7f837dfe5310b1f085d2d6f1bf52e76bd2c"
+    }
+  ]
+}
